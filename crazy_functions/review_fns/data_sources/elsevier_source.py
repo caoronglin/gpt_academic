@@ -1,20 +1,21 @@
-from typing import List, Optional, Dict, Union
-from datetime import datetime
-import aiohttp
 import asyncio
-from crazy_functions.review_fns.data_sources.base_source import DataSource, PaperMetadata
 import json
-from tqdm import tqdm
 import random
+from datetime import datetime
+from typing import Dict, List, Optional, Union
+
+import aiohttp
+from tqdm import tqdm
+
+from crazy_functions.review_fns.data_sources.base_source import (DataSource,
+                                                                 PaperMetadata)
+
 
 class ElsevierSource(DataSource):
     """Elsevier (Scopus) API实现"""
 
     # 定义API密钥列表
-    API_KEYS = [
-        "xxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-        "xxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-    ]
+    API_KEYS = ["xxxxxxxxxxxxxxxxxxxxxxxxxxxxx", "xxxxxxxxxxxxxxxxxxxxxxxxxxxxx"]
 
     def __init__(self, api_key: str = None):
         """初始化
@@ -59,7 +60,9 @@ class ElsevierSource(DataSource):
                         if response.status == 401:
                             print(f"使用的API密钥: {self.api_key}")
                             # 尝试切换到另一个API密钥
-                            new_key = random.choice([k for k in self.API_KEYS if k != self.api_key])
+                            new_key = random.choice(
+                                [k for k in self.API_KEYS if k != self.api_key]
+                            )
                             print(f"尝试切换到新的API密钥: {new_key}")
                             self.api_key = new_key
                             self.headers["X-ELS-APIKey"] = new_key
@@ -75,7 +78,7 @@ class ElsevierSource(DataSource):
         query: str,
         limit: int = 100,
         sort_by: str = "relevance",
-        start_year: int = None
+        start_year: int = None,
     ) -> List[PaperMetadata]:
         """搜索论文"""
         try:
@@ -84,7 +87,7 @@ class ElsevierSource(DataSource):
                 "count": min(limit, 100),
                 "view": "STANDARD",
                 # 移除dc:description字段，因为它在STANDARD视图中不可用
-                "field": "dc:title,dc:creator,prism:doi,prism:coverDate,citedby-count,prism:publicationName"
+                "field": "dc:title,dc:creator,prism:doi,prism:coverDate,citedby-count,prism:publicationName",
             }
 
             # 添加年份过滤
@@ -99,8 +102,7 @@ class ElsevierSource(DataSource):
 
             # 发送搜索请求
             response = await self._make_request(
-                f"{self.base_url}/search/scopus",
-                params=params
+                f"{self.base_url}/search/scopus", params=params
             )
 
             if not response or "search-results" not in response:
@@ -108,7 +110,11 @@ class ElsevierSource(DataSource):
 
             # 解析搜索结果
             entries = response["search-results"].get("entry", [])
-            papers = [paper for paper in (self._parse_entry(entry) for entry in entries) if paper is not None]
+            papers = [
+                paper
+                for paper in (self._parse_entry(entry) for entry in entries)
+                if paper is not None
+            ]
 
             # 尝试为每篇论文获取摘要
             for paper in papers:
@@ -140,8 +146,8 @@ class ElsevierSource(DataSource):
 
             # 简化venue信息
             venue_info = {
-                'source_id': entry.get("source-id"),
-                'issn': entry.get("prism:issn")
+                "source_id": entry.get("source-id"),
+                "issn": entry.get("prism:issn"),
             }
 
             return PaperMetadata(
@@ -156,7 +162,7 @@ class ElsevierSource(DataSource):
                 institutions=[],  # 移除机构信息
                 venue_type="",
                 venue_name=entry.get("prism:publicationName"),
-                venue_info=venue_info
+                venue_info=venue_info,
             )
 
         except Exception as e:
@@ -169,12 +175,11 @@ class ElsevierSource(DataSource):
             params = {
                 "query": f"REF({doi})",
                 "count": min(limit, 100),
-                "view": "STANDARD"
+                "view": "STANDARD",
             }
 
             response = await self._make_request(
-                f"{self.base_url}/search/scopus",
-                params=params
+                f"{self.base_url}/search/scopus", params=params
             )
 
             if not response or "search-results" not in response:
@@ -192,14 +197,18 @@ class ElsevierSource(DataSource):
         try:
             response = await self._make_request(
                 f"{self.base_url}/abstract/doi/{doi}/references",
-                params={"view": "STANDARD"}
+                params={"view": "STANDARD"},
             )
 
             if not response or "references" not in response:
                 return []
 
             references = response["references"].get("reference", [])
-            papers = [paper for paper in (self._parse_reference(ref) for ref in references) if paper is not None]
+            papers = [
+                paper
+                for paper in (self._parse_reference(ref) for ref in references)
+                if paper is not None
+            ]
             return papers
 
         except Exception as e:
@@ -213,10 +222,14 @@ class ElsevierSource(DataSource):
             if "author-list" in ref:
                 author_list = ref["author-list"].get("author", [])
                 if isinstance(author_list, list):
-                    authors = [f"{author.get('ce:given-name', '')} {author.get('ce:surname', '')}"
-                             for author in author_list]
+                    authors = [
+                        f"{author.get('ce:given-name', '')} {author.get('ce:surname', '')}"
+                        for author in author_list
+                    ]
                 else:
-                    authors = [f"{author_list.get('ce:given-name', '')} {author_list.get('ce:surname', '')}"]
+                    authors = [
+                        f"{author_list.get('ce:given-name', '')} {author_list.get('ce:surname', '')}"
+                    ]
 
             year = None
             if "prism:coverDate" in ref:
@@ -237,7 +250,7 @@ class ElsevierSource(DataSource):
                 institutions=[],
                 venue_type="unknown",
                 venue_name=ref.get("prism:publicationName"),
-                venue_info={}
+                venue_info={},
             )
 
         except Exception as e:
@@ -245,30 +258,21 @@ class ElsevierSource(DataSource):
             return None
 
     async def search_by_author(
-        self,
-        author: str,
-        limit: int = 100,
-        start_year: int = None
+        self, author: str, limit: int = 100, start_year: int = None
     ) -> List[PaperMetadata]:
         """按作者搜索论文"""
         query = f"AUTHOR-NAME({author})"
         return await self.search(query, limit=limit, start_year=start_year)
 
     async def search_by_affiliation(
-        self,
-        affiliation: str,
-        limit: int = 100,
-        start_year: int = None
+        self, affiliation: str, limit: int = 100, start_year: int = None
     ) -> List[PaperMetadata]:
         """按机构搜索论文"""
         query = f"AF-ID({affiliation})"
         return await self.search(query, limit=limit, start_year=start_year)
 
     async def search_by_venue(
-        self,
-        venue: str,
-        limit: int = 100,
-        start_year: int = None
+        self, venue: str, limit: int = 100, start_year: int = None
     ) -> List[PaperMetadata]:
         """按期刊/会议搜索论文"""
         query = f"SRCTITLE({venue})"
@@ -279,26 +283,24 @@ class ElsevierSource(DataSource):
         print(f"\n测试API密钥: {self.api_key}")
 
         # 测试1: 基础搜索
-        basic_params = {
-            "query": "test",
-            "count": 1,
-            "view": "STANDARD"
-        }
+        basic_params = {"query": "test", "count": 1, "view": "STANDARD"}
         print("\n1. 测试基础搜索...")
         response = await self._make_request(
-            f"{self.base_url}/search/scopus",
-            params=basic_params
+            f"{self.base_url}/search/scopus", params=basic_params
         )
         if response:
             print("基础搜索成功")
-            print("可用字段:", list(response.get("search-results", {}).get("entry", [{}])[0].keys()))
+            print(
+                "可用字段:",
+                list(response.get("search-results", {}).get("entry", [{}])[0].keys()),
+            )
 
         # 测试2: 测试单篇文章访问
         print("\n2. 测试文章详情访问...")
         test_doi = "10.1016/j.artint.2021.103535"  # 一个示例DOI
         response = await self._make_request(
             f"{self.base_url}/abstract/doi/{test_doi}",
-            params={"view": "STANDARD"}  # 改为STANDARD视图
+            params={"view": "STANDARD"},  # 改为STANDARD视图
         )
         if response:
             print("文章详情访问成功")
@@ -333,9 +335,7 @@ class ElsevierSource(DataSource):
             # 使用Abstract API而不是Search API
             response = await self._make_request(
                 f"{self.base_url}/abstract/doi/{doi}",
-                params={
-                    "view": "FULL"  # 使用FULL视图
-                }
+                params={"view": "FULL"},  # 使用FULL视图
             )
 
             if response and "abstracts-retrieval-response" in response:
@@ -348,6 +348,7 @@ class ElsevierSource(DataSource):
         except Exception as e:
             print(f"获取摘要时发生错误: {str(e)}")
             return None
+
 
 async def example_usage():
     """ElsevierSource使用示例"""
@@ -414,7 +415,9 @@ async def example_usage():
 
         # 示例5：按机构搜索
         print("\n=== 示例5：按机构搜索 ===")
-        affiliation_papers = await elsevier.search_by_affiliation("60027950", limit=3)  # MIT的机构ID
+        affiliation_papers = await elsevier.search_by_affiliation(
+            "60027950", limit=3
+        )  # MIT的机构ID
         for i, paper in enumerate(affiliation_papers, 1):
             print(f"\n--- 论文 {i} ---")
             print(f"标题: {paper.title}")
@@ -443,7 +446,9 @@ async def example_usage():
     except Exception as e:
         print(f"发生错误: {str(e)}")
         import traceback
+
         print(traceback.format_exc())
+
 
 if __name__ == "__main__":
     asyncio.run(example_usage())

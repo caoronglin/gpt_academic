@@ -1,13 +1,15 @@
-import time
 import asyncio
-import threading
 import importlib
+import threading
+import time
+from multiprocessing import Pipe, Process
 
-from .bridge_newbingfree import preprocess_newbing_out, preprocess_newbing_out_simple
-from multiprocessing import Process, Pipe
-from toolbox import update_ui, get_conf, trimmed_format_exc
 from loguru import logger as logging
-from toolbox import get_conf
+
+from toolbox import get_conf, trimmed_format_exc, update_ui
+
+from .bridge_newbingfree import (preprocess_newbing_out,
+                                 preprocess_newbing_out_simple)
 
 load_message = "正在加载Claude组件，请稍候..."
 
@@ -302,18 +304,24 @@ def predict(
     chatbot[-1] = (inputs, "[Local Message] 等待Claude响应中 ...")
     response = "[Local Message] 等待Claude响应中 ..."
     yield from update_ui(
-        chatbot=chatbot, history=history, msg="Claude响应缓慢，尚未完成全部响应，请耐心完成后再提交新问题。"
+        chatbot=chatbot,
+        history=history,
+        msg="Claude响应缓慢，尚未完成全部响应，请耐心完成后再提交新问题。",
     )
     for response in claude_handle.stream_chat(
         query=inputs, history=history_feedin, system_prompt=system_prompt
     ):
         chatbot[-1] = (inputs, preprocess_newbing_out(response))
         yield from update_ui(
-            chatbot=chatbot, history=history, msg="Claude响应缓慢，尚未完成全部响应，请耐心完成后再提交新问题。"
+            chatbot=chatbot,
+            history=history,
+            msg="Claude响应缓慢，尚未完成全部响应，请耐心完成后再提交新问题。",
         )
     if response == "[Local Message] 等待Claude响应中 ...":
         response = "[Local Message] Claude响应异常，请刷新界面重试 ..."
     history.extend([inputs, response])
     logging.info(f"[raw_input] {inputs}")
     logging.info(f"[response] {response}")
-    yield from update_ui(chatbot=chatbot, history=history, msg="完成全部响应，请提交新问题。")
+    yield from update_ui(
+        chatbot=chatbot, history=history, msg="完成全部响应，请提交新问题。"
+    )

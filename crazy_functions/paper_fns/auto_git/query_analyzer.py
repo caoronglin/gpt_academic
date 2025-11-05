@@ -1,10 +1,12 @@
-from typing import Dict, List
-from dataclasses import dataclass
 import re
+from dataclasses import dataclass
+from typing import Dict, List
+
 
 @dataclass
 class SearchCriteria:
     """搜索条件"""
+
     query_type: str  # 查询类型: repo/code/user/topic
     main_topic: str  # 主题
     sub_topics: List[str]  # 子主题列表
@@ -14,26 +16,35 @@ class SearchCriteria:
     original_query: str = ""  # 原始查询字符串
     repo_id: str = ""  # 特定仓库ID或名称
 
+
 class QueryAnalyzer:
     """查询分析器"""
 
     # 响应索引常量
     BASIC_QUERY_INDEX = 0
     GITHUB_QUERY_INDEX = 1
-    
+
     def __init__(self):
         self.valid_types = {
             "repo": ["repository", "project", "library", "framework", "tool"],
-            "code": ["code", "snippet", "implementation", "function", "class", "algorithm"],
+            "code": [
+                "code",
+                "snippet",
+                "implementation",
+                "function",
+                "class",
+                "algorithm",
+            ],
             "user": ["user", "developer", "organization", "contributor", "maintainer"],
-            "topic": ["topic", "category", "tag", "field", "area", "domain"]
+            "topic": ["topic", "category", "tag", "field", "area", "domain"],
         }
 
     def analyze_query(self, query: str, chatbot: List, llm_kwargs: Dict):
         """分析查询意图"""
         from crazy_functions.crazy_utils import \
-            request_gpt_model_multi_threads_with_very_awesome_ui_and_high_efficiency as request_gpt
-        
+            request_gpt_model_multi_threads_with_very_awesome_ui_and_high_efficiency as \
+            request_gpt
+
         # 1. 基本查询分析
         type_prompt = f"""请分析这个与GitHub相关的查询，并严格按照以下XML格式回答：
 
@@ -197,7 +208,7 @@ Please analyze the query and answer using only the XML tag:
                 "You are a GitHub search expert, specialized in converting natural language queries into optimized GitHub search queries in English.",
                 "你是一个GitHub搜索专家，擅长处理查询并保留中文关键词进行搜索。",
             ]
-            
+
             # 使用同步方式调用LLM
             responses = yield from request_gpt(
                 inputs_array=prompts,
@@ -206,7 +217,7 @@ Please analyze the query and answer using only the XML tag:
                 chatbot=chatbot,
                 history_array=[[] for _ in prompts],
                 sys_prompt_array=sys_prompts,
-                max_workers=3
+                max_workers=3,
             )
 
             # 从收集的响应中提取我们需要的内容
@@ -226,14 +237,19 @@ Please analyze the query and answer using only the XML tag:
                     raise Exception(f"未收到第 {i + 1} 个响应")
 
             # 解析基本信息
-            query_type = self._extract_tag(extracted_responses[self.BASIC_QUERY_INDEX], "query_type")
+            query_type = self._extract_tag(
+                extracted_responses[self.BASIC_QUERY_INDEX], "query_type"
+            )
             if not query_type:
                 print(
-                    f"Debug - Failed to extract query_type. Response was: {extracted_responses[self.BASIC_QUERY_INDEX]}")
+                    f"Debug - Failed to extract query_type. Response was: {extracted_responses[self.BASIC_QUERY_INDEX]}"
+                )
                 raise Exception("无法提取query_type标签内容")
             query_type = query_type.lower()
 
-            main_topic = self._extract_tag(extracted_responses[self.BASIC_QUERY_INDEX], "main_topic")
+            main_topic = self._extract_tag(
+                extracted_responses[self.BASIC_QUERY_INDEX], "main_topic"
+            )
             if not main_topic:
                 print(f"Debug - Failed to extract main_topic. Using query as fallback.")
                 main_topic = query
@@ -242,42 +258,53 @@ Please analyze the query and answer using only the XML tag:
 
             # 提取子主题
             sub_topics = []
-            sub_topics_text = self._extract_tag(extracted_responses[self.BASIC_QUERY_INDEX], "sub_topics")
+            sub_topics_text = self._extract_tag(
+                extracted_responses[self.BASIC_QUERY_INDEX], "sub_topics"
+            )
             if sub_topics_text:
                 sub_topics = [topic.strip() for topic in sub_topics_text.split(",")]
 
             # 提取语言
-            language = self._extract_tag(extracted_responses[self.BASIC_QUERY_INDEX], "language")
-            
+            language = self._extract_tag(
+                extracted_responses[self.BASIC_QUERY_INDEX], "language"
+            )
+
             # 提取最低星标数
             min_stars = 0
-            min_stars_text = self._extract_tag(extracted_responses[self.BASIC_QUERY_INDEX], "min_stars")
+            min_stars_text = self._extract_tag(
+                extracted_responses[self.BASIC_QUERY_INDEX], "min_stars"
+            )
             if min_stars_text and min_stars_text.isdigit():
                 min_stars = int(min_stars_text)
 
             # 解析GitHub搜索参数 - 英文
-            english_github_query = self._extract_tag(extracted_responses[self.GITHUB_QUERY_INDEX], "query")
-            
+            english_github_query = self._extract_tag(
+                extracted_responses[self.GITHUB_QUERY_INDEX], "query"
+            )
+
             # 解析GitHub搜索参数 - 中文
             chinese_github_query = self._extract_tag(extracted_responses[2], "query")
-            
+
             # 构建GitHub参数
             github_params = {
                 "query": english_github_query,
                 "chinese_query": chinese_github_query,
                 "sort": "stars",  # 默认按星标排序
                 "order": "desc",  # 默认降序
-                "per_page": 30,   # 默认每页30条
-                "page": 1         # 默认第1页
+                "per_page": 30,  # 默认每页30条
+                "page": 1,  # 默认第1页
             }
-            
+
             # 检查是否为特定仓库查询
             repo_id = ""
             if "repo:" in english_github_query or "repository:" in english_github_query:
-                repo_match = re.search(r'(repo|repository):([a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+)', english_github_query)
+                repo_match = re.search(
+                    r"(repo|repository):([a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+)",
+                    english_github_query,
+                )
                 if repo_match:
                     repo_id = repo_match.group(2)
-            
+
             print(f"Debug - 提取的信息:")
             print(f"查询类型: {query_type}")
             print(f"主题: {main_topic}")
@@ -297,7 +324,7 @@ Please analyze the query and answer using only the XML tag:
                 min_stars=min_stars,
                 github_params=github_params,
                 original_query=query,
-                repo_id=repo_id
+                repo_id=repo_id,
             )
 
         except Exception as e:
@@ -341,7 +368,7 @@ Please analyze the query and answer using only the XML tag:
             rf"<{tag}>([\s\S]*?)(?:</{tag}>|$)",  # 未闭合的标签
             rf"[{tag}]([\s\S]*?)[/{tag}]",  # 方括号格式
             rf"{tag}:\s*(.*?)(?=\n\w|$)",  # 冒号格式
-            rf"<{tag}>\s*(.*?)(?=<|$)"  # 部分闭合
+            rf"<{tag}>\s*(.*?)(?=<|$)",  # 部分闭合
         ]
 
         # 尝试所有模式
@@ -353,4 +380,4 @@ Please analyze the query and answer using only the XML tag:
                     return content
 
         # 如果所有模式都失败，返回空字符串
-        return "" 
+        return ""

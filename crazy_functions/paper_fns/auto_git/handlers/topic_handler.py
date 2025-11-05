@@ -1,14 +1,16 @@
-from typing import List, Dict, Any
-from .base_handler import BaseHandler
-from ..query_analyzer import SearchCriteria
 import asyncio
+from typing import Any, Dict, List
+
+from ..query_analyzer import SearchCriteria
+from .base_handler import BaseHandler
+
 
 class TopicHandler(BaseHandler):
     """主题搜索处理器"""
-    
+
     def __init__(self, github, llm_kwargs=None):
         super().__init__(github, llm_kwargs)
-    
+
     async def handle(
         self,
         criteria: SearchCriteria,
@@ -19,16 +21,16 @@ class TopicHandler(BaseHandler):
         plugin_kwargs: Dict[str, Any],
     ) -> str:
         """处理主题搜索请求，返回最终的prompt"""
-        
+
         search_params = self._get_search_params(plugin_kwargs)
-        
+
         # 搜索主题
         topics = await self._search_bilingual_topics(
             english_query=criteria.github_params["query"],
             chinese_query=criteria.github_params["chinese_query"],
-            per_page=search_params['max_repos']
+            per_page=search_params["max_repos"],
         )
-        
+
         if not topics:
             # 尝试用主题搜索仓库
             search_query = criteria.github_params["query"]
@@ -36,26 +38,28 @@ class TopicHandler(BaseHandler):
             if "topic:" not in search_query:
                 search_query += " topic:" + criteria.main_topic.replace(" ", "-")
             if "topic:" not in chinese_search_query:
-                chinese_search_query += " topic:" + criteria.main_topic.replace(" ", "-")
-            
+                chinese_search_query += " topic:" + criteria.main_topic.replace(
+                    " ", "-"
+                )
+
             repos = await self._search_bilingual_repositories(
                 english_query=search_query,
                 chinese_query=chinese_search_query,
                 language=criteria.language,
                 min_stars=criteria.min_stars,
-                per_page=search_params['max_repos']
+                per_page=search_params["max_repos"],
             )
-            
+
             if not repos:
                 return self._generate_apology_prompt(criteria)
-                
+
             # 获取仓库详情
             enhanced_repos = await self._get_repo_details(repos[:10])
             self.ranked_repos = enhanced_repos
-            
+
             if not enhanced_repos:
                 return self._generate_apology_prompt(criteria)
-                
+
             # 构建基于主题的仓库列表prompt
             current_time = self._get_current_time()
             final_prompt = f"""当前时间: {current_time}
@@ -97,35 +101,37 @@ class TopicHandler(BaseHandler):
 使用markdown格式提供清晰的分节回复。
 """
             return final_prompt
-            
+
         # 如果找到了主题，则获取主题下的热门仓库
         topic_repos = []
         for topic in topics[:5]:  # 增加到5个主题
-            topic_name = topic.get('name', '')
+            topic_name = topic.get("name", "")
             if topic_name:
                 # 搜索该主题下的仓库
                 repos = await self._search_repositories(
                     query=f"topic:{topic_name}",
                     language=criteria.language,
                     min_stars=criteria.min_stars,
-                    per_page=20  # 每个主题最多20个仓库
+                    per_page=20,  # 每个主题最多20个仓库
                 )
-                
+
                 if repos:
                     for repo in repos:
-                        repo['topic_source'] = topic_name
+                        repo["topic_source"] = topic_name
                         topic_repos.append(repo)
-        
+
         if not topic_repos:
             return self._generate_apology_prompt(criteria)
-            
+
         # 获取前N个仓库的详情
-        enhanced_repos = await self._get_repo_details(topic_repos[:search_params['max_details']])
+        enhanced_repos = await self._get_repo_details(
+            topic_repos[: search_params["max_details"]]
+        )
         self.ranked_repos = enhanced_repos
-        
+
         if not enhanced_repos:
             return self._generate_apology_prompt(criteria)
-            
+
         # 构建最终的prompt
         current_time = self._get_current_time()
         final_prompt = f"""当前时间: {current_time}
@@ -166,28 +172,28 @@ class TopicHandler(BaseHandler):
 
 使用markdown格式提供清晰的分节回复。
 """
-        
+
         return final_prompt
-        
+
     def _format_topic_repos(self, repos: List[Dict]) -> str:
         """按主题格式化仓库列表"""
         # 按主题分组
         topics_dict = {}
         for repo in repos:
-            topic = repo.get('topic_source', '其他')
+            topic = repo.get("topic_source", "其他")
             if topic not in topics_dict:
                 topics_dict[topic] = []
             topics_dict[topic].append(repo)
-        
+
         # 格式化输出
         formatted = []
         for topic, topic_repos in topics_dict.items():
             formatted.append(f"## 主题: {topic}\n")
-            
+
             for i, repo in enumerate(topic_repos, 1):
                 # 构建仓库URL
-                repo_url = repo.get('html_url', '')
-                
+                repo_url = repo.get("html_url", "")
+
                 # 构建引用
                 reference = (
                     f"{i}. **{repo.get('full_name', '')}**\n"
@@ -198,20 +204,20 @@ class TopicHandler(BaseHandler):
                     f"   - 更新时间: {repo.get('updated_at', 'N/A')[:10]}\n"
                     f"   - URL: <a href='{repo_url}' target='_blank'>{repo_url}</a>\n"
                 )
-                
+
                 # 添加主题标签(如果有)
-                if repo.get('topics'):
-                    topics_str = ", ".join(repo.get('topics'))
+                if repo.get("topics"):
+                    topics_str = ", ".join(repo.get("topics"))
                     reference += f"   - 主题标签: {topics_str}\n"
-                
+
                 # 添加README摘要(如果有)
-                if repo.get('readme_excerpt'):
+                if repo.get("readme_excerpt"):
                     # 截断README，只取前200个字符
-                    readme_short = repo.get('readme_excerpt')[:200].replace('\n', ' ')
+                    readme_short = repo.get("readme_excerpt")[:200].replace("\n", " ")
                     reference += f"   - README摘要: {readme_short}...\n"
-                
+
                 formatted.append(reference)
-            
+
             formatted.append("\n")  # 主题之间添加空行
-            
-        return "\n".join(formatted) 
+
+        return "\n".join(formatted)

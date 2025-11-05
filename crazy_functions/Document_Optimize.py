@@ -1,32 +1,36 @@
-import os
-import time
 import glob
+import os
 import re
 import threading
-from typing import Dict, List, Generator, Tuple
+import time
 from dataclasses import dataclass
+from typing import Dict, Generator, List, Tuple
 
-from crazy_functions.crazy_utils import request_gpt_model_multi_threads_with_very_awesome_ui_and_high_efficiency
-from crazy_functions.pdf_fns.breakdown_txt import breakdown_text_to_satisfy_token_limit
-from crazy_functions.rag_fns.rag_file_support import extract_text, supports_format, convert_to_markdown
-from request_llms.bridge_all import model_info
-from toolbox import update_ui, CatchException, report_exception, promote_file_to_downloadzone, write_history_to_file
-from shared_utils.fastapi_server import validate_path_safety
-
+from crazy_functions.crazy_utils import \
+    request_gpt_model_multi_threads_with_very_awesome_ui_and_high_efficiency
 # 新增：导入结构化论文提取器
-from crazy_functions.doc_fns.read_fns.unstructured_all.paper_structure_extractor import PaperStructureExtractor, ExtractorConfig, StructuredPaper
-
+from crazy_functions.doc_fns.read_fns.unstructured_all.paper_structure_extractor import (
+    ExtractorConfig, PaperStructureExtractor, StructuredPaper)
 # 导入格式化器
-from crazy_functions.paper_fns.file2file_doc import (
-    TxtFormatter,
-    MarkdownFormatter,
-    HtmlFormatter,
-    WordFormatter
-)
+from crazy_functions.paper_fns.file2file_doc import (HtmlFormatter,
+                                                     MarkdownFormatter,
+                                                     TxtFormatter,
+                                                     WordFormatter)
+from crazy_functions.pdf_fns.breakdown_txt import \
+    breakdown_text_to_satisfy_token_limit
+from crazy_functions.rag_fns.rag_file_support import (convert_to_markdown,
+                                                      extract_text,
+                                                      supports_format)
+from request_llms.bridge_all import model_info
+from shared_utils.fastapi_server import validate_path_safety
+from toolbox import (CatchException, promote_file_to_downloadzone,
+                     report_exception, update_ui, write_history_to_file)
+
 
 @dataclass
 class TextFragment:
     """文本片段数据类，用于组织处理单元"""
+
     content: str
     fragment_index: int
     total_fragments: int
@@ -35,7 +39,14 @@ class TextFragment:
 class DocumentProcessor:
     """文档处理器 - 处理单个文档并输出结果"""
 
-    def __init__(self, llm_kwargs: Dict, plugin_kwargs: Dict, chatbot: List, history: List, system_prompt: str):
+    def __init__(
+        self,
+        llm_kwargs: Dict,
+        plugin_kwargs: Dict,
+        chatbot: List,
+        history: List,
+        system_prompt: str,
+    ):
         """初始化处理器"""
         self.llm_kwargs = llm_kwargs
         self.plugin_kwargs = plugin_kwargs
@@ -49,24 +60,33 @@ class DocumentProcessor:
 
     def _get_token_limit(self) -> int:
         """获取模型token限制，返回更小的值以确保更细粒度的分割"""
-        max_token = model_info[self.llm_kwargs['llm_model']]['max_token']
+        max_token = model_info[self.llm_kwargs["llm_model"]]["max_token"]
         # 降低token限制，使每个片段更小
         return max_token // 4  # 从3/4降低到1/4
 
-    def _create_batch_inputs(self, fragments: List[TextFragment]) -> Tuple[List, List, List]:
+    def _create_batch_inputs(
+        self, fragments: List[TextFragment]
+    ) -> Tuple[List, List, List]:
         """创建批处理输入"""
         inputs_array = []
         inputs_show_user_array = []
         history_array = []
 
-        user_instruction = self.plugin_kwargs.get("advanced_arg", "请润色以下学术文本，提高其语言表达的准确性、专业性和流畅度，保持学术风格，确保逻辑连贯，但不改变原文的科学内容和核心观点")
+        user_instruction = self.plugin_kwargs.get(
+            "advanced_arg",
+            "请润色以下学术文本，提高其语言表达的准确性、专业性和流畅度，保持学术风格，确保逻辑连贯，但不改变原文的科学内容和核心观点",
+        )
 
         for frag in fragments:
-            i_say = (f'请按照以下要求处理文本内容：{user_instruction}\n\n'
-                     f'请将对文本的处理结果放在<decision>和</decision>标签之间。\n\n'
-                     f'文本内容：\n```\n{frag.content}\n```')
+            i_say = (
+                f"请按照以下要求处理文本内容：{user_instruction}\n\n"
+                f"请将对文本的处理结果放在<decision>和</decision>标签之间。\n\n"
+                f"文本内容：\n```\n{frag.content}\n```"
+            )
 
-            i_say_show_user = f'正在处理文本片段 {frag.fragment_index + 1}/{frag.total_fragments}'
+            i_say_show_user = (
+                f"正在处理文本片段 {frag.fragment_index + 1}/{frag.total_fragments}"
+            )
 
             inputs_array.append(i_say)
             inputs_show_user_array.append(i_say_show_user)
@@ -77,7 +97,8 @@ class DocumentProcessor:
     def _extract_decision(self, text: str) -> str:
         """从LLM响应中提取<decision>标签内的内容"""
         import re
-        pattern = r'<decision>(.*?)</decision>'
+
+        pattern = r"<decision>(.*?)</decision>"
         matches = re.findall(pattern, text, re.DOTALL)
 
         if matches:
@@ -93,11 +114,16 @@ class DocumentProcessor:
 
         try:
             # 首先尝试转换为Markdown
-            from crazy_functions.rag_fns.rag_file_support import convert_to_markdown
+            from crazy_functions.rag_fns.rag_file_support import \
+                convert_to_markdown
+
             file_path = convert_to_markdown(file_path)
 
             # 1. 检查文件是否为支持的论文格式
-            is_paper_format = any(file_path.lower().endswith(ext) for ext in self.paper_extractor.SUPPORTED_EXTENSIONS)
+            is_paper_format = any(
+                file_path.lower().endswith(ext)
+                for ext in self.paper_extractor.SUPPORTED_EXTENSIONS
+            )
 
             if is_paper_format:
                 # 使用结构化提取器处理论文
@@ -133,23 +159,35 @@ class DocumentProcessor:
                     text_fragments = []
                     for i, frag in enumerate(fragments):
                         if frag.strip():
-                            text_fragments.append(TextFragment(
-                                content=frag,
-                                fragment_index=i,
-                                total_fragments=len(fragments)
-                            ))
+                            text_fragments.append(
+                                TextFragment(
+                                    content=frag,
+                                    fragment_index=i,
+                                    total_fragments=len(fragments),
+                                )
+                            )
 
                     # 批量处理片段
                     if text_fragments:
-                        self.chatbot[-1] = ["开始处理文本", f"共 {len(text_fragments)} 个片段"]
+                        self.chatbot[-1] = [
+                            "开始处理文本",
+                            f"共 {len(text_fragments)} 个片段",
+                        ]
                         yield from update_ui(chatbot=self.chatbot, history=self.history)
 
                         # 一次性准备所有输入
-                        inputs_array, inputs_show_user_array, history_array = self._create_batch_inputs(text_fragments)
+                        inputs_array, inputs_show_user_array, history_array = (
+                            self._create_batch_inputs(text_fragments)
+                        )
 
                         # 使用系统提示
-                        instruction = self.plugin_kwargs.get("advanced_arg", "请润色以下学术文本，提高其语言表达的准确性、专业性和流畅度，保持学术风格，确保逻辑连贯，但不改变原文的科学内容和核心观点")
-                        sys_prompt_array = [f"你是一个专业的学术文献编辑助手。请按照用户的要求：'{instruction}'处理文本。保持学术风格，增强表达的准确性和专业性。"] * len(text_fragments)
+                        instruction = self.plugin_kwargs.get(
+                            "advanced_arg",
+                            "请润色以下学术文本，提高其语言表达的准确性、专业性和流畅度，保持学术风格，确保逻辑连贯，但不改变原文的科学内容和核心观点",
+                        )
+                        sys_prompt_array = [
+                            f"你是一个专业的学术文献编辑助手。请按照用户的要求：'{instruction}'处理文本。保持学术风格，增强表达的准确性和专业性。"
+                        ] * len(text_fragments)
 
                         # 调用LLM一次性处理所有片段
                         response_collection = yield from request_gpt_model_multi_threads_with_very_awesome_ui_and_high_efficiency(
@@ -168,30 +206,41 @@ class DocumentProcessor:
                                 processed_text = self._extract_decision(llm_response)
 
                                 if processed_text and processed_text.strip():
-                                    self.processed_results.append({
-                                        'index': frag.fragment_index,
-                                        'content': processed_text
-                                    })
+                                    self.processed_results.append(
+                                        {
+                                            "index": frag.fragment_index,
+                                            "content": processed_text,
+                                        }
+                                    )
                                 else:
                                     self.failed_fragments.append(frag)
-                                    self.processed_results.append({
-                                        'index': frag.fragment_index,
-                                        'content': frag.content
-                                    })
+                                    self.processed_results.append(
+                                        {
+                                            "index": frag.fragment_index,
+                                            "content": frag.content,
+                                        }
+                                    )
                             except Exception as e:
                                 self.failed_fragments.append(frag)
-                                self.processed_results.append({
-                                    'index': frag.fragment_index,
-                                    'content': frag.content
-                                })
+                                self.processed_results.append(
+                                    {
+                                        "index": frag.fragment_index,
+                                        "content": frag.content,
+                                    }
+                                )
 
                         # 按原始顺序合并结果
-                        self.processed_results.sort(key=lambda x: x['index'])
-                        final_content = "\n".join([item['content'] for item in self.processed_results])
+                        self.processed_results.sort(key=lambda x: x["index"])
+                        final_content = "\n".join(
+                            [item["content"] for item in self.processed_results]
+                        )
 
                         # 更新UI
                         success_count = len(text_fragments) - len(self.failed_fragments)
-                        self.chatbot[-1] = ["处理完成", f"成功处理 {success_count}/{len(text_fragments)} 个片段"]
+                        self.chatbot[-1] = [
+                            "处理完成",
+                            f"成功处理 {success_count}/{len(text_fragments)} 个片段",
+                        ]
                         yield from update_ui(chatbot=self.chatbot, history=self.history)
 
                         return final_content
@@ -205,7 +254,10 @@ class DocumentProcessor:
                     return None
 
             # 2. 准备处理章节内容（不处理标题）
-            self.chatbot[-1] = ["已提取论文结构", f"共 {len(paper.sections)} 个主要章节"]
+            self.chatbot[-1] = [
+                "已提取论文结构",
+                f"共 {len(paper.sections)} 个主要章节",
+            ]
             yield from update_ui(chatbot=self.chatbot, history=self.history)
 
             # 3. 收集所有需要处理的章节内容并分割为合适大小
@@ -218,7 +270,11 @@ class DocumentProcessor:
                     current_path = f"{parent_path}/{i}" if parent_path else f"{i}"
 
                     # 检查是否为参考文献部分，如果是则跳过
-                    if section.section_type == 'references' or section.title.lower() in ['references', '参考文献', 'bibliography', '文献']:
+                    if (
+                        section.section_type == "references"
+                        or section.title.lower()
+                        in ["references", "参考文献", "bibliography", "文献"]
+                    ):
                         continue  # 跳过参考文献部分
 
                     # 只处理内容非空的章节
@@ -229,15 +285,22 @@ class DocumentProcessor:
                         for fragment_idx, fragment_content in enumerate(fragments):
                             if fragment_content.strip():
                                 fragment_index = len(sections_to_process)
-                                sections_to_process.append(TextFragment(
-                                    content=fragment_content,
-                                    fragment_index=fragment_index,
-                                    total_fragments=0  # 临时值，稍后更新
-                                ))
+                                sections_to_process.append(
+                                    TextFragment(
+                                        content=fragment_content,
+                                        fragment_index=fragment_index,
+                                        total_fragments=0,  # 临时值，稍后更新
+                                    )
+                                )
 
                                 # 保存映射关系，用于稍后更新章节内容
                                 # 为每个片段存储原始章节和片段索引信息
-                                section_map[fragment_index] = (current_path, section, fragment_idx, len(fragments))
+                                section_map[fragment_index] = (
+                                    current_path,
+                                    section,
+                                    fragment_idx,
+                                    len(fragments),
+                                )
 
                     # 递归处理子章节
                     if section.subsections:
@@ -258,15 +321,25 @@ class DocumentProcessor:
                 return None
 
             # 5. 批量处理章节内容
-            self.chatbot[-1] = ["开始处理论文内容", f"共 {len(sections_to_process)} 个内容片段"]
+            self.chatbot[-1] = [
+                "开始处理论文内容",
+                f"共 {len(sections_to_process)} 个内容片段",
+            ]
             yield from update_ui(chatbot=self.chatbot, history=self.history)
 
             # 一次性准备所有输入
-            inputs_array, inputs_show_user_array, history_array = self._create_batch_inputs(sections_to_process)
+            inputs_array, inputs_show_user_array, history_array = (
+                self._create_batch_inputs(sections_to_process)
+            )
 
             # 使用系统提示
-            instruction = self.plugin_kwargs.get("advanced_arg", "请润色以下学术文本，提高其语言表达的准确性、专业性和流畅度，保持学术风格，确保逻辑连贯，但不改变原文的科学内容和核心观点")
-            sys_prompt_array = [f"你是一个专业的学术文献编辑助手。请按照用户的要求：'{instruction}'处理文本。保持学术风格，增强表达的准确性和专业性。"] * len(sections_to_process)
+            instruction = self.plugin_kwargs.get(
+                "advanced_arg",
+                "请润色以下学术文本，提高其语言表达的准确性、专业性和流畅度，保持学术风格，确保逻辑连贯，但不改变原文的科学内容和核心观点",
+            )
+            sys_prompt_array = [
+                f"你是一个专业的学术文献编辑助手。请按照用户的要求：'{instruction}'处理文本。保持学术风格，增强表达的准确性和专业性。"
+            ] * len(sections_to_process)
 
             # 调用LLM一次性处理所有片段
             response_collection = yield from request_gpt_model_multi_threads_with_very_awesome_ui_and_high_efficiency(
@@ -288,15 +361,16 @@ class DocumentProcessor:
 
                     if processed_text and processed_text.strip():
                         # 保存处理结果
-                        self.processed_results.append({
-                            'index': frag.fragment_index,
-                            'content': processed_text
-                        })
+                        self.processed_results.append(
+                            {"index": frag.fragment_index, "content": processed_text}
+                        )
 
                         # 存储处理后的文本片段，用于后续重组
                         fragment_index = frag.fragment_index
                         if fragment_index in section_map:
-                            path, section, fragment_idx, total_fragments = section_map[fragment_index]
+                            path, section, fragment_idx, total_fragments = section_map[
+                                fragment_index
+                            ]
 
                             # 初始化此章节的内容容器（如果尚未创建）
                             if path not in section_contents:
@@ -323,18 +397,26 @@ class DocumentProcessor:
 
             # 6. 更新UI
             success_count = total_fragments - len(self.failed_fragments)
-            self.chatbot[-1] = ["处理完成", f"成功处理 {success_count}/{total_fragments} 个内容片段"]
+            self.chatbot[-1] = [
+                "处理完成",
+                f"成功处理 {success_count}/{total_fragments} 个内容片段",
+            ]
             yield from update_ui(chatbot=self.chatbot, history=self.history)
 
             # 收集参考文献部分（不进行处理）
             references_sections = []
+
             def collect_references(sections, parent_path=""):
                 """递归收集参考文献部分"""
                 for i, section in enumerate(sections):
                     current_path = f"{parent_path}/{i}" if parent_path else f"{i}"
 
                     # 检查是否为参考文献部分
-                    if section.section_type == 'references' or section.title.lower() in ['references', '参考文献', 'bibliography', '文献']:
+                    if (
+                        section.section_type == "references"
+                        or section.title.lower()
+                        in ["references", "参考文献", "bibliography", "文献"]
+                    ):
                         references_sections.append((current_path, section))
 
                     # 递归检查子章节
@@ -348,13 +430,18 @@ class DocumentProcessor:
             markdown_content = self.paper_extractor.generate_markdown(paper)
 
             # 8. 返回处理后的内容
-            self.chatbot[-1] = ["处理完成", f"成功处理 {success_count}/{total_fragments} 个内容片段，参考文献部分未处理"]
+            self.chatbot[-1] = [
+                "处理完成",
+                f"成功处理 {success_count}/{total_fragments} 个内容片段，参考文献部分未处理",
+            ]
             yield from update_ui(chatbot=self.chatbot, history=self.history)
 
             return markdown_content
 
         except Exception as e:
-            self.chatbot.append(["结构化处理失败", f"错误: {str(e)}，将尝试作为普通文件处理"])
+            self.chatbot.append(
+                ["结构化处理失败", f"错误: {str(e)}，将尝试作为普通文件处理"]
+            )
             yield from update_ui(chatbot=self.chatbot, history=self.history)
             return (yield from self._process_regular_file(file_path))
 
@@ -381,11 +468,11 @@ class DocumentProcessor:
         text_fragments = []
         for i, frag in enumerate(fragments):
             if frag.strip():
-                text_fragments.append(TextFragment(
-                    content=frag,
-                    fragment_index=i,
-                    total_fragments=len(fragments)
-                ))
+                text_fragments.append(
+                    TextFragment(
+                        content=frag, fragment_index=i, total_fragments=len(fragments)
+                    )
+                )
 
         # 4. 处理所有片段
         self.chatbot[-1] = ["开始处理文本", f"共 {len(text_fragments)} 个片段"]
@@ -394,13 +481,17 @@ class DocumentProcessor:
         # 批量处理片段
         batch_size = 8  # 每批处理的片段数
         for i in range(0, len(text_fragments), batch_size):
-            batch = text_fragments[i:i + batch_size]
+            batch = text_fragments[i : i + batch_size]
 
-            inputs_array, inputs_show_user_array, history_array = self._create_batch_inputs(batch)
+            inputs_array, inputs_show_user_array, history_array = (
+                self._create_batch_inputs(batch)
+            )
 
             # 使用系统提示
             instruction = self.plugin_kwargs.get("advanced_arg", "请润色以下文本")
-            sys_prompt_array = [f"你是一个专业的文本处理助手。请按照用户的要求：'{instruction}'处理文本。"] * len(batch)
+            sys_prompt_array = [
+                f"你是一个专业的文本处理助手。请按照用户的要求：'{instruction}'处理文本。"
+            ] * len(batch)
 
             # 调用LLM处理
             response_collection = yield from request_gpt_model_multi_threads_with_very_awesome_ui_and_high_efficiency(
@@ -419,30 +510,36 @@ class DocumentProcessor:
                     processed_text = self._extract_decision(llm_response)
 
                     if processed_text and processed_text.strip():
-                        self.processed_results.append({
-                            'index': frag.fragment_index,
-                            'content': processed_text
-                        })
+                        self.processed_results.append(
+                            {"index": frag.fragment_index, "content": processed_text}
+                        )
                     else:
                         self.failed_fragments.append(frag)
-                        self.processed_results.append({
-                            'index': frag.fragment_index,
-                            'content': frag.content  # 如果处理失败，使用原始内容
-                        })
+                        self.processed_results.append(
+                            {
+                                "index": frag.fragment_index,
+                                "content": frag.content,  # 如果处理失败，使用原始内容
+                            }
+                        )
                 except Exception as e:
                     self.failed_fragments.append(frag)
-                    self.processed_results.append({
-                        'index': frag.fragment_index,
-                        'content': frag.content  # 如果处理失败，使用原始内容
-                    })
+                    self.processed_results.append(
+                        {
+                            "index": frag.fragment_index,
+                            "content": frag.content,  # 如果处理失败，使用原始内容
+                        }
+                    )
 
         # 5. 按原始顺序合并结果
-        self.processed_results.sort(key=lambda x: x['index'])
-        final_content = "\n".join([item['content'] for item in self.processed_results])
+        self.processed_results.sort(key=lambda x: x["index"])
+        final_content = "\n".join([item["content"] for item in self.processed_results])
 
         # 6. 更新UI
         success_count = len(text_fragments) - len(self.failed_fragments)
-        self.chatbot[-1] = ["处理完成", f"成功处理 {success_count}/{len(text_fragments)} 个片段"]
+        self.chatbot[-1] = [
+            "处理完成",
+            f"成功处理 {success_count}/{len(text_fragments)} 个片段",
+        ]
         yield from update_ui(chatbot=self.chatbot, history=self.history)
 
         return final_content
@@ -467,8 +564,7 @@ class DocumentProcessor:
             txt_formatter = TxtFormatter()
             txt_content = txt_formatter.create_document(content)
             txt_file = write_history_to_file(
-                history=[txt_content],
-                file_basename=f"{base_filename}.txt"
+                history=[txt_content], file_basename=f"{base_filename}.txt"
             )
             result_files.append(txt_file)
         except Exception as e:
@@ -479,8 +575,7 @@ class DocumentProcessor:
             md_formatter = MarkdownFormatter()
             md_content = md_formatter.create_document(content, processing_type)
             md_file = write_history_to_file(
-                history=[md_content],
-                file_basename=f"{base_filename}.md"
+                history=[md_content], file_basename=f"{base_filename}.md"
             )
             result_files.append(md_file)
         except Exception as e:
@@ -491,8 +586,7 @@ class DocumentProcessor:
             html_formatter = HtmlFormatter(processing_type=processing_type)
             html_content = html_formatter.create_document(content)
             html_file = write_history_to_file(
-                history=[html_content],
-                file_basename=f"{base_filename}.html"
+                history=[html_content], file_basename=f"{base_filename}.html"
             )
             result_files.append(html_file)
         except Exception as e:
@@ -505,12 +599,15 @@ class DocumentProcessor:
 
             # 获取保存路径
             from toolbox import get_log_folder
+
             word_path = os.path.join(get_log_folder(), f"{base_filename}.docx")
             doc.save(word_path)
 
             # 5. 保存为PDF（通过Word转换）
             try:
-                from crazy_functions.paper_fns.file2file_doc.word2pdf import WordToPdfConverter
+                from crazy_functions.paper_fns.file2file_doc.word2pdf import \
+                    WordToPdfConverter
+
                 pdf_path = WordToPdfConverter.convert_to_pdf(word_path)
                 result_files.append(pdf_path)
             except Exception as e:
@@ -533,10 +630,10 @@ class DocumentProcessor:
         针对中英文设置不同的阈值，因为字符密度不同
         """
         # 先按段落分割文本
-        paragraphs = content.split('\n\n')
+        paragraphs = content.split("\n\n")
 
         # 检测语言类型
-        chinese_char_count = sum(1 for char in content if '\u4e00' <= char <= '\u9fff')
+        chinese_char_count = sum(1 for char in content if "\u4e00" <= char <= "\u9fff")
         is_chinese_text = chinese_char_count / max(1, len(content)) > 0.3
 
         # 根据语言类型设置不同的阈值（只用于合并小段落）
@@ -563,7 +660,7 @@ class DocumentProcessor:
             else:
                 # 如果当前块非空且与当前段落无关，先保存它
                 if current_chunk and current_length > 0:
-                    result_fragments.append('\n\n'.join(current_chunk))
+                    result_fragments.append("\n\n".join(current_chunk))
 
                 # 当前段落作为新块
                 current_chunk = [para]
@@ -571,13 +668,13 @@ class DocumentProcessor:
 
             # 如果当前块大小已接近目标大小，保存并开始新块
             if current_length >= target_size:
-                result_fragments.append('\n\n'.join(current_chunk))
+                result_fragments.append("\n\n".join(current_chunk))
                 current_chunk = []
                 current_length = 0
 
         # 保存最后一个块
         if current_chunk:
-            result_fragments.append('\n\n'.join(current_chunk))
+            result_fragments.append("\n\n".join(current_chunk))
 
         # 2. 处理可能过大的片段（确保不超过token限制）
         final_fragments = []
@@ -598,7 +695,7 @@ class DocumentProcessor:
                 sub_fragments = breakdown_text_to_satisfy_token_limit(
                     txt=fragment,
                     limit=larger_limit,
-                    llm_model=self.llm_kwargs['llm_model']
+                    llm_model=self.llm_kwargs["llm_model"],
                 )
                 final_fragments.extend(sub_fragments)
             else:
@@ -608,17 +705,30 @@ class DocumentProcessor:
 
 
 @CatchException
-def 自定义智能文档处理(txt: str, llm_kwargs: Dict, plugin_kwargs: Dict, chatbot: List,
-              history: List, system_prompt: str, user_request: str):
+def 自定义智能文档处理(
+    txt: str,
+    llm_kwargs: Dict,
+    plugin_kwargs: Dict,
+    chatbot: List,
+    history: List,
+    system_prompt: str,
+    user_request: str,
+):
     """主函数 - 文件到文件处理"""
     # 初始化
-    processor = DocumentProcessor(llm_kwargs, plugin_kwargs, chatbot, history, system_prompt)
-    chatbot.append(["函数插件功能", "文件内容处理：将文档内容按照指定要求处理后输出为多种格式"])
+    processor = DocumentProcessor(
+        llm_kwargs, plugin_kwargs, chatbot, history, system_prompt
+    )
+    chatbot.append(
+        ["函数插件功能", "文件内容处理：将文档内容按照指定要求处理后输出为多种格式"]
+    )
     yield from update_ui(chatbot=chatbot, history=history)
 
     # 验证输入路径
     if not os.path.exists(txt):
-        report_exception(chatbot, history, a=f"解析路径: {txt}", b=f"找不到路径或无权访问: {txt}")
+        report_exception(
+            chatbot, history, a=f"解析路径: {txt}", b=f"找不到路径或无权访问: {txt}"
+        )
         yield from update_ui(chatbot=chatbot, history=history)
         return
 
@@ -633,26 +743,46 @@ def 自定义智能文档处理(txt: str, llm_kwargs: Dict, plugin_kwargs: Dict,
     else:
         # 目录处理 - 类似批量文件询问插件
         project_folder = txt
-        extract_folder = next((d for d in glob.glob(f'{project_folder}/*')
-                           if os.path.isdir(d) and d.endswith('.extract')), project_folder)
+        extract_folder = next(
+            (
+                d
+                for d in glob.glob(f"{project_folder}/*")
+                if os.path.isdir(d) and d.endswith(".extract")
+            ),
+            project_folder,
+        )
 
         # 排除压缩文件
-        exclude_patterns = r'/[^/]+\.(zip|rar|7z|tar|gz)$'
-        file_paths = [f for f in glob.glob(f'{extract_folder}/**', recursive=True)
-                     if os.path.isfile(f) and not re.search(exclude_patterns, f)]
+        exclude_patterns = r"/[^/]+\.(zip|rar|7z|tar|gz)$"
+        file_paths = [
+            f
+            for f in glob.glob(f"{extract_folder}/**", recursive=True)
+            if os.path.isfile(f) and not re.search(exclude_patterns, f)
+        ]
 
         # 过滤支持的文件格式
-        file_paths = [f for f in file_paths if any(f.lower().endswith(ext) for ext in
-                    list(processor.paper_extractor.SUPPORTED_EXTENSIONS) + ['.json', '.csv', '.xlsx', '.xls'])]
+        file_paths = [
+            f
+            for f in file_paths
+            if any(
+                f.lower().endswith(ext)
+                for ext in list(processor.paper_extractor.SUPPORTED_EXTENSIONS)
+                + [".json", ".csv", ".xlsx", ".xls"]
+            )
+        ]
 
     if not file_paths:
-        report_exception(chatbot, history, a=f"解析路径: {txt}", b="未找到支持的文件类型")
+        report_exception(
+            chatbot, history, a=f"解析路径: {txt}", b="未找到支持的文件类型"
+        )
         yield from update_ui(chatbot=chatbot, history=history)
         return
 
     # 处理文件
     if len(file_paths) > 1:
-        chatbot.append(["发现多个文件", f"共找到 {len(file_paths)} 个文件，将处理第一个文件"])
+        chatbot.append(
+            ["发现多个文件", f"共找到 {len(file_paths)} 个文件，将处理第一个文件"]
+        )
         yield from update_ui(chatbot=chatbot, history=history)
 
     # 只处理第一个文件

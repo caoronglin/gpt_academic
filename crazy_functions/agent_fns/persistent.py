@@ -1,6 +1,8 @@
 from toolbox import Singleton
+
+
 @Singleton
-class GradioMultiuserManagerForPersistentClasses():
+class GradioMultiuserManagerForPersistentClasses:
     def __init__(self):
         self.mapping = {}
 
@@ -13,4 +15,3 @@ class GradioMultiuserManagerForPersistentClasses():
 
     def get(self, key):
         return self.mapping[key]
-

@@ -1,9 +1,11 @@
-from docx2pdf import convert
 import os
 import platform
-from typing import Union
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
+from typing import Union
+
+from docx2pdf import convert
+
 
 class WordToPdfConverter:
     """Word文档转PDF转换器"""
@@ -15,11 +17,13 @@ class WordToPdfConverter:
         例如: 'docx_test.pdf' -> 'pdf_test.pdf'
         """
         path = Path(filename)
-        new_name = path.stem.replace('docx', 'pdf')
+        new_name = path.stem.replace("docx", "pdf")
         return path.parent / f"{new_name}{path.suffix}"
 
     @staticmethod
-    def convert_to_pdf(word_path: Union[str, Path], pdf_path: Union[str, Path] = None) -> str:
+    def convert_to_pdf(
+        word_path: Union[str, Path], pdf_path: Union[str, Path] = None
+    ) -> str:
         """
         将Word文档转换为PDF
 
@@ -38,21 +42,27 @@ class WordToPdfConverter:
 
             if pdf_path is None:
                 # 创建新的pdf路径，同时替换文件名中的docx
-                pdf_path = WordToPdfConverter._replace_docx_in_filename(word_path).with_suffix('.pdf')
+                pdf_path = WordToPdfConverter._replace_docx_in_filename(
+                    word_path
+                ).with_suffix(".pdf")
             else:
                 pdf_path = WordToPdfConverter._replace_docx_in_filename(Path(pdf_path))
 
             # 检查操作系统
-            if platform.system() == 'Linux':
+            if platform.system() == "Linux":
                 # Linux系统需要安装libreoffice
-                if not os.system('which libreoffice') == 0:
-                    raise RuntimeError("请先安装LibreOffice: sudo apt-get install libreoffice")
+                if not os.system("which libreoffice") == 0:
+                    raise RuntimeError(
+                        "请先安装LibreOffice: sudo apt-get install libreoffice"
+                    )
 
                 # 使用libreoffice进行转换
-                os.system(f'libreoffice --headless --convert-to pdf "{word_path}" --outdir "{pdf_path.parent}"')
+                os.system(
+                    f'libreoffice --headless --convert-to pdf "{word_path}" --outdir "{pdf_path.parent}"'
+                )
 
                 # 如果输出路径与默认生成的不同，则重命名
-                default_pdf = word_path.with_suffix('.pdf')
+                default_pdf = word_path.with_suffix(".pdf")
                 if default_pdf != pdf_path:
                     os.rename(default_pdf, pdf_path)
             else:
@@ -65,7 +75,9 @@ class WordToPdfConverter:
             raise Exception(f"转换PDF失败: {str(e)}")
 
     @staticmethod
-    def batch_convert(word_dir: Union[str, Path], pdf_dir: Union[str, Path] = None) -> list:
+    def batch_convert(
+        word_dir: Union[str, Path], pdf_dir: Union[str, Path] = None
+    ) -> list:
         """
         批量转换目录下的所有Word文档
 
@@ -86,12 +98,15 @@ class WordToPdfConverter:
         for word_file in word_dir.glob("*.docx"):
             try:
                 if pdf_dir:
-                    pdf_path = pdf_dir / WordToPdfConverter._replace_docx_in_filename(
-                        word_file.with_suffix('.pdf')
-                    ).name
+                    pdf_path = (
+                        pdf_dir
+                        / WordToPdfConverter._replace_docx_in_filename(
+                            word_file.with_suffix(".pdf")
+                        ).name
+                    )
                 else:
                     pdf_path = WordToPdfConverter._replace_docx_in_filename(
-                        word_file.with_suffix('.pdf')
+                        word_file.with_suffix(".pdf")
                     )
 
                 pdf_file = WordToPdfConverter.convert_to_pdf(word_file, pdf_path)
@@ -120,11 +135,13 @@ class WordToPdfConverter:
             output_dir.mkdir(parents=True, exist_ok=True)
 
             # 生成临时word文件
-            temp_docx = output_dir / f"temp_{datetime.now().strftime('%Y%m%d_%H%M%S')}.docx"
+            temp_docx = (
+                output_dir / f"temp_{datetime.now().strftime('%Y%m%d_%H%M%S')}.docx"
+            )
             doc.save(temp_docx)
 
             # 转换为PDF
-            pdf_path = temp_docx.with_suffix('.pdf')
+            pdf_path = temp_docx.with_suffix(".pdf")
             WordToPdfConverter.convert_to_pdf(temp_docx, pdf_path)
 
             # 删除临时word文件

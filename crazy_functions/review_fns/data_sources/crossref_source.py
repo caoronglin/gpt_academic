@@ -1,8 +1,12 @@
-import aiohttp
-from typing import List, Dict, Optional
-from datetime import datetime
-from crazy_functions.review_fns.data_sources.base_source import DataSource, PaperMetadata
 import random
+from datetime import datetime
+from typing import Dict, List, Optional
+
+import aiohttp
+
+from crazy_functions.review_fns.data_sources.base_source import (DataSource,
+                                                                 PaperMetadata)
+
 
 class CrossrefSource(DataSource):
     """Crossref API实现"""
@@ -10,7 +14,7 @@ class CrossrefSource(DataSource):
     CONTACT_EMAILS = [
         "gpt_abc_academic@163.com",
         "gpt_abc_newapi@163.com",
-        "gpt_abc_academic_pwd@163.com"
+        "gpt_abc_academic_pwd@163.com",
     ]
 
     def _initialize(self) -> None:
@@ -31,7 +35,7 @@ class CrossrefSource(DataSource):
         limit: int = 100,
         sort_by: str = None,
         sort_order: str = None,
-        start_year: int = None
+        start_year: int = None,
     ) -> List[PaperMetadata]:
         """搜索论文
 
@@ -52,7 +56,7 @@ class CrossrefSource(DataSource):
                     "DOI,title,author,published-print,abstract,reference,"
                     "container-title,is-referenced-by-count,type,"
                     "publisher,ISSN,ISBN,issue,volume,page"
-                )
+                ),
             }
 
             # 添加年份过滤
@@ -65,10 +69,7 @@ class CrossrefSource(DataSource):
                 if sort_order:
                     params["order"] = sort_order
 
-            async with session.get(
-                f"{self.base_url}/works",
-                params=params
-            ) as response:
+            async with session.get(f"{self.base_url}/works", params=params) as response:
                 if response.status != 200:
                     print(f"API请求失败: HTTP {response.status}")
                     print(f"响应内容: {await response.text()}")
@@ -92,7 +93,9 @@ class CrossrefSource(DataSource):
                     else:
                         filtered_count += 1
 
-                print(f"找到 {len(items)} 篇相关论文，其中 {filtered_count} 篇因缺少摘要被过滤")
+                print(
+                    f"找到 {len(items)} 篇相关论文，其中 {filtered_count} 篇因缺少摘要被过滤"
+                )
                 print(f"返回 {len(papers)} 篇包含摘要的论文")
                 return papers
 
@@ -107,7 +110,7 @@ class CrossrefSource(DataSource):
                         "container-title,is-referenced-by-count,type,"
                         "publisher,ISSN,ISBN,issue,volume,page"
                     )
-                }
+                },
             ) as response:
                 if response.status != 200:
                     print(f"获取论文详情失败: HTTP {response.status}")
@@ -125,8 +128,7 @@ class CrossrefSource(DataSource):
         """获取指定DOI论文的参考文献列表"""
         async with aiohttp.ClientSession(headers=self.headers) as session:
             async with session.get(
-                f"{self.base_url}/works/{doi}",
-                params={"select": "reference"}
+                f"{self.base_url}/works/{doi}", params={"select": "reference"}
             ) as response:
                 if response.status != 200:
                     print(f"获取参考文献失败: HTTP {response.status}")
@@ -150,11 +152,15 @@ class CrossrefSource(DataSource):
                             authors=[ref.get("author", "")],
                             year=ref.get("year"),
                             doi=ref.get("DOI"),
-                            url=f"https://doi.org/{ref.get('DOI')}" if ref.get("DOI") else None,
+                            url=(
+                                f"https://doi.org/{ref.get('DOI')}"
+                                if ref.get("DOI")
+                                else None
+                            ),
                             abstract="",
                             citations=None,
                             venue=ref.get("journal-title", ""),
-                            institutions=[]
+                            institutions=[],
                         )
                         for ref in references
                     ]
@@ -169,8 +175,8 @@ class CrossrefSource(DataSource):
                 f"{self.base_url}/works",
                 params={
                     "filter": f"reference.DOI:{doi}",
-                    "select": "DOI,title,author,published-print,abstract"
-                }
+                    "select": "DOI,title,author,published-print,abstract",
+                },
             ) as response:
                 if response.status != 200:
                     print(f"获取引用信息失败: HTTP {response.status}")
@@ -207,7 +213,10 @@ class CrossrefSource(DataSource):
         for author in work.get("author", []):
             if "affiliation" in author:
                 for affiliation in author["affiliation"]:
-                    if "name" in affiliation and affiliation["name"] not in institutions:
+                    if (
+                        "name" in affiliation
+                        and affiliation["name"] not in institutions
+                    ):
                         institutions.append(affiliation["name"])
 
         # 获取venue信息
@@ -219,7 +228,7 @@ class CrossrefSource(DataSource):
             "isbn": work.get("ISBN", []),
             "issue": work.get("issue"),
             "volume": work.get("volume"),
-            "page": work.get("page")
+            "page": work.get("page"),
         }
 
         return PaperMetadata(
@@ -238,7 +247,7 @@ class CrossrefSource(DataSource):
             venue_type=venue_type,  # 添加venue类型
             venue_name=venue_name,  # 添加venue名称
             venue_info=venue_info,  # 添加venue详细信息
-            source='crossref'  # 添加来源标记
+            source="crossref",  # 添加来源标记
         )
 
     async def search_by_authors(
@@ -246,15 +255,12 @@ class CrossrefSource(DataSource):
         authors: List[str],
         limit: int = 100,
         sort_by: str = None,
-        start_year: int = None
+        start_year: int = None,
     ) -> List[PaperMetadata]:
         """按作者搜索论文"""
-        query = " ".join([f"author:\"{author}\"" for author in authors])
+        query = " ".join([f'author:"{author}"' for author in authors])
         return await self.search(
-            query=query,
-            limit=limit,
-            sort_by=sort_by,
-            start_year=start_year
+            query=query, limit=limit, sort_by=sort_by, start_year=start_year
         )
 
     async def search_by_date_range(
@@ -263,16 +269,14 @@ class CrossrefSource(DataSource):
         end_date: datetime,
         limit: int = 100,
         sort_by: str = None,
-        sort_order: str = None
+        sort_order: str = None,
     ) -> List[PaperMetadata]:
         """按日期范围搜索论文"""
         query = f"from-pub-date:{start_date.strftime('%Y-%m-%d')} until-pub-date:{end_date.strftime('%Y-%m-%d')}"
         return await self.search(
-            query=query,
-            limit=limit,
-            sort_by=sort_by,
-            sort_order=sort_order
+            query=query, limit=limit, sort_by=sort_by, sort_order=sort_order
         )
+
 
 async def example_usage():
     """CrossrefSource使用示例"""
@@ -286,7 +290,7 @@ async def example_usage():
             limit=3,
             sort_by="published",
             sort_order="desc",
-            start_year=2023
+            start_year=2023,
         )
 
         for i, paper in enumerate(papers, 1):
@@ -326,10 +330,7 @@ async def example_usage():
         # 示例3：按作者搜索
         print("\n=== 示例3：搜索特定作者的论文 ===")
         author_papers = await crossref.search_by_authors(
-            authors=["Yoshua Bengio"],
-            limit=3,
-            sort_by="published",
-            start_year=2020
+            authors=["Yoshua Bengio"], limit=3, sort_by="published", start_year=2020
         )
         for i, paper in enumerate(author_papers, 1):
             print(f"\n--- {i}. {paper.title} ---")
@@ -341,6 +342,7 @@ async def example_usage():
         # 示例4：按日期范围搜索
         print("\n=== 示例4：搜索特定日期范围的论文 ===")
         from datetime import datetime, timedelta
+
         end_date = datetime.now()
         start_date = end_date - timedelta(days=30)  # 最近一个月
         recent_papers = await crossref.search_by_date_range(
@@ -348,7 +350,7 @@ async def example_usage():
             end_date=end_date,
             limit=3,
             sort_by="published",
-            sort_order="desc"
+            sort_order="desc",
         )
         for i, paper in enumerate(recent_papers, 1):
             print(f"\n--- 最近发表的论文 {i} ---")
@@ -391,7 +393,9 @@ async def example_usage():
     except Exception as e:
         print(f"发生错误: {str(e)}")
         import traceback
+
         print(traceback.format_exc())
+
 
 if __name__ == "__main__":
     import asyncio

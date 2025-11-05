@@ -2,22 +2,25 @@ import os
 import time
 from abc import ABC, abstractmethod
 from datetime import datetime
+from typing import Dict, List, Tuple
+
+import markdown
 from docx import Document
 from docx.enum.style import WD_STYLE_TYPE
-from docx.enum.text import WD_PARAGRAPH_ALIGNMENT, WD_LINE_SPACING
+from docx.enum.text import WD_LINE_SPACING, WD_PARAGRAPH_ALIGNMENT
 from docx.oxml.ns import qn
-from docx.shared import  Inches, Cm
-from docx.shared import Pt, RGBColor, Inches
-from typing import Dict, List, Tuple
-import markdown
-from crazy_functions.doc_fns.conversation_doc.word_doc import convert_markdown_to_word
+from docx.shared import Cm, Inches, Pt, RGBColor
 
+from crazy_functions.doc_fns.conversation_doc.word_doc import \
+    convert_markdown_to_word
 
 
 class DocumentFormatter(ABC):
     """文档格式化基类，定义文档格式化的基本接口"""
 
-    def __init__(self, final_summary: str, file_summaries_map: Dict, failed_files: List[Tuple]):
+    def __init__(
+        self, final_summary: str, file_summaries_map: Dict, failed_files: List[Tuple]
+    ):
         self.final_summary = final_summary
         self.file_summaries_map = file_summaries_map
         self.failed_files = failed_files
@@ -50,7 +53,7 @@ class WordFormatter(DocumentFormatter):
         self.numbers = {
             1: 0,  # 一级标题编号
             2: 0,  # 二级标题编号
-            3: 0  # 三级标题编号
+            3: 0,  # 三级标题编号
         }
 
     def _setup_document(self):
@@ -74,32 +77,42 @@ class WordFormatter(DocumentFormatter):
             header_para = header.paragraphs[0]
             header_para.alignment = WD_PARAGRAPH_ALIGNMENT.RIGHT
             header_run = header_para.add_run("该文档由GPT-academic生成")
-            header_run.font.name = '仿宋'
-            header_run._element.rPr.rFonts.set(qn('w:eastAsia'), '仿宋')
+            header_run.font.name = "仿宋"
+            header_run._element.rPr.rFonts.set(qn("w:eastAsia"), "仿宋")
             header_run.font.size = Pt(9)
 
     def _create_styles(self):
         """创建文档样式"""
         # 创建正文样式
-        style = self.doc.styles.add_style('Normal_Custom', WD_STYLE_TYPE.PARAGRAPH)
-        style.font.name = '仿宋'
-        style._element.rPr.rFonts.set(qn('w:eastAsia'), '仿宋')
+        style = self.doc.styles.add_style("Normal_Custom", WD_STYLE_TYPE.PARAGRAPH)
+        style.font.name = "仿宋"
+        style._element.rPr.rFonts.set(qn("w:eastAsia"), "仿宋")
         style.font.size = Pt(14)
         style.paragraph_format.line_spacing_rule = WD_LINE_SPACING.ONE_POINT_FIVE
         style.paragraph_format.space_after = Pt(0)
         style.paragraph_format.first_line_indent = Pt(28)
 
         # 创建各级标题样式
-        self._create_heading_style('Title_Custom', '方正小标宋简体', 32, WD_PARAGRAPH_ALIGNMENT.CENTER)
-        self._create_heading_style('Heading1_Custom', '黑体', 22, WD_PARAGRAPH_ALIGNMENT.LEFT)
-        self._create_heading_style('Heading2_Custom', '黑体', 18, WD_PARAGRAPH_ALIGNMENT.LEFT)
-        self._create_heading_style('Heading3_Custom', '黑体', 16, WD_PARAGRAPH_ALIGNMENT.LEFT)
+        self._create_heading_style(
+            "Title_Custom", "方正小标宋简体", 32, WD_PARAGRAPH_ALIGNMENT.CENTER
+        )
+        self._create_heading_style(
+            "Heading1_Custom", "黑体", 22, WD_PARAGRAPH_ALIGNMENT.LEFT
+        )
+        self._create_heading_style(
+            "Heading2_Custom", "黑体", 18, WD_PARAGRAPH_ALIGNMENT.LEFT
+        )
+        self._create_heading_style(
+            "Heading3_Custom", "黑体", 16, WD_PARAGRAPH_ALIGNMENT.LEFT
+        )
 
-    def _create_heading_style(self, style_name: str, font_name: str, font_size: int, alignment):
+    def _create_heading_style(
+        self, style_name: str, font_name: str, font_size: int, alignment
+    ):
         """创建标题样式"""
         style = self.doc.styles.add_style(style_name, WD_STYLE_TYPE.PARAGRAPH)
         style.font.name = font_name
-        style._element.rPr.rFonts.set(qn('w:eastAsia'), font_name)
+        style._element.rPr.rFonts.set(qn("w:eastAsia"), font_name)
         style.font.size = Pt(font_size)
         style.font.bold = True
         style.paragraph_format.alignment = alignment
@@ -145,10 +158,10 @@ class WordFormatter(DocumentFormatter):
             level: 标题级别 (0-3)
         """
         style_map = {
-            0: 'Title_Custom',
-            1: 'Heading1_Custom',
-            2: 'Heading2_Custom',
-            3: 'Heading3_Custom'
+            0: "Title_Custom",
+            1: "Heading1_Custom",
+            2: "Heading2_Custom",
+            3: "Heading3_Custom",
         }
 
         number = self._get_heading_number(level)
@@ -157,25 +170,27 @@ class WordFormatter(DocumentFormatter):
         if number:
             number_run = paragraph.add_run(number)
             font_size = 22 if level == 1 else (18 if level == 2 else 16)
-            self._get_run_style(number_run, '黑体', font_size, True)
+            self._get_run_style(number_run, "黑体", font_size, True)
 
         text_run = paragraph.add_run(text)
-        font_size = 32 if level == 0 else (22 if level == 1 else (18 if level == 2 else 16))
-        self._get_run_style(text_run, '黑体', font_size, True)
+        font_size = (
+            32 if level == 0 else (22 if level == 1 else (18 if level == 2 else 16))
+        )
+        self._get_run_style(text_run, "黑体", font_size, True)
 
         # 主标题添加日期
         if level == 0:
             date_paragraph = self.doc.add_paragraph()
             date_paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
-            date_run = date_paragraph.add_run(datetime.now().strftime('%Y年%m月%d日'))
-            self._get_run_style(date_run, '仿宋', 16, False)
+            date_run = date_paragraph.add_run(datetime.now().strftime("%Y年%m月%d日"))
+            self._get_run_style(date_run, "仿宋", 16, False)
 
         return paragraph
 
     def _get_run_style(self, run, font_name: str, font_size: int, bold: bool = False):
         """设置文本运行对象的样式"""
         run.font.name = font_name
-        run._element.rPr.rFonts.set(qn('w:eastAsia'), font_name)
+        run._element.rPr.rFonts.set(qn("w:eastAsia"), font_name)
         run.font.size = Pt(font_size)
         run.font.bold = bold
 
@@ -200,7 +215,7 @@ class WordFormatter(DocumentFormatter):
         """添加正文内容，使用convert_markdown_to_word处理文本"""
         # 使用convert_markdown_to_word处理markdown文本
         processed_text = convert_markdown_to_word(text)
-        paragraph = self.doc.add_paragraph(processed_text, style='Normal_Custom')
+        paragraph = self.doc.add_paragraph(processed_text, style="Normal_Custom")
         if not indent:
             paragraph.paragraph_format.first_line_indent = Pt(0)
         return paragraph
@@ -228,7 +243,9 @@ class WordFormatter(DocumentFormatter):
                 # 无目录的文件作为二级标题
                 self._add_heading(f"📄 {file_name}", 2)
                 # 使用convert_markdown_to_word处理文件内容
-                self._add_content(convert_markdown_to_word(self.file_summaries_map[path]))
+                self._add_content(
+                    convert_markdown_to_word(self.file_summaries_map[path])
+                )
                 self.doc.add_paragraph()
 
         # 处理有目录的文件
@@ -249,11 +266,12 @@ class WordFormatter(DocumentFormatter):
                 # 添加文件名作为三级标题
                 self._add_heading(f"📄 {file_name}", 3)
                 # 使用convert_markdown_to_word处理文件内容
-                self._add_content(convert_markdown_to_word(self.file_summaries_map[path]))
+                self._add_content(
+                    convert_markdown_to_word(self.file_summaries_map[path])
+                )
                 self.doc.add_paragraph()
 
         return "\n".join(result)
-
 
     def create_document(self):
         """创建完整Word文档并返回文档对象"""
@@ -282,15 +300,17 @@ class WordFormatter(DocumentFormatter):
 
     def save_as_pdf(self, word_path, pdf_path=None):
         """将生成的Word文档转换为PDF
-        
+
         参数:
             word_path: Word文档的路径
             pdf_path: 可选，PDF文件的输出路径。如果未指定，将使用与Word文档相同的名称和位置
-            
+
         返回:
             生成的PDF文件路径，如果转换失败则返回None
         """
-        from crazy_functions.doc_fns.conversation_doc.word2pdf import WordToPdfConverter
+        from crazy_functions.doc_fns.conversation_doc.word2pdf import \
+            WordToPdfConverter
+
         try:
             pdf_path = WordToPdfConverter.convert_to_pdf(word_path, pdf_path)
             return pdf_path
@@ -332,22 +352,14 @@ class MarkdownFormatter(DocumentFormatter):
         return "\n".join(formatted_text)
 
     def create_document(self) -> str:
-        document = [
-            "# 📑 文档总结报告",
-            "\n## 总体摘要",
-            self.final_summary
-        ]
+        document = ["# 📑 文档总结报告", "\n## 总体摘要", self.final_summary]
 
         if self.failed_files:
             document.append(self.format_failed_files())
 
-        document.extend([
-            "\n# 📚 各文件详细总结",
-            self.format_file_summaries()
-        ])
+        document.extend(["\n# 📚 各文件详细总结", self.format_file_summaries()])
 
         return "\n".join(document)
-
 
 
 class HtmlFormatter(DocumentFormatter):
@@ -355,7 +367,9 @@ class HtmlFormatter(DocumentFormatter):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.md = markdown.Markdown(extensions=['extra','codehilite', 'tables','nl2br'])
+        self.md = markdown.Markdown(
+            extensions=["extra", "codehilite", "tables", "nl2br"]
+        )
         self.css_styles = """
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(20px); }
@@ -765,15 +779,17 @@ class HtmlFormatter(DocumentFormatter):
             if dir_path != current_dir:
                 if dir_path:
                     formatted_html.append('<div class="directory-section">')
-                    formatted_html.append(f'<h2><span class="icon">📁</span> {dir_path}</h2>')
-                    formatted_html.append('</div>')
+                    formatted_html.append(
+                        f'<h2><span class="icon">📁</span> {dir_path}</h2>'
+                    )
+                    formatted_html.append("</div>")
                 current_dir = dir_path
 
             file_name = os.path.basename(path)
             formatted_html.append('<div class="file-summary">')
             formatted_html.append(f'<h3><span class="icon">📄</span> {file_name}</h3>')
             formatted_html.append(self.md.convert(self.file_summaries_map[path]))
-            formatted_html.append('</div>')
+            formatted_html.append("</div>")
 
         return "\n".join(formatted_html)
 

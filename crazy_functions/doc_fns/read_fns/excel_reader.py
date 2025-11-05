@@ -1,40 +1,51 @@
 from __future__ import annotations
 
-import pandas as pd
-import numpy as np
-from pathlib import Path
-from typing import Optional, List, Set, Dict, Union, Iterator, Tuple
-from dataclasses import dataclass, field
 import logging
-from concurrent.futures import ThreadPoolExecutor, as_completed
-import chardet
-from functools import lru_cache
 import os
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from dataclasses import dataclass, field
+from functools import lru_cache
+from pathlib import Path
+from typing import Dict, Iterator, List, Optional, Set, Tuple, Union
+
+import chardet
+import numpy as np
+import pandas as pd
 
 
 @dataclass
 class ExtractorConfig:
     """提取器配置类"""
-    encoding: str = 'auto'
+
+    encoding: str = "auto"
     na_filter: bool = True
     skip_blank_lines: bool = True
     chunk_size: int = 10000
     max_workers: int = 4
     preserve_format: bool = True
     read_all_sheets: bool = True  # 新增：是否读取所有工作表
-    text_cleanup: Dict[str, bool] = field(default_factory=lambda: {
-        'remove_extra_spaces': True,
-        'normalize_whitespace': False,
-        'remove_special_chars': False,
-        'lowercase': False
-    })
+    text_cleanup: Dict[str, bool] = field(
+        default_factory=lambda: {
+            "remove_extra_spaces": True,
+            "normalize_whitespace": False,
+            "remove_special_chars": False,
+            "lowercase": False,
+        }
+    )
 
 
 class ExcelTextExtractor:
     """增强的Excel格式文件文本内容提取器"""
 
     SUPPORTED_EXTENSIONS: Set[str] = {
-        '.xlsx', '.xls', '.csv', '.tsv', '.xlsm', '.xltx', '.xltm', '.ods'
+        ".xlsx",
+        ".xls",
+        ".csv",
+        ".tsv",
+        ".xlsm",
+        ".xltx",
+        ".xltm",
+        ".ods",
     }
 
     def __init__(self, config: Optional[ExtractorConfig] = None):
@@ -46,25 +57,25 @@ class ExcelTextExtractor:
         """配置日志记录器"""
         logging.basicConfig(
             level=logging.INFO,
-            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         )
         self.logger = logging.getLogger(__name__)
-        fh = logging.FileHandler('excel_extractor.log')
+        fh = logging.FileHandler("excel_extractor.log")
         fh.setLevel(logging.ERROR)
         self.logger.addHandler(fh)
 
     def _detect_encoding(self, file_path: Path) -> str:
-        if self.config.encoding != 'auto':
+        if self.config.encoding != "auto":
             return self.config.encoding
 
         try:
-            with open(file_path, 'rb') as f:
+            with open(file_path, "rb") as f:
                 raw_data = f.read(10000)
                 result = chardet.detect(raw_data)
-                return result['encoding'] or 'utf-8'
+                return result["encoding"] or "utf-8"
         except Exception as e:
             self.logger.warning(f"Encoding detection failed: {e}. Using utf-8")
-            return 'utf-8'
+            return "utf-8"
 
     def _validate_file(self, file_path: Union[str, Path]) -> Path:
         path = Path(file_path).resolve()
@@ -88,12 +99,17 @@ class ExcelTextExtractor:
 
     def _format_value(self, value: Any) -> str:
         if pd.isna(value) or value is None:
-            return ''
+            return ""
         if isinstance(value, (int, float)):
             return str(value)
         return str(value).strip()
 
-    def _process_chunk(self, chunk: pd.DataFrame, columns: Optional[List[str]] = None, sheet_name: str = '') -> str:
+    def _process_chunk(
+        self,
+        chunk: pd.DataFrame,
+        columns: Optional[List[str]] = None,
+        sheet_name: str = "",
+    ) -> str:
         """处理数据块，新增sheet_name参数"""
         try:
             if columns:
@@ -109,32 +125,34 @@ class ExcelTextExtractor:
 
                 # 添加表头
                 headers = [str(col) for col in formatted_chunk.columns]
-                rows.append('\t'.join(headers))
+                rows.append("\t".join(headers))
 
                 # 添加数据行
                 for _, row in formatted_chunk.iterrows():
-                    rows.append('\t'.join(row.values))
+                    rows.append("\t".join(row.values))
 
-                return '\n'.join(rows)
+                return "\n".join(rows)
             else:
                 flat_values = (
                     chunk.astype(str)
-                    .replace({'nan': '', 'None': '', 'NaN': ''})
+                    .replace({"nan": "", "None": "", "NaN": ""})
                     .values.flatten()
                 )
-                return ' '.join(v for v in flat_values if v)
+                return " ".join(v for v in flat_values if v)
 
         except Exception as e:
             self.logger.error(f"Error processing chunk: {e}")
             raise
 
-    def _read_file(self, file_path: Path) -> Union[pd.DataFrame, Iterator[pd.DataFrame], Dict[str, pd.DataFrame]]:
+    def _read_file(
+        self, file_path: Path
+    ) -> Union[pd.DataFrame, Iterator[pd.DataFrame], Dict[str, pd.DataFrame]]:
         """读取文件，支持多工作表"""
         try:
             encoding = self._detect_encoding(file_path)
 
-            if file_path.suffix.lower() in {'.csv', '.tsv'}:
-                sep = '\t' if file_path.suffix.lower() == '.tsv' else ','
+            if file_path.suffix.lower() in {".csv", ".tsv"}:
+                sep = "\t" if file_path.suffix.lower() == ".tsv" else ","
 
                 # 对大文件使用分块读取
                 if file_path.stat().st_size > self.config.chunk_size * 1024:
@@ -145,7 +163,7 @@ class ExcelTextExtractor:
                         skip_blank_lines=self.config.skip_blank_lines,
                         sep=sep,
                         chunksize=self.config.chunk_size,
-                        on_bad_lines='warn'
+                        on_bad_lines="warn",
                     )
                 else:
                     return pd.read_csv(
@@ -153,7 +171,7 @@ class ExcelTextExtractor:
                         encoding=encoding,
                         na_filter=self.config.na_filter,
                         skip_blank_lines=self.config.skip_blank_lines,
-                        sep=sep
+                        sep=sep,
                     )
             else:
                 # Excel文件处理，支持多工作表
@@ -163,8 +181,8 @@ class ExcelTextExtractor:
                         file_path,
                         na_filter=self.config.na_filter,
                         keep_default_na=self.config.na_filter,
-                        engine='openpyxl',
-                        sheet_name=None  # None表示读取所有工作表
+                        engine="openpyxl",
+                        sheet_name=None,  # None表示读取所有工作表
                     )
                 else:
                     # 只读取第一个工作表
@@ -172,8 +190,8 @@ class ExcelTextExtractor:
                         file_path,
                         na_filter=self.config.na_filter,
                         keep_default_na=self.config.na_filter,
-                        engine='openpyxl',
-                        sheet_name=0  # 读取第一个工作表
+                        engine="openpyxl",
+                        sheet_name=0,  # 读取第一个工作表
                     )
 
         except Exception as e:
@@ -181,10 +199,10 @@ class ExcelTextExtractor:
             raise
 
     def extract_text(
-            self,
-            file_path: Union[str, Path],
-            columns: Optional[List[str]] = None,
-            separator: str = '\n'
+        self,
+        file_path: Union[str, Path],
+        columns: Optional[List[str]] = None,
+        separator: str = "\n",
     ) -> str:
         """提取文本，支持多工作表"""
         try:
@@ -208,7 +226,9 @@ class ExcelTextExtractor:
 
             # 处理DataFrame迭代器
             else:
-                with ThreadPoolExecutor(max_workers=self.config.max_workers) as executor:
+                with ThreadPoolExecutor(
+                    max_workers=self.config.max_workers
+                ) as executor:
                     futures = {
                         executor.submit(self._process_chunk, chunk, columns): i
                         for i, chunk in enumerate(reader)
@@ -233,7 +253,7 @@ class ExcelTextExtractor:
                     if len(texts) > 1:
                         # 跳过后续块的表头行
                         for text in texts[1:]:
-                            result += '\n' + '\n'.join(text.split('\n')[1:])
+                            result += "\n" + "\n".join(text.split("\n")[1:])
                     return result
                 else:
                     return separator.join(texts)
@@ -251,26 +271,23 @@ class ExcelTextExtractor:
 def main():
     """主函数：演示用法"""
     config = ExtractorConfig(
-        encoding='auto',
+        encoding="auto",
         preserve_format=True,
         read_all_sheets=True,  # 启用多工作表读取
         text_cleanup={
-            'remove_extra_spaces': True,
-            'normalize_whitespace': False,
-            'remove_special_chars': False,
-            'lowercase': False
-        }
+            "remove_extra_spaces": True,
+            "normalize_whitespace": False,
+            "remove_special_chars": False,
+            "lowercase": False,
+        },
     )
 
     extractor = ExcelTextExtractor(config)
 
     try:
-        sample_file = 'example.xlsx'
+        sample_file = "example.xlsx"
         if Path(sample_file).exists():
-            text = extractor.extract_text(
-                sample_file,
-                columns=['title', 'content']
-            )
+            text = extractor.extract_text(sample_file, columns=["title", "content"])
             print("提取的文本:")
             print(text)
         else:

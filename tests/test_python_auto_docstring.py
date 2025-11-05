@@ -1,14 +1,17 @@
-import init_test
-
-from toolbox import CatchException, update_ui
-from crazy_functions.crazy_utils import request_gpt_model_in_new_thread_with_ui_alive
-from request_llms.bridge_all import predict_no_ui_long_connection
 import datetime
 import re
 from textwrap import dedent
+
+import init_test
+
+from crazy_functions.crazy_utils import \
+    request_gpt_model_in_new_thread_with_ui_alive
+from request_llms.bridge_all import predict_no_ui_long_connection
+from toolbox import CatchException, update_ui
+
 # TODO: 解决缩进问题
 
-find_function_end_prompt = '''
+find_function_end_prompt = """
 Below is a page of code that you need to read. This page may not yet complete, you job is to split this page to separate functions, class functions etc.
 - Provide the line number where the first visible function ends.
 - Provide the line number where the next visible function begins.
@@ -50,12 +53,7 @@ OUTPUT:
 ```
 {THE_TAGGED_CODE}
 ```
-'''
-
-
-
-
-
+"""
 
 
 revise_function_prompt = '''
@@ -113,13 +111,13 @@ def zip_result(folder):
 '''
 
 
-class ContextWindowManager():
+class ContextWindowManager:
 
     def __init__(self, llm_kwargs) -> None:
         self.full_context = []
         self.full_context_with_line_no = []
         self.current_page_start = 0
-        self.page_limit = 100 # 100 lines of code each page
+        self.page_limit = 100  # 100 lines of code each page
         self.ignore_limit = 20
         self.llm_kwargs = llm_kwargs
 
@@ -132,27 +130,28 @@ class ContextWindowManager():
         return self.full_context_with_line_no
 
     def read_file(self, path):
-        with open(path, 'r', encoding='utf8') as f:
+        with open(path, "r", encoding="utf8") as f:
             self.full_context = f.readlines()
         self.full_context_with_line_no = self.generate_tagged_code_from_full_context()
 
-
-    def find_next_function_begin(self, tagged_code:list, begin_and_end):
+    def find_next_function_begin(self, tagged_code: list, begin_and_end):
         begin, end = begin_and_end
-        THE_TAGGED_CODE = ''.join(tagged_code)
-        self.llm_kwargs['temperature'] = 0
+        THE_TAGGED_CODE = "".join(tagged_code)
+        self.llm_kwargs["temperature"] = 0
         result = predict_no_ui_long_connection(
             inputs=find_function_end_prompt.format(THE_TAGGED_CODE=THE_TAGGED_CODE),
             llm_kwargs=self.llm_kwargs,
             history=[],
             sys_prompt="",
             observe_window=[],
-            console_silence=True
+            console_silence=True,
         )
 
         def extract_number(text):
             # 使用正则表达式匹配模式
-            match = re.search(r'<next_function_begin_from>L(\d+)</next_function_begin_from>', text)
+            match = re.search(
+                r"<next_function_begin_from>L(\d+)</next_function_begin_from>", text
+            )
             if match:
                 # 提取匹配的数字部分并转换为整数
                 return int(match.group(1))
@@ -178,9 +177,13 @@ class ContextWindowManager():
             self.current_page_start = future_page_start
             return current_page_start, future_page_start
 
-
-        tagged_code = self.full_context_with_line_no[ self.current_page_start: self.current_page_start + self.page_limit]
-        line_no = self.find_next_function_begin(tagged_code, [self.current_page_start, self.current_page_start + self.page_limit])
+        tagged_code = self.full_context_with_line_no[
+            self.current_page_start : self.current_page_start + self.page_limit
+        ]
+        line_no = self.find_next_function_begin(
+            tagged_code,
+            [self.current_page_start, self.current_page_start + self.page_limit],
+        )
 
         if line_no > len(self.full_context) - 5:
             line_no = len(self.full_context) + 1
@@ -192,14 +195,13 @@ class ContextWindowManager():
         return current_page_start, future_page_start
 
     def dedent(self, text):
-        """Remove any common leading whitespace from every line in `text`.
-        """
+        """Remove any common leading whitespace from every line in `text`."""
         # Look for the longest leading string of spaces and tabs common to
         # all lines.
         margin = None
-        _whitespace_only_re = re.compile('^[ \t]+$', re.MULTILINE)
-        _leading_whitespace_re = re.compile('(^[ \t]*)(?:[^ \t\n])', re.MULTILINE)
-        text = _whitespace_only_re.sub('', text)
+        _whitespace_only_re = re.compile("^[ \t]+$", re.MULTILINE)
+        _leading_whitespace_re = re.compile("(^[ \t]*)(?:[^ \t\n])", re.MULTILINE)
+        text = _whitespace_only_re.sub("", text)
         indents = _leading_whitespace_re.findall(text)
         for indent in indents:
             if margin is None:
@@ -226,37 +228,50 @@ class ContextWindowManager():
         # sanity check (testing/debugging only)
         if 0 and margin:
             for line in text.split("\n"):
-                assert not line or line.startswith(margin), \
-                    "line = %r, margin = %r" % (line, margin)
+                assert not line or line.startswith(margin), "line = %r, margin = %r" % (
+                    line,
+                    margin,
+                )
 
         if margin:
-            text = re.sub(r'(?m)^' + margin, '', text)
+            text = re.sub(r"(?m)^" + margin, "", text)
         return text, len(margin)
 
     def get_next_batch(self):
         current_page_start, future_page_start = self._get_next_window()
-        return self.full_context[current_page_start: future_page_start], current_page_start, future_page_start
+        return (
+            self.full_context[current_page_start:future_page_start],
+            current_page_start,
+            future_page_start,
+        )
 
     def tag_code(self, fn):
-        code = ''.join(fn)
+        code = "".join(fn)
         _, n_indent = self.dedent(code)
-        indent_reminder = "" if n_indent == 0 else "(Reminder: as you can see, this piece of code has indent made up with {n_indent} whitespace, please preserve them in the OUTPUT.)"
-        self.llm_kwargs['temperature'] = 0
+        indent_reminder = (
+            ""
+            if n_indent == 0
+            else "(Reminder: as you can see, this piece of code has indent made up with {n_indent} whitespace, please preserve them in the OUTPUT.)"
+        )
+        self.llm_kwargs["temperature"] = 0
         result = predict_no_ui_long_connection(
-            inputs=revise_function_prompt.format(THE_CODE=code, INDENT_REMINDER=indent_reminder),
+            inputs=revise_function_prompt.format(
+                THE_CODE=code, INDENT_REMINDER=indent_reminder
+            ),
             llm_kwargs=self.llm_kwargs,
             history=[],
             sys_prompt="",
             observe_window=[],
-            console_silence=True
+            console_silence=True,
         )
 
         def get_code_block(reply):
             import re
-            pattern = r"```([\s\S]*?)```" # regex pattern to match code blocks
-            matches = re.findall(pattern, reply) # find all code blocks in text
+
+            pattern = r"```([\s\S]*?)```"  # regex pattern to match code blocks
+            matches = re.findall(pattern, reply)  # find all code blocks in text
             if len(matches) == 1:
-                return matches[0].strip('python') #  code block
+                return matches[0].strip("python")  #  code block
             return None
 
         code_block = get_code_block(result)
@@ -271,11 +286,12 @@ class ContextWindowManager():
 
         def count_leading_empty_lines(s, reverse=False):
             """Count the number of leading empty lines in a string."""
-            lines = s.split('\n')
-            if reverse: lines = list(reversed(lines))
+            lines = s.split("\n")
+            if reverse:
+                lines = list(reversed(lines))
             count = 0
             for line in lines:
-                if line.strip() == '':
+                if line.strip() == "":
                     count += 1
                 else:
                     break
@@ -285,31 +301,32 @@ class ContextWindowManager():
         revised_empty_lines = count_leading_empty_lines(revised)
 
         if original_empty_lines > revised_empty_lines:
-            additional_lines = '\n' * (original_empty_lines - revised_empty_lines)
+            additional_lines = "\n" * (original_empty_lines - revised_empty_lines)
             revised = additional_lines + revised
         elif original_empty_lines < revised_empty_lines:
-            lines = revised.split('\n')
-            revised = '\n'.join(lines[revised_empty_lines - original_empty_lines:])
+            lines = revised.split("\n")
+            revised = "\n".join(lines[revised_empty_lines - original_empty_lines :])
 
         original_empty_lines = count_leading_empty_lines(original, reverse=True)
         revised_empty_lines = count_leading_empty_lines(revised, reverse=True)
 
         if original_empty_lines > revised_empty_lines:
-            additional_lines = '\n' * (original_empty_lines - revised_empty_lines)
-            revised =  revised + additional_lines
+            additional_lines = "\n" * (original_empty_lines - revised_empty_lines)
+            revised = revised + additional_lines
         elif original_empty_lines < revised_empty_lines:
-            lines = revised.split('\n')
-            revised = '\n'.join(lines[:-(revised_empty_lines - original_empty_lines)])
+            lines = revised.split("\n")
+            revised = "\n".join(lines[: -(revised_empty_lines - original_empty_lines)])
 
         return revised
 
 
 from toolbox import get_plugin_default_kwargs
+
 llm_kwargs = get_plugin_default_kwargs()["llm_kwargs"]
 cwm = ContextWindowManager(llm_kwargs)
 cwm.read_file(path="./test.py")
 output_buf = ""
-with open('temp.py', 'w+', encoding='utf8') as f:
+with open("temp.py", "w+", encoding="utf8") as f:
     while True:
         try:
             next_batch, line_no_start, line_no_end = cwm.get_next_batch()
@@ -319,24 +336,9 @@ with open('temp.py', 'w+', encoding='utf8') as f:
         except StopIteration:
             next_batch, line_no_start, line_no_end = [], -1, -1
             break
-        print('-------------------------------------------')
-        print(''.join(next_batch))
-        print('-------------------------------------------')
+        print("-------------------------------------------")
+        print("".join(next_batch))
+        print("-------------------------------------------")
 
 
 print(cwm)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

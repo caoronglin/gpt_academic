@@ -1,12 +1,15 @@
 model_name = "InternLM"
 cmd_to_install = "`pip install -r request_llms/requirements_chatglm.txt`"
 
-from transformers import AutoModel, AutoTokenizer
-import time
-import threading
 import importlib
-from toolbox import update_ui, get_conf, ProxyNetworkActivate
-from multiprocessing import Process, Pipe
+import threading
+import time
+from multiprocessing import Pipe, Process
+
+from transformers import AutoModel, AutoTokenizer
+
+from toolbox import ProxyNetworkActivate, get_conf, update_ui
+
 from .local_llm_class import LocalLLMHandle, get_local_llm_predict_fns
 
 
@@ -15,6 +18,7 @@ from .local_llm_class import LocalLLMHandle, get_local_llm_predict_fns
 # ------------------------------------------------------------------------------------------------------------------------
 def try_to_import_special_deps():
     import sentencepiece
+
 
 def combine_history(prompt, hist):
     user_prompt = "<|User|>:{user}<eoh>\n"
@@ -30,6 +34,7 @@ def combine_history(prompt, hist):
         total_prompt += cur_prompt
     total_prompt = total_prompt + cur_query_prompt.replace("{user}", prompt)
     return total_prompt
+
 
 # ------------------------------------------------------------------------------------------------------------------------
 # 🔌💻 Local Model
@@ -51,35 +56,49 @@ class GetInternlmHandle(LocalLLMHandle):
         # 🏃‍♂️🏃‍♂️🏃‍♂️ 子进程执行
         import torch
         from transformers import AutoModelForCausalLM, AutoTokenizer
-        device = get_conf('LOCAL_MODEL_DEVICE')
-        with ProxyNetworkActivate('Download_LLM'):
+
+        device = get_conf("LOCAL_MODEL_DEVICE")
+        with ProxyNetworkActivate("Download_LLM"):
             if self._model is None:
-                tokenizer = AutoTokenizer.from_pretrained("internlm/internlm-chat-7b", trust_remote_code=True)
-                if device=='cpu':
-                    model = AutoModelForCausalLM.from_pretrained("internlm/internlm-chat-7b", trust_remote_code=True).to(torch.bfloat16)
+                tokenizer = AutoTokenizer.from_pretrained(
+                    "internlm/internlm-chat-7b", trust_remote_code=True
+                )
+                if device == "cpu":
+                    model = AutoModelForCausalLM.from_pretrained(
+                        "internlm/internlm-chat-7b", trust_remote_code=True
+                    ).to(torch.bfloat16)
                 else:
-                    model = AutoModelForCausalLM.from_pretrained("internlm/internlm-chat-7b", trust_remote_code=True).to(torch.bfloat16).cuda()
+                    model = (
+                        AutoModelForCausalLM.from_pretrained(
+                            "internlm/internlm-chat-7b", trust_remote_code=True
+                        )
+                        .to(torch.bfloat16)
+                        .cuda()
+                    )
 
                 model = model.eval()
         return model, tokenizer
 
     def llm_stream_generator(self, **kwargs):
-        import torch
         import copy
         import warnings
+
+        import torch
         import torch.nn as nn
-        from loguru import logger as logging 
-        from transformers.generation.utils import LogitsProcessorList, StoppingCriteriaList, GenerationConfig
+        from loguru import logger as logging
+        from transformers.generation.utils import (GenerationConfig,
+                                                   LogitsProcessorList,
+                                                   StoppingCriteriaList)
 
         # 🏃‍♂️🏃‍♂️🏃‍♂️ 子进程执行
         def adaptor():
             model = self._model
             tokenizer = self._tokenizer
-            prompt = kwargs['query']
-            max_length = kwargs['max_length']
-            top_p = kwargs['top_p']
-            temperature = kwargs['temperature']
-            history = kwargs['history']
+            prompt = kwargs["query"]
+            max_length = kwargs["max_length"]
+            top_p = kwargs["top_p"]
+            temperature = kwargs["temperature"]
+            history = kwargs["history"]
             real_prompt = combine_history(prompt, history)
             return model, tokenizer, real_prompt, max_length, top_p, temperature
 
@@ -94,7 +113,7 @@ class GetInternlmHandle(LocalLLMHandle):
 
         inputs = tokenizer([prompt], padding=True, return_tensors="pt")
         input_length = len(inputs["input_ids"][0])
-        device = get_conf('LOCAL_MODEL_DEVICE')
+        device = get_conf("LOCAL_MODEL_DEVICE")
         for k, v in inputs.items():
             inputs[k] = v.to(device)
         input_ids = inputs["input_ids"]
@@ -103,12 +122,18 @@ class GetInternlmHandle(LocalLLMHandle):
             generation_config = model.generation_config
         generation_config = copy.deepcopy(generation_config)
         model_kwargs = generation_config.update(**kwargs)
-        bos_token_id, eos_token_id = generation_config.bos_token_id, generation_config.eos_token_id
+        bos_token_id, eos_token_id = (
+            generation_config.bos_token_id,
+            generation_config.eos_token_id,
+        )
         if isinstance(eos_token_id, int):
             eos_token_id = [eos_token_id]
         if additional_eos_token_id is not None:
             eos_token_id.append(additional_eos_token_id)
-        has_default_max_length = kwargs.get("max_length") is None and generation_config.max_length is not None
+        has_default_max_length = (
+            kwargs.get("max_length") is None
+            and generation_config.max_length is not None
+        )
         if has_default_max_length and generation_config.max_new_tokens is None:
             warnings.warn(
                 f"Using `max_length`'s default ({generation_config.max_length}) to control the generation length. "
@@ -117,7 +142,9 @@ class GetInternlmHandle(LocalLLMHandle):
                 UserWarning,
             )
         elif generation_config.max_new_tokens is not None:
-            generation_config.max_length = generation_config.max_new_tokens + input_ids_seq_length
+            generation_config.max_length = (
+                generation_config.max_new_tokens + input_ids_seq_length
+            )
             if not has_default_max_length:
                 logging.warning(
                     f"Both `max_new_tokens` (={generation_config.max_new_tokens}) and `max_length`(="
@@ -136,8 +163,14 @@ class GetInternlmHandle(LocalLLMHandle):
             )
 
         # 2. Set generation parameters if not already defined
-        logits_processor = logits_processor if logits_processor is not None else LogitsProcessorList()
-        stopping_criteria = stopping_criteria if stopping_criteria is not None else StoppingCriteriaList()
+        logits_processor = (
+            logits_processor if logits_processor is not None else LogitsProcessorList()
+        )
+        stopping_criteria = (
+            stopping_criteria
+            if stopping_criteria is not None
+            else StoppingCriteriaList()
+        )
 
         logits_processor = model._get_logits_processor(
             generation_config=generation_config,
@@ -155,7 +188,9 @@ class GetInternlmHandle(LocalLLMHandle):
         unfinished_sequences = input_ids.new(input_ids.shape[0]).fill_(1)
         scores = None
         while True:
-            model_inputs = model.prepare_inputs_for_generation(input_ids, **model_kwargs)
+            model_inputs = model.prepare_inputs_for_generation(
+                input_ids, **model_kwargs
+            )
             # forward pass to get next token
             outputs = model(
                 **model_inputs,
@@ -182,7 +217,9 @@ class GetInternlmHandle(LocalLLMHandle):
             model_kwargs = model._update_model_kwargs_for_generation(
                 outputs, model_kwargs, is_encoder_decoder=False
             )
-            unfinished_sequences = unfinished_sequences.mul((min(next_tokens != i for i in eos_token_id)).long())
+            unfinished_sequences = unfinished_sequences.mul(
+                (min(next_tokens != i for i in eos_token_id)).long()
+            )
 
             output_token_ids = input_ids[0].cpu().tolist()
             output_token_ids = output_token_ids[input_length:]
@@ -200,4 +237,6 @@ class GetInternlmHandle(LocalLLMHandle):
 # ------------------------------------------------------------------------------------------------------------------------
 # 🔌💻 GPT-Academic Interface
 # ------------------------------------------------------------------------------------------------------------------------
-predict_no_ui_long_connection, predict = get_local_llm_predict_fns(GetInternlmHandle, model_name)
+predict_no_ui_long_connection, predict = get_local_llm_predict_fns(
+    GetInternlmHandle, model_name
+)

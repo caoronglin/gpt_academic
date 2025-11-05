@@ -1,14 +1,16 @@
-from typing import List, Dict, Any
-from .base_handler import BaseHandler
-from ..query_analyzer import SearchCriteria
 import asyncio
+from typing import Any, Dict, List
+
+from ..query_analyzer import SearchCriteria
+from .base_handler import BaseHandler
+
 
 class CodeSearchHandler(BaseHandler):
     """代码搜索处理器"""
-    
+
     def __init__(self, github, llm_kwargs=None):
         super().__init__(github, llm_kwargs)
-    
+
     async def handle(
         self,
         criteria: SearchCriteria,
@@ -19,27 +21,31 @@ class CodeSearchHandler(BaseHandler):
         plugin_kwargs: Dict[str, Any],
     ) -> str:
         """处理代码搜索请求，返回最终的prompt"""
-        
+
         search_params = self._get_search_params(plugin_kwargs)
-        
+
         # 搜索代码
         code_results = await self._search_bilingual_code(
             english_query=criteria.github_params["query"],
             chinese_query=criteria.github_params["chinese_query"],
             language=criteria.language,
-            per_page=search_params['max_repos']
+            per_page=search_params["max_repos"],
         )
-        
+
         if not code_results:
             return self._generate_apology_prompt(criteria)
-            
+
         # 获取代码文件内容
-        enhanced_code_results = await self._get_code_details(code_results[:search_params['max_details']])
-        self.ranked_repos = [item["repository"] for item in enhanced_code_results if "repository" in item]
-        
+        enhanced_code_results = await self._get_code_details(
+            code_results[: search_params["max_details"]]
+        )
+        self.ranked_repos = [
+            item["repository"] for item in enhanced_code_results if "repository" in item
+        ]
+
         if not enhanced_code_results:
             return self._generate_apology_prompt(criteria)
-        
+
         # 构建最终的prompt
         current_time = self._get_current_time()
         final_prompt = f"""当前时间: {current_time}
@@ -83,74 +89,78 @@ class CodeSearchHandler(BaseHandler):
 
 使用markdown格式提供清晰的分节回复。
 """
-        
+
         return final_prompt
 
     async def _get_code_details(self, code_results: List[Dict]) -> List[Dict]:
         """获取代码详情"""
         enhanced_results = []
-        
+
         for item in code_results:
             try:
-                repo = item.get('repository', {})
-                file_path = item.get('path', '')
-                repo_name = repo.get('full_name', '')
-                
+                repo = item.get("repository", {})
+                file_path = item.get("path", "")
+                repo_name = repo.get("full_name", "")
+
                 if repo_name and file_path:
-                    owner, repo_name = repo_name.split('/')
-                    
+                    owner, repo_name = repo_name.split("/")
+
                     # 获取文件内容
-                    file_content = await self.github.get_file_content(owner, repo_name, file_path)
+                    file_content = await self.github.get_file_content(
+                        owner, repo_name, file_path
+                    )
                     if file_content and "decoded_content" in file_content:
-                        item['code_content'] = file_content["decoded_content"]
-                        
+                        item["code_content"] = file_content["decoded_content"]
+
                         # 获取仓库基本信息
                         repo_details = await self.github.get_repo(owner, repo_name)
                         if repo_details:
-                            item['repository'] = repo_details
-                
+                            item["repository"] = repo_details
+
                 enhanced_results.append(item)
             except Exception as e:
                 print(f"获取代码详情时出错: {str(e)}")
                 enhanced_results.append(item)  # 添加原始信息
-                
+
         return enhanced_results
 
     def _format_code_results(self, code_results: List[Dict]) -> str:
         """格式化代码搜索结果"""
         formatted = []
-        
+
         for i, item in enumerate(code_results, 1):
             # 构建仓库信息
-            repo = item.get('repository', {})
-            repo_name = repo.get('full_name', 'N/A')
-            repo_url = repo.get('html_url', '')
-            stars = repo.get('stargazers_count', 0)
-            language = repo.get('language', 'N/A')
-            
+            repo = item.get("repository", {})
+            repo_name = repo.get("full_name", "N/A")
+            repo_url = repo.get("html_url", "")
+            stars = repo.get("stargazers_count", 0)
+            language = repo.get("language", "N/A")
+
             # 构建文件信息
-            file_path = item.get('path', 'N/A')
-            file_url = item.get('html_url', '')
-            
+            file_path = item.get("path", "N/A")
+            file_url = item.get("html_url", "")
+
             # 构建代码内容
-            code_content = item.get('code_content', '')
+            code_content = item.get("code_content", "")
             if code_content:
                 # 只显示前30行代码
                 code_lines = code_content.split("\n")
                 if len(code_lines) > 30:
-                    displayed_code = "\n".join(code_lines[:30]) + "\n... (代码太长已截断) ..."
+                    displayed_code = (
+                        "\n".join(code_lines[:30]) + "\n... (代码太长已截断) ..."
+                    )
                 else:
                     displayed_code = code_content
             else:
                 displayed_code = "(代码内容获取失败)"
-            
+
             reference = (
                 f"### {i}. {file_path} (在 {repo_name} 中)\n\n"
                 f"- **仓库**: <a href='{repo_url}' target='_blank'>{repo_name}</a> (⭐ {stars}, 语言: {language})\n"
                 f"- **文件路径**: <a href='{file_url}' target='_blank'>{file_path}</a>\n\n"
                 f"```{language.lower()}\n{displayed_code}\n```\n\n"
             )
-            
+
             formatted.append(reference)
-            
-        return "\n".join(formatted) 
+
+        return "\n".join(formatted)

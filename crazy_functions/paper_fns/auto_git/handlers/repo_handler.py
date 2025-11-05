@@ -1,14 +1,16 @@
-from typing import List, Dict, Any
-from .base_handler import BaseHandler
-from ..query_analyzer import SearchCriteria
 import asyncio
+from typing import Any, Dict, List
+
+from ..query_analyzer import SearchCriteria
+from .base_handler import BaseHandler
+
 
 class RepositoryHandler(BaseHandler):
     """仓库搜索处理器"""
-    
+
     def __init__(self, github, llm_kwargs=None):
         super().__init__(github, llm_kwargs)
-    
+
     async def handle(
         self,
         criteria: SearchCriteria,
@@ -19,53 +21,59 @@ class RepositoryHandler(BaseHandler):
         plugin_kwargs: Dict[str, Any],
     ) -> str:
         """处理仓库搜索请求，返回最终的prompt"""
-        
+
         search_params = self._get_search_params(plugin_kwargs)
-        
+
         # 如果是特定仓库查询
         if criteria.repo_id:
             try:
-                owner, repo = criteria.repo_id.split('/')
+                owner, repo = criteria.repo_id.split("/")
                 repo_details = await self.github.get_repo(owner, repo)
                 if repo_details:
                     # 获取推荐的相似仓库
-                    similar_repos = await self.github.get_repo_recommendations(criteria.repo_id, limit=5)
-                    
+                    similar_repos = await self.github.get_repo_recommendations(
+                        criteria.repo_id, limit=5
+                    )
+
                     # 添加详细信息
                     all_repos = [repo_details] + similar_repos
                     enhanced_repos = await self._get_repo_details(all_repos)
-                    
+
                     self.ranked_repos = enhanced_repos
-                    
+
                     # 构建最终的prompt
                     current_time = self._get_current_time()
-                    final_prompt = self._build_repo_detail_prompt(enhanced_repos[0], enhanced_repos[1:], current_time)
+                    final_prompt = self._build_repo_detail_prompt(
+                        enhanced_repos[0], enhanced_repos[1:], current_time
+                    )
                     return final_prompt
                 else:
                     return self._generate_apology_prompt(criteria)
             except Exception as e:
                 print(f"处理特定仓库时出错: {str(e)}")
                 return self._generate_apology_prompt(criteria)
-        
+
         # 一般仓库搜索
         repos = await self._search_bilingual_repositories(
             english_query=criteria.github_params["query"],
             chinese_query=criteria.github_params["chinese_query"],
             language=criteria.language,
             min_stars=criteria.min_stars,
-            per_page=search_params['max_repos']
+            per_page=search_params["max_repos"],
         )
-        
+
         if not repos:
             return self._generate_apology_prompt(criteria)
-        
+
         # 获取仓库详情
-        enhanced_repos = await self._get_repo_details(repos[:search_params['max_details']])  # 使用max_details参数
+        enhanced_repos = await self._get_repo_details(
+            repos[: search_params["max_details"]]
+        )  # 使用max_details参数
         self.ranked_repos = enhanced_repos
-        
+
         if not enhanced_repos:
             return self._generate_apology_prompt(criteria)
-        
+
         # 构建最终的prompt
         current_time = self._get_current_time()
         final_prompt = f"""当前时间: {current_time}
@@ -107,30 +115,32 @@ class RepositoryHandler(BaseHandler):
 
 使用markdown格式提供清晰的分节回复。
 """
-        
+
         return final_prompt
 
-    def _build_repo_detail_prompt(self, main_repo: Dict, similar_repos: List[Dict], current_time: str) -> str:
+    def _build_repo_detail_prompt(
+        self, main_repo: Dict, similar_repos: List[Dict], current_time: str
+    ) -> str:
         """构建仓库详情prompt"""
-        
+
         # 提取README摘要
         readme_content = "未提供"
-        if main_repo.get('readme_excerpt'):
-            readme_content = main_repo.get('readme_excerpt')
-            
+        if main_repo.get("readme_excerpt"):
+            readme_content = main_repo.get("readme_excerpt")
+
         # 构建语言分布
-        languages = main_repo.get('languages_detail', {})
+        languages = main_repo.get("languages_detail", {})
         lang_distribution = []
         if languages:
             total = sum(languages.values())
             for lang, bytes_val in languages.items():
                 percentage = (bytes_val / total) * 100
                 lang_distribution.append(f"{lang}: {percentage:.1f}%")
-        
+
         lang_str = "未知"
         if lang_distribution:
             lang_str = ", ".join(lang_distribution)
-            
+
         # 构建最终prompt
         prompt = f"""当前时间: {current_time}
 
@@ -189,4 +199,4 @@ class RepositoryHandler(BaseHandler):
 
 请以专业、客观的技术分析角度回答，使用markdown格式提供结构化信息。
 """
-        return prompt 
+        return prompt

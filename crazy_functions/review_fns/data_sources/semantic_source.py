@@ -1,7 +1,10 @@
-from typing import List, Optional
-from datetime import datetime
-from crazy_functions.review_fns.data_sources.base_source import DataSource, PaperMetadata
 import random
+from datetime import datetime
+from typing import List, Optional
+
+from crazy_functions.review_fns.data_sources.base_source import (DataSource,
+                                                                 PaperMetadata)
+
 
 class SemanticScholarSource(DataSource):
     """Semantic Scholar API实现,使用官方Python包"""
@@ -21,7 +24,7 @@ class SemanticScholarSource(DataSource):
             # 默认API密钥列表
             default_api_keys = [
                 "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-                "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
             ]
             self.api_key = random.choice(default_api_keys)
 
@@ -35,20 +38,18 @@ class SemanticScholarSource(DataSource):
             "citationCount",
             "venue",
             "openAccessPdf",
-            "publicationVenue"
+            "publicationVenue",
         ]
 
     async def _ensure_client(self):
         """确保客户端已初始化"""
         if self.client is None:
             from semanticscholar import AsyncSemanticScholar
+
             self.client = AsyncSemanticScholar(api_key=self.api_key)
 
     async def search(
-        self,
-        query: str,
-        limit: int = 100,
-        start_year: int = None
+        self, query: str, limit: int = 100, start_year: int = None
     ) -> List[PaperMetadata]:
         """搜索论文"""
         try:
@@ -62,13 +63,14 @@ class SemanticScholarSource(DataSource):
             response = await self.client._requester.get_data_async(
                 f"{self.client.api_url}{self.client.BASE_PATH_GRAPH}/paper/search",
                 f"query={query}&limit={min(limit, 100)}&fields={','.join(self.fields)}",
-                self.client.auth_header
+                self.client.auth_header,
             )
-            papers = response.get('data', [])
+            papers = response.get("data", [])
             return [self._parse_paper_data(paper) for paper in papers]
         except Exception as e:
             print(f"搜索论文时发生错误: {str(e)}")
             import traceback
+
             print(traceback.format_exc())
             return []
 
@@ -83,10 +85,7 @@ class SemanticScholarSource(DataSource):
             return None
 
     async def get_citations(
-        self,
-        doi: str,
-        limit: int = 100,
-        start_year: int = None
+        self, doi: str, limit: int = 100, start_year: int = None
     ) -> List[PaperMetadata]:
         """获取引用指定DOI论文的文献列表"""
         try:
@@ -100,19 +99,19 @@ class SemanticScholarSource(DataSource):
             response = await self.client._requester.get_data_async(
                 f"{self.client.api_url}{self.client.BASE_PATH_GRAPH}/paper/DOI:{doi}/citations",
                 params,
-                self.client.auth_header
+                self.client.auth_header,
             )
-            citations = response.get('data', [])
-            return [self._parse_paper_data(citation.get('citingPaper', {})) for citation in citations]
+            citations = response.get("data", [])
+            return [
+                self._parse_paper_data(citation.get("citingPaper", {}))
+                for citation in citations
+            ]
         except Exception as e:
             print(f"获取引用列表时发生错误: {str(e)}")
             return []
 
     async def get_references(
-        self,
-        doi: str,
-        limit: int = 100,
-        start_year: int = None
+        self, doi: str, limit: int = 100, start_year: int = None
     ) -> List[PaperMetadata]:
         """获取指定DOI论文的参考文献列表"""
         try:
@@ -126,15 +125,20 @@ class SemanticScholarSource(DataSource):
             response = await self.client._requester.get_data_async(
                 f"{self.client.api_url}{self.client.BASE_PATH_GRAPH}/paper/DOI:{doi}/references",
                 params,
-                self.client.auth_header
+                self.client.auth_header,
             )
-            references = response.get('data', [])
-            return [self._parse_paper_data(reference.get('citedPaper', {})) for reference in references]
+            references = response.get("data", [])
+            return [
+                self._parse_paper_data(reference.get("citedPaper", {}))
+                for reference in references
+            ]
         except Exception as e:
             print(f"获取参考文献列表时发生错误: {str(e)}")
             return []
 
-    async def get_recommended_papers(self, doi: str, limit: int = 100) -> List[PaperMetadata]:
+    async def get_recommended_papers(
+        self, doi: str, limit: int = 100
+    ) -> List[PaperMetadata]:
         """获取论文推荐
 
         根据一篇论文获取相关的推荐论文
@@ -149,9 +153,7 @@ class SemanticScholarSource(DataSource):
         try:
             await self._ensure_client()
             papers = await self.client.get_recommended_papers(
-                f"DOI:{doi}",
-                fields=self.fields,
-                limit=min(limit, 500)
+                f"DOI:{doi}", fields=self.fields, limit=min(limit, 500)
             )
             return [self._parse_paper_data(paper) for paper in papers]
         except Exception as e:
@@ -162,7 +164,7 @@ class SemanticScholarSource(DataSource):
         self,
         positive_dois: List[str],
         negative_dois: List[str] = None,
-        limit: int = 100
+        limit: int = 100,
     ) -> List[PaperMetadata]:
         """基于正负例论文列表获取推荐
 
@@ -177,13 +179,15 @@ class SemanticScholarSource(DataSource):
         try:
             await self._ensure_client()
             positive_ids = [f"DOI:{doi}" for doi in positive_dois]
-            negative_ids = [f"DOI:{doi}" for doi in negative_dois] if negative_dois else None
+            negative_ids = (
+                [f"DOI:{doi}" for doi in negative_dois] if negative_dois else None
+            )
 
             papers = await self.client.get_recommended_papers_from_lists(
                 positive_paper_ids=positive_ids,
                 negative_paper_ids=negative_ids,
                 fields=self.fields,
-                limit=min(limit, 500)
+                limit=min(limit, 500),
             )
             return [self._parse_paper_data(paper) for paper in papers]
         except Exception as e:
@@ -198,15 +202,15 @@ class SemanticScholarSource(DataSource):
             response = await self.client._requester.get_data_async(
                 f"{self.client.api_url}{self.client.BASE_PATH_GRAPH}/author/search",
                 f"query={query}&fields=name,paperCount,citationCount&limit={min(limit, 1000)}",
-                self.client.auth_header
+                self.client.auth_header,
             )
-            authors = response.get('data', [])
+            authors = response.get("data", [])
             return [
                 {
-                    'author_id': author.get('authorId'),
-                    'name': author.get('name'),
-                    'paper_count': author.get('paperCount'),
-                    'citation_count': author.get('citationCount'),
+                    "author_id": author.get("authorId"),
+                    "name": author.get("name"),
+                    "paper_count": author.get("paperCount"),
+                    "citation_count": author.get("citationCount"),
                 }
                 for author in authors
             ]
@@ -222,20 +226,22 @@ class SemanticScholarSource(DataSource):
             response = await self.client._requester.get_data_async(
                 f"{self.client.api_url}{self.client.BASE_PATH_GRAPH}/author/{author_id}",
                 "fields=name,paperCount,citationCount,hIndex",
-                self.client.auth_header
+                self.client.auth_header,
             )
             return {
-                'author_id': response.get('authorId'),
-                'name': response.get('name'),
-                'paper_count': response.get('paperCount'),
-                'citation_count': response.get('citationCount'),
-                'h_index': response.get('hIndex'),
+                "author_id": response.get("authorId"),
+                "name": response.get("name"),
+                "paper_count": response.get("paperCount"),
+                "citation_count": response.get("citationCount"),
+                "h_index": response.get("hIndex"),
             }
         except Exception as e:
             print(f"获取作者详情时发生错误: {str(e)}")
             return None
 
-    async def get_author_papers(self, author_id: str, limit: int = 100) -> List[PaperMetadata]:
+    async def get_author_papers(
+        self, author_id: str, limit: int = 100
+    ) -> List[PaperMetadata]:
         """获取作者的论文列表"""
         try:
             await self._ensure_client()
@@ -243,9 +249,9 @@ class SemanticScholarSource(DataSource):
             response = await self.client._requester.get_data_async(
                 f"{self.client.api_url}{self.client.BASE_PATH_GRAPH}/author/{author_id}/papers",
                 f"fields={','.join(self.fields)}&limit={min(limit, 1000)}",
-                self.client.auth_header
+                self.client.auth_header,
             )
-            papers = response.get('data', [])
+            papers = response.get("data", [])
             return [self._parse_paper_data(paper) for paper in papers]
         except Exception as e:
             print(f"获取作者论文列表时发生错误: {str(e)}")
@@ -259,15 +265,15 @@ class SemanticScholarSource(DataSource):
             response = await self.client._requester.get_data_async(
                 f"{self.client.api_url}{self.client.BASE_PATH_GRAPH}/paper/autocomplete",
                 f"query={query}",
-                self.client.auth_header
+                self.client.auth_header,
             )
-            suggestions = response.get('matches', [])
+            suggestions = response.get("matches", [])
             return [
                 {
-                    'title': suggestion.get('title'),
-                    'paper_id': suggestion.get('paperId'),
-                    'year': suggestion.get('year'),
-                    'venue': suggestion.get('venue'),
+                    "title": suggestion.get("title"),
+                    "paper_id": suggestion.get("paperId"),
+                    "year": suggestion.get("year"),
+                    "venue": suggestion.get("venue"),
                 }
                 for suggestion in suggestions
             ]
@@ -279,70 +285,106 @@ class SemanticScholarSource(DataSource):
         """解析论文数据"""
         # 获取DOI
         doi = None
-        external_ids = paper.get('externalIds', {}) if isinstance(paper, dict) else paper.externalIds
+        external_ids = (
+            paper.get("externalIds", {})
+            if isinstance(paper, dict)
+            else paper.externalIds
+        )
         if external_ids:
             if isinstance(external_ids, dict):
-                doi = external_ids.get('DOI')
-                if not doi and 'ArXiv' in external_ids:
+                doi = external_ids.get("DOI")
+                if not doi and "ArXiv" in external_ids:
                     doi = f"10.48550/arXiv.{external_ids['ArXiv']}"
             else:
-                doi = external_ids.DOI if hasattr(external_ids, 'DOI') else None
-                if not doi and hasattr(external_ids, 'ArXiv'):
+                doi = external_ids.DOI if hasattr(external_ids, "DOI") else None
+                if not doi and hasattr(external_ids, "ArXiv"):
                     doi = f"10.48550/arXiv.{external_ids.ArXiv}"
 
         # 获取PDF URL
         pdf_url = None
-        pdf_info = paper.get('openAccessPdf', {}) if isinstance(paper, dict) else paper.openAccessPdf
+        pdf_info = (
+            paper.get("openAccessPdf", {})
+            if isinstance(paper, dict)
+            else paper.openAccessPdf
+        )
         if pdf_info:
-            pdf_url = pdf_info.get('url') if isinstance(pdf_info, dict) else pdf_info.url
+            pdf_url = (
+                pdf_info.get("url") if isinstance(pdf_info, dict) else pdf_info.url
+            )
 
         # 获取发表场所详细信息
         venue_type = None
         venue_name = None
         venue_info = {}
 
-        venue = paper.get('publicationVenue', {}) if isinstance(paper, dict) else paper.publicationVenue
+        venue = (
+            paper.get("publicationVenue", {})
+            if isinstance(paper, dict)
+            else paper.publicationVenue
+        )
         if venue:
             if isinstance(venue, dict):
-                venue_name = venue.get('name')
-                venue_type = venue.get('type')
+                venue_name = venue.get("name")
+                venue_type = venue.get("type")
                 # 提取更多venue信息
                 venue_info = {
-                    'issn': venue.get('issn'),
-                    'publisher': venue.get('publisher'),
-                    'url': venue.get('url'),
-                    'alternate_names': venue.get('alternate_names', [])
+                    "issn": venue.get("issn"),
+                    "publisher": venue.get("publisher"),
+                    "url": venue.get("url"),
+                    "alternate_names": venue.get("alternate_names", []),
                 }
             else:
-                venue_name = venue.name if hasattr(venue, 'name') else None
-                venue_type = venue.type if hasattr(venue, 'type') else None
+                venue_name = venue.name if hasattr(venue, "name") else None
+                venue_type = venue.type if hasattr(venue, "type") else None
                 venue_info = {
-                    'issn': getattr(venue, 'issn', None),
-                    'publisher': getattr(venue, 'publisher', None),
-                    'url': getattr(venue, 'url', None),
-                    'alternate_names': getattr(venue, 'alternate_names', [])
+                    "issn": getattr(venue, "issn", None),
+                    "publisher": getattr(venue, "publisher", None),
+                    "url": getattr(venue, "url", None),
+                    "alternate_names": getattr(venue, "alternate_names", []),
                 }
 
         # 获取标题
-        title = paper.get('title', '') if isinstance(paper, dict) else getattr(paper, 'title', '')
+        title = (
+            paper.get("title", "")
+            if isinstance(paper, dict)
+            else getattr(paper, "title", "")
+        )
 
         # 获取作者
-        authors = paper.get('authors', []) if isinstance(paper, dict) else getattr(paper, 'authors', [])
+        authors = (
+            paper.get("authors", [])
+            if isinstance(paper, dict)
+            else getattr(paper, "authors", [])
+        )
         author_names = []
         for author in authors:
             if isinstance(author, dict):
-                author_names.append(author.get('name', ''))
+                author_names.append(author.get("name", ""))
             else:
-                author_names.append(author.name if hasattr(author, 'name') else str(author))
+                author_names.append(
+                    author.name if hasattr(author, "name") else str(author)
+                )
 
         # 获取摘要
-        abstract = paper.get('abstract', '') if isinstance(paper, dict) else getattr(paper, 'abstract', '')
+        abstract = (
+            paper.get("abstract", "")
+            if isinstance(paper, dict)
+            else getattr(paper, "abstract", "")
+        )
 
         # 获取年份
-        year = paper.get('year') if isinstance(paper, dict) else getattr(paper, 'year', None)
+        year = (
+            paper.get("year")
+            if isinstance(paper, dict)
+            else getattr(paper, "year", None)
+        )
 
         # 获取引用次数
-        citations = paper.get('citationCount') if isinstance(paper, dict) else getattr(paper, 'citationCount', None)
+        citations = (
+            paper.get("citationCount")
+            if isinstance(paper, dict)
+            else getattr(paper, "citationCount", None)
+        )
 
         return PaperMetadata(
             title=title,
@@ -357,8 +399,9 @@ class SemanticScholarSource(DataSource):
             venue_type=venue_type,
             venue_name=venue_name,
             venue_info=venue_info,
-            source='semantic'  # 添加来源标记
+            source="semantic",  # 添加来源标记
         )
+
 
 async def example_usage():
     """SemanticScholarSource使用示例"""
@@ -416,8 +459,7 @@ async def example_usage():
         positive_dois = ["10.18653/v1/N19-1423", "10.18653/v1/P19-1285"]
         print(f"基于 {len(positive_dois)} 篇论文获取推荐...")
         multi_recommendations = await semantic.get_recommended_papers_from_lists(
-            positive_dois=positive_dois,
-            limit=3
+            positive_dois=positive_dois, limit=3
         )
         for i, paper in enumerate(multi_recommendations, 1):
             print(f"\n--- 推荐论文 {i} ---")
@@ -438,7 +480,7 @@ async def example_usage():
         # 示例6：获取作者详情
         print("\n=== 示例6：获取作者详情 ===")
         if authors:  # 使用第一个搜索结果的作者ID
-            author_id = authors[0]['author_id']
+            author_id = authors[0]["author_id"]
             print(f"获取作者ID {author_id} 的详细信息...")
             author_details = await semantic.get_author_details(author_id)
             if author_details:
@@ -450,7 +492,7 @@ async def example_usage():
         # 示例7：获取作者论文
         print("\n=== 示例7：获取作者论文 ===")
         if authors:  # 使用第一个搜索结果的作者ID
-            author_id = authors[0]['author_id']
+            author_id = authors[0]["author_id"]
             print(f"获取作者 {authors[0]['name']} 的论文列表...")
             author_papers = await semantic.get_author_papers(author_id, limit=3)
             for i, paper in enumerate(author_papers, 1):
@@ -473,8 +515,11 @@ async def example_usage():
     except Exception as e:
         print(f"发生错误: {str(e)}")
         import traceback
+
         print(traceback.format_exc())
+
 
 if __name__ == "__main__":
     import asyncio
+
     asyncio.run(example_usage())

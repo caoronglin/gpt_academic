@@ -1,6 +1,7 @@
-from multiprocessing import Pipe, Queue
-import time
 import threading
+import time
+from multiprocessing import Pipe, Queue
+
 
 class PipeSide(object):
     def __init__(self, q_2remote, q_2local) -> None:
@@ -15,6 +16,7 @@ class PipeSide(object):
 
     def poll(self):
         return not self.q_2local.empty()
+
 
 def create_queue_pipe():
     q_p2c = Queue()

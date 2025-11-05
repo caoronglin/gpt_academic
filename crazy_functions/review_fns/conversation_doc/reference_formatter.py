@@ -1,6 +1,8 @@
-from typing import List
-from crazy_functions.review_fns.data_sources.base_source import PaperMetadata
 import re
+from typing import List
+
+from crazy_functions.review_fns.data_sources.base_source import PaperMetadata
+
 
 class ReferenceFormatter:
     """通用参考文献格式生成器"""
@@ -15,22 +17,22 @@ class ReferenceFormatter:
 
         # 替换特殊字符
         replacements = {
-            '&': '\\&',
-            '%': '\\%',
-            '$': '\\$',
-            '#': '\\#',
-            '_': '\\_',
-            '{': '\\{',
-            '}': '\\}',
-            '~': '\\textasciitilde{}',
-            '^': '\\textasciicircum{}',
-            '\\': '\\textbackslash{}',
-            '<': '\\textless{}',
-            '>': '\\textgreater{}',
-            '"': '``',
+            "&": "\\&",
+            "%": "\\%",
+            "$": "\\$",
+            "#": "\\#",
+            "_": "\\_",
+            "{": "\\{",
+            "}": "\\}",
+            "~": "\\textasciitilde{}",
+            "^": "\\textasciicircum{}",
+            "\\": "\\textbackslash{}",
+            "<": "\\textless{}",
+            ">": "\\textgreater{}",
+            '"': "``",
             "'": "'",
-            '-': '--',
-            '—': '---',
+            "-": "--",
+            "—": "---",
         }
 
         for char, replacement in replacements.items():
@@ -54,9 +56,21 @@ class ReferenceFormatter:
         title_word = ""
         if paper.title:
             # 移除特殊字符，分割成单词
-            words = re.findall(r'\w+', paper.title.lower())
+            words = re.findall(r"\w+", paper.title.lower())
             # 过滤掉常见的停用词
-            stop_words = {'a', 'an', 'the', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by'}
+            stop_words = {
+                "a",
+                "an",
+                "the",
+                "in",
+                "on",
+                "at",
+                "to",
+                "for",
+                "of",
+                "with",
+                "by",
+            }
             for word in words:
                 if word not in stop_words and len(word) > 2:
                     title_word = word
@@ -66,26 +80,25 @@ class ReferenceFormatter:
         cite_key = f"{first_author}{year}{title_word}"
 
         # 确保cite key只包含合法字符
-        cite_key = re.sub(r'[^a-z0-9]', '', cite_key.lower())
+        cite_key = re.sub(r"[^a-z0-9]", "", cite_key.lower())
 
         return cite_key
 
     def _get_entry_type(self, paper: PaperMetadata) -> str:
         """确定BibTeX条目类型"""
-        if hasattr(paper, 'venue_type') and paper.venue_type:
+        if hasattr(paper, "venue_type") and paper.venue_type:
             venue_type = paper.venue_type.lower()
-            if venue_type == 'conference':
-                return 'inproceedings'
-            elif venue_type == 'preprint':
-                return 'unpublished'
-            elif venue_type == 'journal':
-                return 'article'
-            elif venue_type == 'book':
-                return 'book'
-            elif venue_type == 'thesis':
-                return 'phdthesis'
-        return 'article'  # 默认为期刊文章
-
+            if venue_type == "conference":
+                return "inproceedings"
+            elif venue_type == "preprint":
+                return "unpublished"
+            elif venue_type == "journal":
+                return "article"
+            elif venue_type == "book":
+                return "book"
+            elif venue_type == "thesis":
+                return "phdthesis"
+        return "article"  # 默认为期刊文章
 
     def create_document(self, papers: List[PaperMetadata]) -> str:
         """生成BibTeX格式的参考文献文本"""
@@ -111,12 +124,14 @@ class ReferenceFormatter:
                     if len(names) > 1:
                         # 假设最后一个词是姓，其他的是名
                         surname = names[-1]
-                        given_names = ' '.join(names[:-1])
+                        given_names = " ".join(names[:-1])
                         processed_authors.append(f"{surname}, {given_names}")
                     else:
                         processed_authors.append(author)
 
-                authors = " and ".join([self._sanitize_bibtex(author) for author in processed_authors])
+                authors = " and ".join(
+                    [self._sanitize_bibtex(author) for author in processed_authors]
+                )
                 bibtex_text += f"  author = {{{authors}}},\n"
 
             # 添加年份
@@ -124,22 +139,34 @@ class ReferenceFormatter:
                 bibtex_text += f"  year = {{{paper.year}}},\n"
 
             # 添加期刊/会议名称
-            if hasattr(paper, 'venue_name') and paper.venue_name:
-                if entry_type == 'inproceedings':
+            if hasattr(paper, "venue_name") and paper.venue_name:
+                if entry_type == "inproceedings":
                     bibtex_text += f"  booktitle = {{{self._sanitize_bibtex(paper.venue_name)}}},\n"
-                elif entry_type == 'article':
-                    bibtex_text += f"  journal = {{{self._sanitize_bibtex(paper.venue_name)}}},\n"
+                elif entry_type == "article":
+                    bibtex_text += (
+                        f"  journal = {{{self._sanitize_bibtex(paper.venue_name)}}},\n"
+                    )
                     # 添加期刊相关信息
-                    if hasattr(paper, 'venue_info'):
-                        if 'volume' in paper.venue_info:
-                            bibtex_text += f"  volume = {{{paper.venue_info['volume']}}},\n"
-                        if 'number' in paper.venue_info:
-                            bibtex_text += f"  number = {{{paper.venue_info['number']}}},\n"
-                        if 'pages' in paper.venue_info:
-                            bibtex_text += f"  pages = {{{paper.venue_info['pages']}}},\n"
+                    if hasattr(paper, "venue_info"):
+                        if "volume" in paper.venue_info:
+                            bibtex_text += (
+                                f"  volume = {{{paper.venue_info['volume']}}},\n"
+                            )
+                        if "number" in paper.venue_info:
+                            bibtex_text += (
+                                f"  number = {{{paper.venue_info['number']}}},\n"
+                            )
+                        if "pages" in paper.venue_info:
+                            bibtex_text += (
+                                f"  pages = {{{paper.venue_info['pages']}}},\n"
+                            )
             elif paper.venue:
-                venue_field = "booktitle" if entry_type == "inproceedings" else "journal"
-                bibtex_text += f"  {venue_field} = {{{self._sanitize_bibtex(paper.venue)}}},\n"
+                venue_field = (
+                    "booktitle" if entry_type == "inproceedings" else "journal"
+                )
+                bibtex_text += (
+                    f"  {venue_field} = {{{self._sanitize_bibtex(paper.venue)}}},\n"
+                )
 
             # 添加DOI
             if paper.doi:
@@ -153,22 +180,26 @@ class ReferenceFormatter:
 
             # 添加摘要
             if paper.abstract:
-                bibtex_text += f"  abstract = {{{self._sanitize_bibtex(paper.abstract)}}},\n"
+                bibtex_text += (
+                    f"  abstract = {{{self._sanitize_bibtex(paper.abstract)}}},\n"
+                )
 
             # 添加机构
-            if hasattr(paper, 'institutions') and paper.institutions:
-                institutions = " and ".join([self._sanitize_bibtex(inst) for inst in paper.institutions])
+            if hasattr(paper, "institutions") and paper.institutions:
+                institutions = " and ".join(
+                    [self._sanitize_bibtex(inst) for inst in paper.institutions]
+                )
                 bibtex_text += f"  institution = {{{institutions}}},\n"
 
             # 添加月份
-            if hasattr(paper, 'month'):
+            if hasattr(paper, "month"):
                 bibtex_text += f"  month = {{{paper.month}}},\n"
 
             # 添加注释字段
-            if hasattr(paper, 'note'):
+            if hasattr(paper, "note"):
                 bibtex_text += f"  note = {{{self._sanitize_bibtex(paper.note)}}},\n"
 
             # 移除最后一个逗号并关闭条目
-            bibtex_text = bibtex_text.rstrip(',\n') + "\n}\n\n"
+            bibtex_text = bibtex_text.rstrip(",\n") + "\n}\n\n"
 
         return bibtex_text

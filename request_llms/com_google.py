@@ -5,9 +5,12 @@
 import json
 import os
 import re
+from typing import Dict, List, Tuple
+
 import requests
-from typing import List, Dict, Tuple
-from toolbox import get_conf, update_ui, encode_image, get_pictures_list, to_markdown_tabs
+
+from toolbox import (encode_image, get_conf, get_pictures_list,
+                     to_markdown_tabs, update_ui)
 
 proxies, TIMEOUT_SECONDS = get_conf("proxies", "TIMEOUT_SECONDS")
 
@@ -113,23 +116,41 @@ def html_local_img(__file, layout="left", max_width=None, max_height=None, md=Tr
 
 
 def reverse_base64_from_input(inputs):
-    pattern = re.compile(r'<br/><br/><div align="center"><img[^<>]+base64="([^"]+)"></div>')
+    pattern = re.compile(
+        r'<br/><br/><div align="center"><img[^<>]+base64="([^"]+)"></div>'
+    )
     base64_strings = pattern.findall(inputs)
     return base64_strings
+
 
 def contain_base64(inputs):
     base64_strings = reverse_base64_from_input(inputs)
     return len(base64_strings) > 0
 
+
 class GoogleChatInit:
     def __init__(self, llm_kwargs):
         from .bridge_all import model_info
-        endpoint = model_info[llm_kwargs['llm_model']]['endpoint']
+
+        endpoint = model_info[llm_kwargs["llm_model"]]["endpoint"]
         self.url_gemini = endpoint + "/%m:streamGenerateContent?key=%k"
 
-    def generate_chat(self, inputs, llm_kwargs, history, system_prompt, image_base64_array:list=[], has_multimodal_capacity:bool=False):
+    def generate_chat(
+        self,
+        inputs,
+        llm_kwargs,
+        history,
+        system_prompt,
+        image_base64_array: list = [],
+        has_multimodal_capacity: bool = False,
+    ):
         headers, payload = self.generate_message_payload(
-            inputs, llm_kwargs, history, system_prompt, image_base64_array, has_multimodal_capacity
+            inputs,
+            llm_kwargs,
+            history,
+            system_prompt,
+            image_base64_array,
+            has_multimodal_capacity,
         )
         response = requests.post(
             url=self.url_gemini,
@@ -144,7 +165,7 @@ class GoogleChatInit:
     def __conversation_user(self, user_input, llm_kwargs, enable_multimodal_capacity):
         what_i_have_asked = {"role": "user", "parts": []}
         from .bridge_all import model_info
-            
+
         if enable_multimodal_capacity:
             input_, encode_img = input_encode_handler(user_input, llm_kwargs=llm_kwargs)
         else:
@@ -169,7 +190,9 @@ class GoogleChatInit:
         conversation_cnt = len(history) // 2
         if conversation_cnt:
             for index in range(0, 2 * conversation_cnt, 2):
-                what_i_have_asked = self.__conversation_user(history[index], llm_kwargs, enable_multimodal_capacity)
+                what_i_have_asked = self.__conversation_user(
+                    history[index], llm_kwargs, enable_multimodal_capacity
+                )
                 what_gpt_answer = {
                     "role": "model",
                     "parts": [{"text": history[index + 1]}],
@@ -179,7 +202,13 @@ class GoogleChatInit:
         return messages
 
     def generate_message_payload(
-        self, inputs, llm_kwargs, history, system_prompt, image_base64_array:list=[], has_multimodal_capacity:bool=False
+        self,
+        inputs,
+        llm_kwargs,
+        history,
+        system_prompt,
+        image_base64_array: list = [],
+        has_multimodal_capacity: bool = False,
     ) -> Tuple[Dict, Dict]:
         messages = [
             # {"role": "system", "parts": [{"text": system_prompt}]},  # gemini 不允许对话轮次为偶数，所以这个没有用，看后续支持吧。。。
@@ -192,16 +221,22 @@ class GoogleChatInit:
         header = {"Content-Type": "application/json"}
 
         if has_multimodal_capacity:
-            enable_multimodal_capacity = (len(image_base64_array) > 0) or any([contain_base64(h) for h in history])
+            enable_multimodal_capacity = (len(image_base64_array) > 0) or any(
+                [contain_base64(h) for h in history]
+            )
         else:
             enable_multimodal_capacity = False
-        
+
         if not enable_multimodal_capacity:
             messages.extend(
-                self.__conversation_history(history, llm_kwargs, enable_multimodal_capacity)
+                self.__conversation_history(
+                    history, llm_kwargs, enable_multimodal_capacity
+                )
             )  # 处理 history
-            
-        messages.append(self.__conversation_user(inputs, llm_kwargs, enable_multimodal_capacity))  # 处理用户对话
+
+        messages.append(
+            self.__conversation_user(inputs, llm_kwargs, enable_multimodal_capacity)
+        )  # 处理用户对话
         stop_sequences = str(llm_kwargs.get("stop", "")).split(" ")
         # 过滤空字符串并确保至少有一个停止序列
         stop_sequences = [s for s in stop_sequences if s]

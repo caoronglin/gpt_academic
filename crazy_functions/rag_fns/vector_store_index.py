@@ -1,19 +1,17 @@
-from llama_index.core import VectorStoreIndex
-from typing import Any,  List, Optional
+from typing import Any, List, Optional
 
+from llama_index.core import VectorStoreIndex
 from llama_index.core.callbacks.base import CallbackManager
 from llama_index.core.schema import TransformComponent
 from llama_index.core.service_context import ServiceContext
 from llama_index.core.settings import (
-    Settings,
-    callback_manager_from_settings_or_context,
-    transformations_from_settings_or_context,
-)
+    Settings, callback_manager_from_settings_or_context,
+    transformations_from_settings_or_context)
 from llama_index.core.storage.storage_context import StorageContext
 
 
 class GptacVectorStoreIndex(VectorStoreIndex):
-    
+
     @classmethod
     def default_vector_store(
         cls,
@@ -23,7 +21,7 @@ class GptacVectorStoreIndex(VectorStoreIndex):
         transformations: Optional[List[TransformComponent]] = None,
         # deprecated
         service_context: Optional[ServiceContext] = None,
-        embed_model = None,
+        embed_model=None,
         **kwargs: Any,
     ):
         """Create index from documents.
@@ -55,4 +53,3 @@ class GptacVectorStoreIndex(VectorStoreIndex):
                 embed_model=embed_model,
                 **kwargs,
             )
-

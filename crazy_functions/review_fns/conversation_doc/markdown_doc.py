@@ -9,7 +9,9 @@ class MarkdownFormatter:
         if text:
             self.content.append(f"\n{text}\n")
 
-    def create_document(self, question: str, answer: str, ranked_papers: list = None) -> str:
+    def create_document(
+        self, question: str, answer: str, ranked_papers: list = None
+    ) -> str:
         """创建完整的Markdown文档
         Args:
             question: str, 用户问题
@@ -30,9 +32,9 @@ class MarkdownFormatter:
         if ranked_papers:
             content.append("\n## 参考文献")
             for idx, paper in enumerate(ranked_papers, 1):
-                authors = ', '.join(paper.authors[:3])
+                authors = ", ".join(paper.authors[:3])
                 if len(paper.authors) > 3:
-                    authors += ' et al.'
+                    authors += " et al."
 
                 ref = f"[{idx}] {authors}. *{paper.title}*"
                 if paper.venue_name:

@@ -1,13 +1,14 @@
-from typing import Dict, List
-from dataclasses import dataclass
-from textwrap import dedent
-from datetime import datetime
 import re
+from dataclasses import dataclass
+from datetime import datetime
+from textwrap import dedent
+from typing import Dict, List
 
 
 @dataclass
 class SearchCriteria:
     """搜索条件"""
+
     query_type: str  # 查询类型: review/recommend/qa/paper
     main_topic: str  # 主题
     sub_topics: List[str]  # 子主题列表
@@ -47,35 +48,39 @@ class QueryAnalyzer:
             "review": ["review", "literature review", "survey"],
             "recommend": ["recommend", "recommendation", "suggest", "similar"],
             "qa": ["qa", "question", "answer", "explain", "what", "how", "why"],
-            "paper": ["paper", "analyze", "analysis"]
+            "paper": ["paper", "analyze", "analysis"],
         }
 
     def analyze_query(self, query: str, chatbot: List, llm_kwargs: Dict):
         """分析查询意图"""
         from crazy_functions.crazy_utils import \
-            request_gpt_model_multi_threads_with_very_awesome_ui_and_high_efficiency as request_gpt
+            request_gpt_model_multi_threads_with_very_awesome_ui_and_high_efficiency as \
+            request_gpt
         from crazy_functions.review_fns.prompts.arxiv_prompts import (
-            ARXIV_QUERY_PROMPT, ARXIV_CATEGORIES_PROMPT, ARXIV_LATEST_PROMPT,
-            ARXIV_SORT_PROMPT, ARXIV_QUERY_SYSTEM_PROMPT, ARXIV_CATEGORIES_SYSTEM_PROMPT, ARXIV_SORT_SYSTEM_PROMPT,
-            ARXIV_LATEST_SYSTEM_PROMPT
-        )
+            ARXIV_CATEGORIES_PROMPT, ARXIV_CATEGORIES_SYSTEM_PROMPT,
+            ARXIV_LATEST_PROMPT, ARXIV_LATEST_SYSTEM_PROMPT,
+            ARXIV_QUERY_PROMPT, ARXIV_QUERY_SYSTEM_PROMPT, ARXIV_SORT_PROMPT,
+            ARXIV_SORT_SYSTEM_PROMPT)
         from crazy_functions.review_fns.prompts.semantic_prompts import (
-            SEMANTIC_QUERY_PROMPT, SEMANTIC_FIELDS_PROMPT,
-            SEMANTIC_QUERY_SYSTEM_PROMPT, SEMANTIC_FIELDS_SYSTEM_PROMPT
-        )
-        from .prompts.paper_prompts import PAPER_IDENTIFY_PROMPT, PAPER_IDENTIFY_SYSTEM_PROMPT
-        from .prompts.pubmed_prompts import (
-            PUBMED_TYPE_PROMPT, PUBMED_QUERY_PROMPT, PUBMED_SORT_PROMPT,
-            PUBMED_TYPE_SYSTEM_PROMPT, PUBMED_QUERY_SYSTEM_PROMPT, PUBMED_SORT_SYSTEM_PROMPT
-        )
-        from .prompts.crossref_prompts import (
-            CROSSREF_QUERY_PROMPT,
-            CROSSREF_QUERY_SYSTEM_PROMPT
-        )
-        from .prompts.adsabs_prompts import ADSABS_QUERY_PROMPT, ADSABS_QUERY_SYSTEM_PROMPT
+            SEMANTIC_FIELDS_PROMPT, SEMANTIC_FIELDS_SYSTEM_PROMPT,
+            SEMANTIC_QUERY_PROMPT, SEMANTIC_QUERY_SYSTEM_PROMPT)
+
+        from .prompts.adsabs_prompts import (ADSABS_QUERY_PROMPT,
+                                             ADSABS_QUERY_SYSTEM_PROMPT)
+        from .prompts.crossref_prompts import (CROSSREF_QUERY_PROMPT,
+                                               CROSSREF_QUERY_SYSTEM_PROMPT)
+        from .prompts.paper_prompts import (PAPER_IDENTIFY_PROMPT,
+                                            PAPER_IDENTIFY_SYSTEM_PROMPT)
+        from .prompts.pubmed_prompts import (PUBMED_QUERY_PROMPT,
+                                             PUBMED_QUERY_SYSTEM_PROMPT,
+                                             PUBMED_SORT_PROMPT,
+                                             PUBMED_SORT_SYSTEM_PROMPT,
+                                             PUBMED_TYPE_PROMPT,
+                                             PUBMED_TYPE_SYSTEM_PROMPT)
 
         # 1. 基本查询分析
-        type_prompt = dedent(f"""Please analyze this academic query and respond STRICTLY in the following XML format:
+        type_prompt = dedent(
+            f"""Please analyze this academic query and respond STRICTLY in the following XML format:
 
             Query: {query}
 
@@ -127,7 +132,7 @@ class QueryAnalyzer:
                 PUBMED_TYPE_PROMPT.format(query=query),
                 PUBMED_QUERY_PROMPT.format(query=query),
                 CROSSREF_QUERY_PROMPT.format(query=query),
-                ADSABS_QUERY_PROMPT.format(query=query)
+                ADSABS_QUERY_PROMPT.format(query=query),
             ]
 
             show_messages = [
@@ -142,7 +147,7 @@ class QueryAnalyzer:
                 "Determining PubMed search type...",
                 "Optimizing PubMed query...",
                 "Optimizing Crossref query...",
-                "Optimizing ADS query..."
+                "Optimizing ADS query...",
             ]
 
             sys_prompts = [
@@ -157,7 +162,7 @@ class QueryAnalyzer:
                 PUBMED_TYPE_SYSTEM_PROMPT,
                 PUBMED_QUERY_SYSTEM_PROMPT,
                 CROSSREF_QUERY_SYSTEM_PROMPT,
-                ADSABS_QUERY_SYSTEM_PROMPT
+                ADSABS_QUERY_SYSTEM_PROMPT,
             ]
             new_llm_kwargs = llm_kwargs.copy()
             # new_llm_kwargs['llm_model'] = 'deepseek-chat'  # deepseek-ai/DeepSeek-V2.5
@@ -170,7 +175,7 @@ class QueryAnalyzer:
                 chatbot=chatbot,
                 history_array=[[] for _ in prompts],
                 sys_prompt_array=sys_prompts,
-                max_workers=5
+                max_workers=5,
             )
 
             # 从收集的响应中提取我们需要的内容
@@ -190,14 +195,19 @@ class QueryAnalyzer:
                     raise Exception(f"未收到第 {i + 1} 个响应")
 
             # 解析基本信息
-            query_type = self._extract_tag(extracted_responses[self.BASIC_QUERY_INDEX], "query_type")
+            query_type = self._extract_tag(
+                extracted_responses[self.BASIC_QUERY_INDEX], "query_type"
+            )
             if not query_type:
                 print(
-                    f"Debug - Failed to extract query_type. Response was: {extracted_responses[self.BASIC_QUERY_INDEX]}")
+                    f"Debug - Failed to extract query_type. Response was: {extracted_responses[self.BASIC_QUERY_INDEX]}"
+                )
                 raise Exception("无法提取query_type标签内容")
             query_type = query_type.lower()
 
-            main_topic = self._extract_tag(extracted_responses[self.BASIC_QUERY_INDEX], "main_topic")
+            main_topic = self._extract_tag(
+                extracted_responses[self.BASIC_QUERY_INDEX], "main_topic"
+            )
             if not main_topic:
                 print(f"Debug - Failed to extract main_topic. Using query as fallback.")
                 main_topic = query
@@ -207,17 +217,29 @@ class QueryAnalyzer:
             # 解析arXiv参数
             try:
                 arxiv_params = {
-                    "query": self._extract_tag(extracted_responses[self.ARXIV_QUERY_INDEX], "query"),
-                    "categories": [cat.strip() for cat in
-                                   self._extract_tag(extracted_responses[self.ARXIV_CATEGORIES_INDEX],
-                                                     "categories").split(",")],
-                    "sort_by": self._extract_tag(extracted_responses[self.ARXIV_SORT_INDEX], "sort_by"),
-                    "sort_order": self._extract_tag(extracted_responses[self.ARXIV_SORT_INDEX], "sort_order"),
-                    "limit": 20
+                    "query": self._extract_tag(
+                        extracted_responses[self.ARXIV_QUERY_INDEX], "query"
+                    ),
+                    "categories": [
+                        cat.strip()
+                        for cat in self._extract_tag(
+                            extracted_responses[self.ARXIV_CATEGORIES_INDEX],
+                            "categories",
+                        ).split(",")
+                    ],
+                    "sort_by": self._extract_tag(
+                        extracted_responses[self.ARXIV_SORT_INDEX], "sort_by"
+                    ),
+                    "sort_order": self._extract_tag(
+                        extracted_responses[self.ARXIV_SORT_INDEX], "sort_order"
+                    ),
+                    "limit": 20,
                 }
 
                 # 安全地解析limit值
-                limit_str = self._extract_tag(extracted_responses[self.ARXIV_SORT_INDEX], "limit")
+                limit_str = self._extract_tag(
+                    extracted_responses[self.ARXIV_SORT_INDEX], "limit"
+                )
                 if limit_str and limit_str.isdigit():
                     arxiv_params["limit"] = int(limit_str)
 
@@ -228,17 +250,23 @@ class QueryAnalyzer:
                     "categories": [],
                     "sort_by": "relevance",
                     "sort_order": "descending",
-                    "limit": 0
+                    "limit": 0,
                 }
 
             # 解析Semantic Scholar参数
             try:
                 semantic_params = {
-                    "query": self._extract_tag(extracted_responses[self.SEMANTIC_QUERY_INDEX], "query"),
-                    "fields": [field.strip() for field in
-                               self._extract_tag(extracted_responses[self.SEMANTIC_FIELDS_INDEX], "fields").split(",")],
+                    "query": self._extract_tag(
+                        extracted_responses[self.SEMANTIC_QUERY_INDEX], "query"
+                    ),
+                    "fields": [
+                        field.strip()
+                        for field in self._extract_tag(
+                            extracted_responses[self.SEMANTIC_FIELDS_INDEX], "fields"
+                        ).split(",")
+                    ],
                     "sort_by": "relevance",
-                    "limit": 20
+                    "limit": 20,
                 }
             except Exception as e:
                 print(f"Warning: Error parsing Semantic Scholar parameters: {str(e)}")
@@ -246,13 +274,15 @@ class QueryAnalyzer:
                     "query": query,
                     "fields": ["title", "abstract", "authors", "year"],
                     "sort_by": "relevance",
-                    "limit": 20
+                    "limit": 20,
                 }
 
             # 解析PubMed参数
             try:
                 # 首先检查是否需要PubMed搜索
-                pubmed_search_type = self._extract_tag(extracted_responses[self.PUBMED_TYPE_INDEX], "search_type")
+                pubmed_search_type = self._extract_tag(
+                    extracted_responses[self.PUBMED_TYPE_INDEX], "search_type"
+                )
 
                 if pubmed_search_type == "none":
                     # 不需要PubMed搜索，使用空参数
@@ -260,15 +290,17 @@ class QueryAnalyzer:
                         "search_type": "none",
                         "query": "",
                         "sort_by": "relevance",
-                        "limit": 0
+                        "limit": 0,
                     }
                 else:
                     # 需要PubMed搜索，解析完整参数
                     pubmed_params = {
                         "search_type": pubmed_search_type,
-                        "query": self._extract_tag(extracted_responses[self.PUBMED_QUERY_INDEX], "query"),
+                        "query": self._extract_tag(
+                            extracted_responses[self.PUBMED_QUERY_INDEX], "query"
+                        ),
                         "sort_by": "relevance",
-                        "limit": 200
+                        "limit": 200,
                     }
             except Exception as e:
                 print(f"Warning: Error parsing PubMed parameters: {str(e)}")
@@ -276,26 +308,28 @@ class QueryAnalyzer:
                     "search_type": "none",
                     "query": "",
                     "sort_by": "relevance",
-                    "limit": 0
+                    "limit": 0,
                 }
 
             # 解析Crossref参数
             try:
-                crossref_query = self._extract_tag(extracted_responses[self.CROSSREF_QUERY_INDEX], "query")
+                crossref_query = self._extract_tag(
+                    extracted_responses[self.CROSSREF_QUERY_INDEX], "query"
+                )
 
                 if not crossref_query:
                     crossref_params = {
                         "search_type": "none",
                         "query": "",
                         "sort_by": "relevance",
-                        "limit": 0
+                        "limit": 0,
                     }
                 else:
                     crossref_params = {
                         "search_type": "basic",
                         "query": crossref_query,
                         "sort_by": "relevance",
-                        "limit": 20
+                        "limit": 20,
                     }
             except Exception as e:
                 print(f"Warning: Error parsing Crossref parameters: {str(e)}")
@@ -303,26 +337,28 @@ class QueryAnalyzer:
                     "search_type": "none",
                     "query": "",
                     "sort_by": "relevance",
-                    "limit": 0
+                    "limit": 0,
                 }
 
             # 解析ADS参数
             try:
-                adsabs_query = self._extract_tag(extracted_responses[self.ADSABS_QUERY_INDEX], "query")
+                adsabs_query = self._extract_tag(
+                    extracted_responses[self.ADSABS_QUERY_INDEX], "query"
+                )
 
                 if not adsabs_query:
                     adsabs_params = {
                         "search_type": "none",
                         "query": "",
                         "sort_by": "relevance",
-                        "limit": 0
+                        "limit": 0,
                     }
                 else:
                     adsabs_params = {
                         "search_type": "basic",
                         "query": adsabs_query,
                         "sort_by": "relevance",
-                        "limit": 20
+                        "limit": 20,
                     }
             except Exception as e:
                 print(f"Warning: Error parsing ADS parameters: {str(e)}")
@@ -330,7 +366,7 @@ class QueryAnalyzer:
                     "search_type": "none",
                     "query": "",
                     "sort_by": "relevance",
-                    "limit": 0
+                    "limit": 0,
                 }
 
             print(f"Debug - Extracted information:")
@@ -345,14 +381,18 @@ class QueryAnalyzer:
             # 提取子主题
             sub_topics = []
             if "sub_topics" in query.lower():
-                sub_topics_text = self._extract_tag(extracted_responses[self.BASIC_QUERY_INDEX], "sub_topics")
+                sub_topics_text = self._extract_tag(
+                    extracted_responses[self.BASIC_QUERY_INDEX], "sub_topics"
+                )
                 if sub_topics_text:
                     sub_topics = [topic.strip() for topic in sub_topics_text.split(",")]
 
             # 提取年份范围
             start_year = self.current_year - 5  # 默认最近5年
             end_year = self.current_year
-            year_range = self._extract_tag(extracted_responses[self.BASIC_QUERY_INDEX], "year_range")
+            year_range = self._extract_tag(
+                extracted_responses[self.BASIC_QUERY_INDEX], "year_range"
+            )
             if year_range:
                 try:
                     years = year_range.split("-")
@@ -363,17 +403,27 @@ class QueryAnalyzer:
                     pass
 
             # 提取 latest request 判断
-            is_latest_request = self._extract_tag(extracted_responses[self.ARXIV_LATEST_INDEX],
-                                                  "is_latest_request").lower() == "true"
+            is_latest_request = (
+                self._extract_tag(
+                    extracted_responses[self.ARXIV_LATEST_INDEX], "is_latest_request"
+                ).lower()
+                == "true"
+            )
 
             # 如果是最新论文请求，将查询类型改为 "latest"
             if is_latest_request:
                 query_type = "latest"
 
             # 提取论文标识信息
-            paper_source = self._extract_tag(extracted_responses[self.PAPER_IDENTIFY_INDEX], "paper_source")
-            paper_id = self._extract_tag(extracted_responses[self.PAPER_IDENTIFY_INDEX], "paper_id")
-            paper_title = self._extract_tag(extracted_responses[self.PAPER_IDENTIFY_INDEX], "paper_title")
+            paper_source = self._extract_tag(
+                extracted_responses[self.PAPER_IDENTIFY_INDEX], "paper_source"
+            )
+            paper_id = self._extract_tag(
+                extracted_responses[self.PAPER_IDENTIFY_INDEX], "paper_id"
+            )
+            paper_title = self._extract_tag(
+                extracted_responses[self.PAPER_IDENTIFY_INDEX], "paper_title"
+            )
             if start_year > end_year:
                 start_year, end_year = end_year, start_year
             # 更新返回的 SearchCriteria
@@ -391,7 +441,7 @@ class QueryAnalyzer:
                 paper_title=paper_title,
                 paper_source=paper_source,
                 original_query=query,
-                adsabs_params=adsabs_params
+                adsabs_params=adsabs_params,
             )
 
         except Exception as e:
@@ -438,7 +488,7 @@ class QueryAnalyzer:
                 # 简单列表格式：cs.CL, cs.AI, cs.LG
                 r"(?:^|\s)((?:(?:cs|stat|math|physics|q-bio|q-fin|nlin|astro-ph|cond-mat|gr-qc|hep-[a-z]+|math-ph|nucl-[a-z]+|quant-ph)\.[A-Z]+(?:\s*,\s*)?)+)(?:\s|$)",
                 # 单个类别格式：cs.AI
-                r"(?:^|\s)((?:cs|stat|math|physics|q-bio|q-fin|nlin|astro-ph|cond-mat|gr-qc|hep-[a-z]+|math-ph|nucl-[a-z]+|quant-ph)\.[A-Z]+)(?:\s|$)"
+                r"(?:^|\s)((?:cs|stat|math|physics|q-bio|q-fin|nlin|astro-ph|cond-mat|gr-qc|hep-[a-z]+|math-ph|nucl-[a-z]+|quant-ph)\.[A-Z]+)(?:\s|$)",
             ]
 
         elif tag == "query":
@@ -449,7 +499,7 @@ class QueryAnalyzer:
                 # 简单的关键词列表：keyword1, keyword2
                 r"(?:^|\s)((?:\"[^\"]*\"|'[^']*'|[^\s,]+)(?:\s*,\s*(?:\"[^\"]*\"|'[^']*'|[^\s,]+))*)",
                 # 字段搜索格式：field:value
-                r"((?:ti|abs|au|cat):\s*(?:\"[^\"]*\"|'[^']*'|[^\s]+))"
+                r"((?:ti|abs|au|cat):\s*(?:\"[^\"]*\"|'[^']*'|[^\s]+))",
             ]
 
         elif tag == "fields":
@@ -467,7 +517,7 @@ class QueryAnalyzer:
                 # 标准格式：<sort_by>value</sort_by>
                 r"<sort_by>\s*(relevance|date|citations|submittedDate|year)\s*</sort_by>",
                 # 简单值格式：relevance
-                r"(?:^|\s)(relevance|date|citations|submittedDate|year)(?:\s|$)"
+                r"(?:^|\s)(relevance|date|citations|submittedDate|year)(?:\s|$)",
             ]
 
         else:
@@ -477,7 +527,7 @@ class QueryAnalyzer:
                 f"<{tag}>([\s\S]*?)(?:</{tag}>|$)",  # 未闭合的标签
                 f"[{tag}]([\s\S]*?)[/{tag}]",  # 方括号格式
                 f"{tag}:\s*(.*?)(?=\n\w|$)",  # 冒号格式
-                f"<{tag}>\s*(.*?)(?=<|$)"  # 部分闭合
+                f"<{tag}>\s*(.*?)(?=<|$)",  # 部分闭合
             ]
 
         # 3. 尝试所有模式
@@ -490,4 +540,3 @@ class QueryAnalyzer:
 
         # 4. 如果所有模式都失败，返回空字符串
         return ""
-

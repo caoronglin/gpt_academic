@@ -2,13 +2,18 @@
 对项目中的各个插件进行测试。运行方法：直接运行 python tests/test_plugins.py
 """
 
-import init_test
-import os, sys
+import os
+import sys
 
+import init_test
 
 if __name__ == "__main__":
     from test_utils import plugin_test
-    plugin_test(plugin='crazy_functions.Academic_Conversation->学术对话', main_input="搜索最新使用GAIA Benchmark的论文")
+
+    plugin_test(
+        plugin="crazy_functions.Academic_Conversation->学术对话",
+        main_input="搜索最新使用GAIA Benchmark的论文",
+    )
 
     # plugin_test(plugin='crazy_functions.Internet_GPT->连接网络回答问题', main_input="谁是应急食品？")
 
@@ -61,4 +66,3 @@ if __name__ == "__main__":
     # plugin_test(plugin='crazy_functions.知识库文件注入->读取知识库作答', main_input="远程云服务器部署？")
 
     # plugin_test(plugin='crazy_functions.Latex_Function->Latex翻译中文并重新编译PDF', main_input="2210.03629")
-

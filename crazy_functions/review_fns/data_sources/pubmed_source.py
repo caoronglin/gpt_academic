@@ -1,13 +1,17 @@
-from typing import List, Optional, Dict, Union
-from datetime import datetime
-import aiohttp
 import asyncio
-from crazy_functions.review_fns.data_sources.base_source import DataSource, PaperMetadata
-import xml.etree.ElementTree as ET
-from urllib.parse import quote
 import json
-from tqdm import tqdm
 import random
+import xml.etree.ElementTree as ET
+from datetime import datetime
+from typing import Dict, List, Optional, Union
+from urllib.parse import quote
+
+import aiohttp
+from tqdm import tqdm
+
+from crazy_functions.review_fns.data_sources.base_source import (DataSource,
+                                                                 PaperMetadata)
+
 
 class PubMedSource(DataSource):
     """PubMed API实现"""
@@ -16,7 +20,7 @@ class PubMedSource(DataSource):
     API_KEYS = [
         "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
         "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-        "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
     ]
 
     def __init__(self, api_key: str = None):
@@ -33,7 +37,7 @@ class PubMedSource(DataSource):
         self.base_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"
         self.headers = {
             "User-Agent": "Mozilla/5.0 PubMedDataSource/1.0",
-            "Accept": "application/json"
+            "Accept": "application/json",
         }
 
     async def _make_request(self, url: str) -> Optional[str]:
@@ -62,7 +66,7 @@ class PubMedSource(DataSource):
         query: str,
         limit: int = 100,
         sort_by: str = "relevance",
-        start_year: int = None
+        start_year: int = None,
     ) -> List[PaperMetadata]:
         """搜索论文
 
@@ -107,7 +111,7 @@ class PubMedSource(DataSource):
             papers = []
             batch_size = 50
             for i in range(0, len(pmids), batch_size):
-                batch = pmids[i:i + batch_size]
+                batch = pmids[i : i + batch_size]
                 batch_papers = await self._fetch_papers_batch(batch)
                 papers.extend(batch_papers)
 
@@ -197,11 +201,11 @@ class PubMedSource(DataSource):
 
                 # 获取期刊详细信息
                 venue_info = {
-                    'issn': journal.findtext(".//ISSN"),
-                    'volume': journal.findtext(".//Volume"),
-                    'issue': journal.findtext(".//Issue"),
-                    'pub_date': journal.findtext(".//PubDate/MedlineDate") or
-                               f"{journal.findtext('.//PubDate/Year', '')}-{journal.findtext('.//PubDate/Month', '')}"
+                    "issn": journal.findtext(".//ISSN"),
+                    "volume": journal.findtext(".//Volume"),
+                    "issue": journal.findtext(".//Issue"),
+                    "pub_date": journal.findtext(".//PubDate/MedlineDate")
+                    or f"{journal.findtext('.//PubDate/Year', '')}-{journal.findtext('.//PubDate/Month', '')}",
                 }
             else:
                 venue = None
@@ -227,7 +231,7 @@ class PubMedSource(DataSource):
                 venue_type="journal",
                 venue_name=venue,
                 venue_info=venue_info,
-                source='pubmed'  # 添加来源标记
+                source="pubmed",  # 添加来源标记
             )
 
         except Exception as e:
@@ -239,7 +243,9 @@ class PubMedSource(DataSource):
         papers = await self._fetch_papers_batch([pmid])
         return papers[0] if papers else None
 
-    async def get_related_papers(self, pmid: str, limit: int = 100) -> List[PaperMetadata]:
+    async def get_related_papers(
+        self, pmid: str, limit: int = 100
+    ) -> List[PaperMetadata]:
         """获取相关论文
 
         使用PubMed的相关文章功能
@@ -278,10 +284,7 @@ class PubMedSource(DataSource):
             return []
 
     async def search_by_author(
-        self,
-        author: str,
-        limit: int = 100,
-        start_year: int = None
+        self, author: str, limit: int = 100, start_year: int = None
     ) -> List[PaperMetadata]:
         """按作者搜索论文"""
         query = f"{author}[Author]"
@@ -290,10 +293,7 @@ class PubMedSource(DataSource):
         return await self.search(query, limit=limit)
 
     async def search_by_journal(
-        self,
-        journal: str,
-        limit: int = 100,
-        start_year: int = None
+        self, journal: str, limit: int = 100, start_year: int = None
     ) -> List[PaperMetadata]:
         """按期刊搜索论文"""
         query = f"{journal}[Journal]"
@@ -302,9 +302,7 @@ class PubMedSource(DataSource):
         return await self.search(query, limit=limit)
 
     async def get_latest_papers(
-        self,
-        days: int = 7,
-        limit: int = 100
+        self, days: int = 7, limit: int = 100
     ) -> List[PaperMetadata]:
         """获取最新论文
 
@@ -370,6 +368,7 @@ class PubMedSource(DataSource):
         except Exception as e:
             print(f"获取参考文献时发生错误: {str(e)}")
             return []
+
 
 async def example_usage():
     """PubMedSource使用示例"""
@@ -452,7 +451,9 @@ async def example_usage():
     except Exception as e:
         print(f"发生错误: {str(e)}")
         import traceback
+
         print(traceback.format_exc())
+
 
 if __name__ == "__main__":
     asyncio.run(example_usage())

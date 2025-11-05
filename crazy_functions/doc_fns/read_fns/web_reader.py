@@ -1,12 +1,13 @@
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Dict, Optional, Union
 from urllib.parse import urlparse
-import logging
-import trafilatura
+
 import requests
-from pathlib import Path
+import trafilatura
 
 
 @dataclass
@@ -23,24 +24,27 @@ class WebExtractorConfig:
         user_agent: 自定义User-Agent
         text_cleanup: 文本清理选项
     """
+
     extract_comments: bool = False
     extract_tables: bool = True
     extract_links: bool = False
-    paragraph_separator: str = '\n\n'
+    paragraph_separator: str = "\n\n"
     timeout: int = 10
     max_retries: int = 3
-    user_agent: str = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-    text_cleanup: Dict[str, bool] = field(default_factory=lambda: {
-        'remove_extra_spaces': True,
-        'normalize_whitespace': True,
-        'remove_special_chars': False,
-        'lowercase': False
-    })
+    user_agent: str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+    text_cleanup: Dict[str, bool] = field(
+        default_factory=lambda: {
+            "remove_extra_spaces": True,
+            "normalize_whitespace": True,
+            "remove_special_chars": False,
+            "lowercase": False,
+        }
+    )
 
 
 class WebTextExtractor:
     """网页文本内容提取器
-    
+
     使用trafilatura库提取网页中的主要文本内容，去除广告、导航等无关内容。
     """
 
@@ -57,12 +61,12 @@ class WebTextExtractor:
         """配置日志记录器"""
         logging.basicConfig(
             level=logging.INFO,
-            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         )
         self.logger = logging.getLogger(__name__)
 
         # 添加文件处理器
-        fh = logging.FileHandler('web_extractor.log')
+        fh = logging.FileHandler("web_extractor.log")
         fh.setLevel(logging.ERROR)
         self.logger.addHandler(fh)
 
@@ -93,21 +97,21 @@ class WebTextExtractor:
         Raises:
             Exception: 下载失败时抛出异常
         """
-        headers = {'User-Agent': self.config.user_agent}
-        
+        headers = {"User-Agent": self.config.user_agent}
+
         for attempt in range(self.config.max_retries):
             try:
                 response = requests.get(
-                    url, 
-                    headers=headers,
-                    timeout=self.config.timeout
+                    url, headers=headers, timeout=self.config.timeout
                 )
                 response.raise_for_status()
                 return response.text
             except requests.RequestException as e:
                 self.logger.warning(f"Attempt {attempt + 1} failed: {e}")
                 if attempt == self.config.max_retries - 1:
-                    raise Exception(f"Failed to download webpage after {self.config.max_retries} attempts: {e}")
+                    raise Exception(
+                        f"Failed to download webpage after {self.config.max_retries} attempts: {e}"
+                    )
         return None
 
     def _cleanup_text(self, text: str) -> str:
@@ -122,13 +126,13 @@ class WebTextExtractor:
         if not text:
             return ""
 
-        if self.config.text_cleanup['remove_extra_spaces']:
-            text = ' '.join(text.split())
+        if self.config.text_cleanup["remove_extra_spaces"]:
+            text = " ".join(text.split())
 
-        if self.config.text_cleanup['normalize_whitespace']:
-            text = text.replace('\t', ' ').replace('\r', '\n')
+        if self.config.text_cleanup["normalize_whitespace"]:
+            text = text.replace("\t", " ").replace("\r", "\n")
 
-        if self.config.text_cleanup['lowercase']:
+        if self.config.text_cleanup["lowercase"]:
             text = text.lower()
 
         return text.strip()
@@ -151,7 +155,7 @@ class WebTextExtractor:
                 raise ValueError(f"Invalid URL: {url}")
 
             self.logger.info(f"Processing URL: {url}")
-            
+
             # 下载网页
             html_content = self._download_webpage(url)
             if not html_content:
@@ -159,24 +163,21 @@ class WebTextExtractor:
 
             # 配置trafilatura提取选项
             extract_config = {
-                'include_comments': self.config.extract_comments,
-                'include_tables': self.config.extract_tables,
-                'include_links': self.config.extract_links,
-                'no_fallback': False,  # 允许使用后备提取器
+                "include_comments": self.config.extract_comments,
+                "include_tables": self.config.extract_tables,
+                "include_links": self.config.extract_links,
+                "no_fallback": False,  # 允许使用后备提取器
             }
 
             # 提取文本
-            extracted_text = trafilatura.extract(
-                html_content,
-                **extract_config
-            )
+            extracted_text = trafilatura.extract(html_content, **extract_config)
 
             if not extracted_text:
                 raise Exception("No content could be extracted")
 
             # 清理文本
             cleaned_text = self._cleanup_text(extracted_text)
-            
+
             return cleaned_text
 
         except Exception as e:
@@ -193,11 +194,11 @@ def main():
         extract_links=False,
         timeout=10,
         text_cleanup={
-            'remove_extra_spaces': True,
-            'normalize_whitespace': True,
-            'remove_special_chars': False,
-            'lowercase': False
-        }
+            "remove_extra_spaces": True,
+            "normalize_whitespace": True,
+            "remove_special_chars": False,
+            "lowercase": False,
+        },
     )
 
     # 创建提取器
@@ -206,7 +207,7 @@ def main():
     # 使用示例
     try:
         # 替换为实际的URL
-        sample_url = 'https://arxiv.org/abs/2412.00036'
+        sample_url = "https://arxiv.org/abs/2412.00036"
         text = extractor.extract_text(sample_url)
         print("提取的文本:")
         print(text)

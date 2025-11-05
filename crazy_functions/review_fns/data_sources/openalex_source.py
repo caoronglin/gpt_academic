@@ -1,9 +1,12 @@
-import aiohttp
-from typing import List, Dict, Optional
-from datetime import datetime
-from .base_source import DataSource, PaperMetadata
 import os
+from datetime import datetime
+from typing import Dict, List, Optional
 from urllib.parse import quote
+
+import aiohttp
+
+from .base_source import DataSource, PaperMetadata
+
 
 class OpenAlexSource(DataSource):
     """OpenAlex API实现"""
@@ -14,16 +17,10 @@ class OpenAlexSource(DataSource):
 
     async def search(self, query: str, limit: int = 100) -> List[PaperMetadata]:
         params = {"mailto": self.mailto} if self.mailto else {}
-        params.update({
-            "filter": f"title.search:{query}",
-            "per-page": limit
-        })
+        params.update({"filter": f"title.search:{query}", "per-page": limit})
 
         async with aiohttp.ClientSession() as session:
-            async with session.get(
-                f"{self.base_url}/works",
-                params=params
-            ) as response:
+            async with session.get(f"{self.base_url}/works", params=params) as response:
                 try:
                     response.raise_for_status()
                     data = await response.json()
@@ -42,10 +39,7 @@ class OpenAlexSource(DataSource):
             if authorship
         ]
         # 处理作者名字格式
-        authors = [
-            self._reformat_name(author)
-            for author in raw_author_names
-        ]
+        authors = [self._reformat_name(author) for author in raw_author_names]
 
         # 获取机构信息
         institutions = [
@@ -72,7 +66,7 @@ class OpenAlexSource(DataSource):
             doi=work.get("doi"),
             url=work.get("doi"),  # OpenAlex 使用 DOI 作为 URL
             citations=work.get("cited_by_count"),
-            venue=venue
+            venue=venue,
         )
 
     def _reformat_name(self, name: str) -> str:
@@ -88,7 +82,7 @@ class OpenAlexSource(DataSource):
         async with aiohttp.ClientSession() as session:
             async with session.get(
                 f"{self.base_url}/works/https://doi.org/{quote(doi, safe='')}",
-                params=params
+                params=params,
             ) as response:
                 data = await response.json()
                 return self._parse_work(data)
@@ -99,7 +93,7 @@ class OpenAlexSource(DataSource):
         async with aiohttp.ClientSession() as session:
             async with session.get(
                 f"{self.base_url}/works/https://doi.org/{quote(doi, safe='')}/references",
-                params=params
+                params=params,
             ) as response:
                 data = await response.json()
                 return [self._parse_work(work) for work in data.get("results", [])]
@@ -107,18 +101,13 @@ class OpenAlexSource(DataSource):
     async def get_citations(self, doi: str) -> List[PaperMetadata]:
         """获取引用指定DOI论文的文献列表"""
         params = {"mailto": self.mailto} if self.mailto else {}
-        params.update({
-            "filter": f"cites:doi:{doi}",
-            "per-page": 100
-        })
+        params.update({"filter": f"cites:doi:{doi}", "per-page": 100})
 
         async with aiohttp.ClientSession() as session:
-            async with session.get(
-                f"{self.base_url}/works",
-                params=params
-            ) as response:
+            async with session.get(f"{self.base_url}/works", params=params) as response:
                 data = await response.json()
                 return [self._parse_work(work) for work in data.get("results", [])]
+
 
 async def example_usage():
     """OpenAlexSource使用示例"""
@@ -148,12 +137,16 @@ async def example_usage():
             print(f"URL: {paper.url if paper.url else '未知'}")
             if paper.abstract:
                 print(f"摘要: {paper.abstract[:200]}...")
-            print(f"引用次数: {paper.citations if paper.citations is not None else '未知'}")
+            print(
+                f"引用次数: {paper.citations if paper.citations is not None else '未知'}"
+            )
             print(f"发表venue: {paper.venue if paper.venue else '未知'}")
     except Exception as e:
         print(f"发生错误: {str(e)}")
         import traceback
+
         print(traceback.format_exc())
+
 
 # 如果直接运行此文件，执行示例代码
 if __name__ == "__main__":

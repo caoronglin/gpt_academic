@@ -1,7 +1,10 @@
-from typing import List, Dict, Any
-from .base_handler import BaseHandler
-from crazy_functions.review_fns.query_analyzer import SearchCriteria
 import asyncio
+from typing import Any, Dict, List
+
+from crazy_functions.review_fns.query_analyzer import SearchCriteria
+
+from .base_handler import BaseHandler
+
 
 class Arxiv最新论文推荐功能(BaseHandler):
     """最新论文推荐处理器"""
@@ -27,9 +30,7 @@ class Arxiv最新论文推荐功能(BaseHandler):
         papers = []
         for category in criteria.arxiv_params["categories"]:
             latest_papers = await self.arxiv.get_latest_papers(
-                category=category,
-                debug=False,
-                batch_size=50
+                category=category, debug=False, batch_size=50
             )
             papers.extend(latest_papers)
 
@@ -38,9 +39,7 @@ class Arxiv最新论文推荐功能(BaseHandler):
 
         # 使用embedding模型对论文进行排序
         self.ranked_papers = self.paper_ranker.rank_papers(
-            query=criteria.original_query,
-            papers=papers,
-            search_criteria=criteria
+            query=criteria.original_query, papers=papers, search_criteria=criteria
         )
 
         # 构建最终的prompt

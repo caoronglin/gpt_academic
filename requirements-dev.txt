@@ -1,0 +1,25 @@
+# 构建和开发依赖
+pyinstaller>=5.0
+py2app>=0.28
+wheel
+setuptools
+
+# 测试依赖
+pytest
+pytest-cov
+pytest-asyncio
+
+# 代码质量
+black
+flake8
+mypy
+isort
+
+# 文档生成
+sphinx
+sphinx-rtd-theme
+recommonmark
+
+# 其他工具
+pre-commit
+tox

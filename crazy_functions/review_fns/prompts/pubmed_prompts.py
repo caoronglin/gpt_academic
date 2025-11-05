@@ -105,4 +105,4 @@ Always generate English search terms regardless of the input language."""
 PUBMED_SORT_SYSTEM_PROMPT = """You are an expert at optimizing PubMed search results.
 Your task is to determine the best sorting parameters based on the query context.
 Consider the balance between relevance and recency.
-Always respond in English regardless of the input language.""" 
+Always respond in English regardless of the input language."""

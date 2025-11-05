@@ -1,8 +1,13 @@
-from typing import List, Dict, Any
-from .base_handler import BaseHandler
 from textwrap import dedent
+from typing import Any, Dict, List
+
+from crazy_functions.crazy_utils import \
+    request_gpt_model_multi_threads_with_very_awesome_ui_and_high_efficiency as \
+    request_gpt
 from crazy_functions.review_fns.query_analyzer import SearchCriteria
-from crazy_functions.crazy_utils import request_gpt_model_multi_threads_with_very_awesome_ui_and_high_efficiency as request_gpt
+
+from .base_handler import BaseHandler
+
 
 class 论文推荐功能(BaseHandler):
     """论文推荐处理器"""
@@ -35,9 +40,7 @@ class 论文推荐功能(BaseHandler):
             return self._generate_apology_prompt(criteria)
 
         self.ranked_papers = self.paper_ranker.rank_papers(
-            query=criteria.original_query,
-            papers=all_papers,
-            search_criteria=criteria
+            query=criteria.original_query, papers=all_papers, search_criteria=criteria
         )
 
         if not self.ranked_papers:
@@ -45,7 +48,8 @@ class 论文推荐功能(BaseHandler):
 
         # 构建最终的prompt
         current_time = self._get_current_time()
-        final_prompt = dedent(f"""Current time: {current_time}
+        final_prompt = dedent(
+            f"""Current time: {current_time}
 
             Based on the user's interest in {criteria.main_topic}, here are relevant papers.
 
@@ -111,7 +115,9 @@ class 论文推荐功能(BaseHandler):
         )
         return final_prompt
 
-    async def _search_seed_papers(self, criteria: SearchCriteria, search_params: Dict) -> List:
+    async def _search_seed_papers(
+        self, criteria: SearchCriteria, search_params: Dict
+    ) -> List:
         """搜索种子论文"""
         try:
             # 使用_search_all_sources替代原来的并行搜索
@@ -126,7 +132,9 @@ class 论文推荐功能(BaseHandler):
             print(f"搜索种子论文时出错: {str(e)}")
             return []
 
-    async def _get_recommendations(self, seed_papers: List, multiplier: int = 1) -> List:
+    async def _get_recommendations(
+        self, seed_papers: List, multiplier: int = 1
+    ) -> List:
         """获取推荐论文"""
         recommendations = []
         base_limit = 3 * multiplier
@@ -143,19 +151,16 @@ class 论文推荐功能(BaseHandler):
                     # arXiv论文
                     arxiv_id = paper.doi.split(".")[-1]
                     paper_details = await self.arxiv.get_paper_details(arxiv_id)
-                    if paper_details and hasattr(paper_details, 'venue'):
+                    if paper_details and hasattr(paper_details, "venue"):
                         category = paper_details.venue.split(":")[-1]
                         similar_papers = await self.arxiv.search_by_category(
-                            category,
-                            limit=base_limit,
-                            sort_by='relevance'
+                            category, limit=base_limit, sort_by="relevance"
                         )
                         recommendations.extend(similar_papers)
                 elif paper.doi:  # 只对有DOI的论文获取推荐
                     # Semantic Scholar论文
                     similar_papers = await self.semantic.get_recommended_papers(
-                        paper.doi,
-                        limit=base_limit
+                        paper.doi, limit=base_limit
                     )
                     if similar_papers:  # 只添加成功获取的推荐
                         recommendations.extend(similar_papers)
@@ -163,8 +168,7 @@ class 论文推荐功能(BaseHandler):
                     # 对于没有DOI的论文，使用标题进行相关搜索
                     if paper.title:
                         similar_papers = await self.semantic.search(
-                            query=paper.title,
-                            limit=base_limit
+                            query=paper.title, limit=base_limit
                         )
                         recommendations.extend(similar_papers)
 

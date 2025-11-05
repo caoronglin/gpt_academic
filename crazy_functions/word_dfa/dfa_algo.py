@@ -3,7 +3,6 @@ Large language models (LLMs) have demonstrated remarkable potential in solving c
 """
 
 
-
 ai_terms_from_web = """
 
 # Letter All
@@ -2471,8 +2470,6 @@ AITD-03440|TTS|文本语音合成||||
 """
 
 
-
-
 black_list_ai_terms = """
 AITD-00007|Accuracy|准确率||[[1]](https://www.nature.com/articles/s41557-021-00716-z)||
 AITD-00075|Attribute|属性||[1]||
@@ -2601,11 +2598,10 @@ all_blacklist_terms_predefine = [
 ]
 
 
-
-
-from dataclasses import dataclass
-import time
 import re
+import time
+from dataclasses import dataclass
+
 
 @dataclass
 class Term:
@@ -2615,6 +2611,7 @@ class Term:
 
     def __str__(self):
         return f"{self.words} => {self.translation}"
+
 
 class DFA:
     def __init__(self):
@@ -2626,20 +2623,25 @@ class DFA:
         all_blacklist_terms = all_blacklist_terms_predefine
 
         # 将markdown格式的术语转换为Term对象
-        for term_raw in black_list_ai_terms.split('\n'):
-            if '|' not in term_raw: continue
-            if 'AITD' not in term_raw: continue
+        for term_raw in black_list_ai_terms.split("\n"):
+            if "|" not in term_raw:
+                continue
+            if "AITD" not in term_raw:
+                continue
             t = Term()
-            t.id, t.words, t.translation, _, _, _, _ = term_raw.split('|')
+            t.id, t.words, t.translation, _, _, _, _ = term_raw.split("|")
             all_blacklist_terms.append(t.words)
 
         # 将markdown格式的术语转换为Term对象
-        for term_raw in ai_terms_from_web.split('\n'):
-            if '|' not in term_raw: continue
-            if 'AITD' not in term_raw: continue
+        for term_raw in ai_terms_from_web.split("\n"):
+            if "|" not in term_raw:
+                continue
+            if "AITD" not in term_raw:
+                continue
             t = Term()
-            t.id, t.words, t.translation, _, _, _, _ = term_raw.split('|')
-            if t.words in all_blacklist_terms: continue
+            t.id, t.words, t.translation, _, _, _, _ = term_raw.split("|")
+            if t.words in all_blacklist_terms:
+                continue
             all_terms.append(t)
 
         # 构建DFA
@@ -2649,19 +2651,19 @@ class DFA:
                 if char not in current_state:
                     current_state[char] = {}
                 current_state = current_state[char]
-            current_state['#'] = term  # 用特殊字符标记一个完整的词
+            current_state["#"] = term  # 用特殊字符标记一个完整的词
 
     def is_at_word_end(self, text, j):
         # 如果单词后面不足5个字符，则返回False
-        if j+5 >= len(text):
+        if j + 5 >= len(text):
             return False
         # 使用正则表达式匹配字符是否在 a-z 或 A-Z 范围内
-        is_letter = lambda char: bool(re.match(r'^[a-zA-Z]$', char))
+        is_letter = lambda char: bool(re.match(r"^[a-zA-Z]$", char))
         # 如果单词后面是非字母，则返回True
         if not is_letter(text[j]):
             return True
         # 如果是复数变体，也返回True
-        if text[j] == 's' and not is_letter(text[j+1]):
+        if text[j] == "s" and not is_letter(text[j + 1]):
             return True
         # 其他情况
         return False
@@ -2679,12 +2681,14 @@ class DFA:
             while j < n + max_word_wrap and text[j] in current_state:
                 current_state = current_state[text[j]]
                 j += 1
-                if '#' in current_state and self.is_at_word_end(text, j):
-                    if current_state['#'] not in found_terms:
-                        if found: found_terms.pop(-1)   # greedy search for longer matched term
-                        found_terms.append(current_state['#'])
+                if "#" in current_state and self.is_at_word_end(text, j):
+                    if current_state["#"] not in found_terms:
+                        if found:
+                            found_terms.pop(-1)  # greedy search for longer matched term
+                        found_terms.append(current_state["#"])
                         found = True
         return found_terms
+
 
 def main():
 
@@ -2701,6 +2705,7 @@ def main():
     # 打印找到的术语
     for term in found_terms:  # 使用set去重
         print(f"找到术语: {term}")
+
 
 if __name__ == "__main__":
     main()

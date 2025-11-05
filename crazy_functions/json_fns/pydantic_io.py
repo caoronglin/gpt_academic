@@ -24,7 +24,9 @@ class Actor(BaseModel):
     film_names: List[str] = Field(description="list of names of films they starred in")
 """
 
-import json, re
+import json
+import re
+
 from loguru import logger as logging
 
 PYDANTIC_FORMAT_INSTRUCTIONS = """The output should be formatted as a JSON instance that conforms to the JSON schema below.
@@ -43,9 +45,11 @@ PYDANTIC_FORMAT_INSTRUCTIONS_SIMPLE = """The output should be formatted as a JSO
 {schema}
 ```"""
 
+
 class JsonStringError(Exception): ...
 
-class GptJsonIO():
+
+class GptJsonIO:
 
     def __init__(self, schema, example_instruction=True):
         self.pydantic_object = schema
@@ -74,20 +78,27 @@ class GptJsonIO():
             r"\{.*\}", text.strip(), re.MULTILINE | re.IGNORECASE | re.DOTALL
         )
         json_str = ""
-        if match: json_str = match.group()
+        if match:
+            json_str = match.group()
         json_object = json.loads(json_str, strict=False)
         final_object = self.pydantic_object.parse_obj(json_object)
         return final_object
 
     def generate_repair_prompt(self, broken_json, error):
-        prompt = "Fix a broken json string.\n\n" + \
-                 "(1) The broken json string need to fix is: \n\n" + \
-                 "```" + "\n" + \
-                 broken_json + "\n" + \
-                 "```" + "\n\n" + \
-                 "(2) The error message is: \n\n" + \
-                 error + "\n\n" + \
-                "Now, fix this json string. \n\n"
+        prompt = (
+            "Fix a broken json string.\n\n"
+            + "(1) The broken json string need to fix is: \n\n"
+            + "```"
+            + "\n"
+            + broken_json
+            + "\n"
+            + "```"
+            + "\n\n"
+            + "(2) The error message is: \n\n"
+            + error
+            + "\n\n"
+            + "Now, fix this json string. \n\n"
+        )
         return prompt
 
     def generate_output_auto_repair(self, response, gpt_gen_fn):
@@ -99,13 +110,16 @@ class GptJsonIO():
             result = self.generate_output(response)
         except Exception as e:
             try:
-                logging.info(f'Repairing json：{response}')
-                repair_prompt = self.generate_repair_prompt(broken_json = response, error=repr(e))
-                result = self.generate_output(gpt_gen_fn(repair_prompt, self.format_instructions))
-                logging.info('Repair json success.')
+                logging.info(f"Repairing json：{response}")
+                repair_prompt = self.generate_repair_prompt(
+                    broken_json=response, error=repr(e)
+                )
+                result = self.generate_output(
+                    gpt_gen_fn(repair_prompt, self.format_instructions)
+                )
+                logging.info("Repair json success.")
             except Exception as e:
                 # 没辙了，放弃治疗
-                logging.info('Repair json fail.')
-                raise JsonStringError('Cannot repair json.', str(e))
+                logging.info("Repair json fail.")
+                raise JsonStringError("Cannot repair json.", str(e))
         return result
-

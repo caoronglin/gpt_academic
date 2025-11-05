@@ -1,8 +1,6 @@
-
-
 class HtmlFormatter:
     """聊天记录HTML格式生成器"""
-    
+
     def __init__(self, chatbot, history):
         self.chatbot = chatbot
         self.history = history
@@ -141,31 +139,35 @@ class HtmlFormatter:
         for q, a in self.chatbot:
             question = str(q) if q is not None else ""
             answer = str(a) if a is not None else ""
-            chat_content.append(f'''
+            chat_content.append(
+                f"""
             <div class="QaBox">
                 <div class="Question">{question}</div>
                 <div class="Answer">{answer}</div>
             </div>
-            ''')
+            """
+            )
         return "\n".join(chat_content)
 
     def format_history_content(self) -> str:
         """格式化历史记录内容"""
         if not self.history:
             return ""
-            
+
         history_content = []
         for entry in self.history:
-            history_content.append(f'''
+            history_content.append(
+                f"""
             <div class="historyBox">
                 <div class="entry">{entry}</div>
             </div>
-            ''')
+            """
+            )
         return "\n".join(history_content)
 
     def create_document(self) -> str:
         """生成完整的HTML文档
-        
+
         Returns:
             str: 完整的HTML文档字符串
         """

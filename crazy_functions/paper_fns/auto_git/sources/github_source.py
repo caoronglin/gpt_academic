@@ -1,10 +1,12 @@
-import aiohttp
 import asyncio
 import base64
 import json
 import random
 from datetime import datetime
-from typing import List, Dict, Optional, Union, Any
+from typing import Any, Dict, List, Optional, Union
+
+import aiohttp
+
 
 class GitHubSource:
     """GitHub API实现"""
@@ -39,7 +41,7 @@ class GitHubSource:
         self.headers = {
             "Accept": "application/vnd.github+json",
             "X-GitHub-Api-Version": "2022-11-28",
-            "User-Agent": "GitHub-API-Python-Client"
+            "User-Agent": "GitHub-API-Python-Client",
         }
 
         # 如果有可用的API密钥，随机选择一个
@@ -50,7 +52,9 @@ class GitHubSource:
         else:
             print("警告: 未提供API密钥，将受到GitHub API请求限制")
 
-    async def _request(self, method: str, endpoint: str, params: Dict = None, data: Dict = None) -> Any:
+    async def _request(
+        self, method: str, endpoint: str, params: Dict = None, data: Dict = None
+    ) -> Any:
         """发送API请求
 
         Args:
@@ -107,8 +111,14 @@ class GitHubSource:
         endpoint = "/user" if username is None else f"/users/{username}"
         return await self._request("GET", endpoint)
 
-    async def get_user_repos(self, username: Optional[str] = None, sort: str = "updated",
-                            direction: str = "desc", per_page: int = 30, page: int = 1) -> List[Dict]:
+    async def get_user_repos(
+        self,
+        username: Optional[str] = None,
+        sort: str = "updated",
+        direction: str = "desc",
+        per_page: int = 30,
+        page: int = 1,
+    ) -> List[Dict]:
         """获取用户的仓库列表
 
         Args:
@@ -126,12 +136,13 @@ class GitHubSource:
             "sort": sort,
             "direction": direction,
             "per_page": per_page,
-            "page": page
+            "page": page,
         }
         return await self._request("GET", endpoint, params=params)
 
-    async def get_user_starred(self, username: Optional[str] = None,
-                              per_page: int = 30, page: int = 1) -> List[Dict]:
+    async def get_user_starred(
+        self, username: Optional[str] = None, per_page: int = 30, page: int = 1
+    ) -> List[Dict]:
         """获取用户星标的仓库
 
         Args:
@@ -143,10 +154,7 @@ class GitHubSource:
             星标仓库列表
         """
         endpoint = "/user/starred" if username is None else f"/users/{username}/starred"
-        params = {
-            "per_page": per_page,
-            "page": page
-        }
+        params = {"per_page": per_page, "page": page}
         return await self._request("GET", endpoint, params=params)
 
     # ===== 仓库相关方法 =====
@@ -164,7 +172,9 @@ class GitHubSource:
         endpoint = f"/repos/{owner}/{repo}"
         return await self._request("GET", endpoint)
 
-    async def get_repo_branches(self, owner: str, repo: str, per_page: int = 30, page: int = 1) -> List[Dict]:
+    async def get_repo_branches(
+        self, owner: str, repo: str, per_page: int = 30, page: int = 1
+    ) -> List[Dict]:
         """获取仓库的分支列表
 
         Args:
@@ -177,14 +187,18 @@ class GitHubSource:
             分支列表
         """
         endpoint = f"/repos/{owner}/{repo}/branches"
-        params = {
-            "per_page": per_page,
-            "page": page
-        }
+        params = {"per_page": per_page, "page": page}
         return await self._request("GET", endpoint, params=params)
 
-    async def get_repo_commits(self, owner: str, repo: str, sha: Optional[str] = None,
-                              path: Optional[str] = None, per_page: int = 30, page: int = 1) -> List[Dict]:
+    async def get_repo_commits(
+        self,
+        owner: str,
+        repo: str,
+        sha: Optional[str] = None,
+        path: Optional[str] = None,
+        per_page: int = 30,
+        page: int = 1,
+    ) -> List[Dict]:
         """获取仓库的提交历史
 
         Args:
@@ -199,10 +213,7 @@ class GitHubSource:
             提交列表
         """
         endpoint = f"/repos/{owner}/{repo}/commits"
-        params = {
-            "per_page": per_page,
-            "page": page
-        }
+        params = {"per_page": per_page, "page": page}
         if sha:
             params["sha"] = sha
         if path:
@@ -226,7 +237,9 @@ class GitHubSource:
 
     # ===== 内容相关方法 =====
 
-    async def get_file_content(self, owner: str, repo: str, path: str, ref: Optional[str] = None) -> Dict:
+    async def get_file_content(
+        self, owner: str, repo: str, path: str, ref: Optional[str] = None
+    ) -> Dict:
         """获取文件内容
 
         Args:
@@ -254,7 +267,9 @@ class GitHubSource:
 
         return response
 
-    async def get_directory_content(self, owner: str, repo: str, path: str, ref: Optional[str] = None) -> List[Dict]:
+    async def get_directory_content(
+        self, owner: str, repo: str, path: str, ref: Optional[str] = None
+    ) -> List[Dict]:
         """获取目录内容
 
         Args:
@@ -276,9 +291,16 @@ class GitHubSource:
 
     # ===== Issues相关方法 =====
 
-    async def get_issues(self, owner: str, repo: str, state: str = "open",
-                        sort: str = "created", direction: str = "desc",
-                        per_page: int = 30, page: int = 1) -> List[Dict]:
+    async def get_issues(
+        self,
+        owner: str,
+        repo: str,
+        state: str = "open",
+        sort: str = "created",
+        direction: str = "desc",
+        per_page: int = 30,
+        page: int = 1,
+    ) -> List[Dict]:
         """获取仓库的Issues列表
 
         Args:
@@ -299,7 +321,7 @@ class GitHubSource:
             "sort": sort,
             "direction": direction,
             "per_page": per_page,
-            "page": page
+            "page": page,
         }
         return await self._request("GET", endpoint, params=params)
 
@@ -317,7 +339,9 @@ class GitHubSource:
         endpoint = f"/repos/{owner}/{repo}/issues/{issue_number}"
         return await self._request("GET", endpoint)
 
-    async def get_issue_comments(self, owner: str, repo: str, issue_number: int) -> List[Dict]:
+    async def get_issue_comments(
+        self, owner: str, repo: str, issue_number: int
+    ) -> List[Dict]:
         """获取Issue的评论
 
         Args:
@@ -333,9 +357,16 @@ class GitHubSource:
 
     # ===== Pull Requests相关方法 =====
 
-    async def get_pull_requests(self, owner: str, repo: str, state: str = "open",
-                               sort: str = "created", direction: str = "desc",
-                               per_page: int = 30, page: int = 1) -> List[Dict]:
+    async def get_pull_requests(
+        self,
+        owner: str,
+        repo: str,
+        state: str = "open",
+        sort: str = "created",
+        direction: str = "desc",
+        per_page: int = 30,
+        page: int = 1,
+    ) -> List[Dict]:
         """获取仓库的Pull Request列表
 
         Args:
@@ -356,7 +387,7 @@ class GitHubSource:
             "sort": sort,
             "direction": direction,
             "per_page": per_page,
-            "page": page
+            "page": page,
         }
         return await self._request("GET", endpoint, params=params)
 
@@ -374,7 +405,9 @@ class GitHubSource:
         endpoint = f"/repos/{owner}/{repo}/pulls/{pr_number}"
         return await self._request("GET", endpoint)
 
-    async def get_pull_request_files(self, owner: str, repo: str, pr_number: int) -> List[Dict]:
+    async def get_pull_request_files(
+        self, owner: str, repo: str, pr_number: int
+    ) -> List[Dict]:
         """获取Pull Request中修改的文件
 
         Args:
@@ -390,8 +423,14 @@ class GitHubSource:
 
     # ===== 搜索相关方法 =====
 
-    async def search_repositories(self, query: str, sort: str = "stars",
-                                 order: str = "desc", per_page: int = 30, page: int = 1) -> Dict:
+    async def search_repositories(
+        self,
+        query: str,
+        sort: str = "stars",
+        order: str = "desc",
+        per_page: int = 30,
+        page: int = 1,
+    ) -> Dict:
         """搜索仓库
 
         Args:
@@ -410,12 +449,18 @@ class GitHubSource:
             "sort": sort,
             "order": order,
             "per_page": per_page,
-            "page": page
+            "page": page,
         }
         return await self._request("GET", endpoint, params=params)
 
-    async def search_code(self, query: str, sort: str = "indexed",
-                         order: str = "desc", per_page: int = 30, page: int = 1) -> Dict:
+    async def search_code(
+        self,
+        query: str,
+        sort: str = "indexed",
+        order: str = "desc",
+        per_page: int = 30,
+        page: int = 1,
+    ) -> Dict:
         """搜索代码
 
         Args:
@@ -434,12 +479,18 @@ class GitHubSource:
             "sort": sort,
             "order": order,
             "per_page": per_page,
-            "page": page
+            "page": page,
         }
         return await self._request("GET", endpoint, params=params)
 
-    async def search_issues(self, query: str, sort: str = "created",
-                           order: str = "desc", per_page: int = 30, page: int = 1) -> Dict:
+    async def search_issues(
+        self,
+        query: str,
+        sort: str = "created",
+        order: str = "desc",
+        per_page: int = 30,
+        page: int = 1,
+    ) -> Dict:
         """搜索Issues和Pull Requests
 
         Args:
@@ -458,12 +509,18 @@ class GitHubSource:
             "sort": sort,
             "order": order,
             "per_page": per_page,
-            "page": page
+            "page": page,
         }
         return await self._request("GET", endpoint, params=params)
 
-    async def search_users(self, query: str, sort: str = "followers",
-                          order: str = "desc", per_page: int = 30, page: int = 1) -> Dict:
+    async def search_users(
+        self,
+        query: str,
+        sort: str = "followers",
+        order: str = "desc",
+        per_page: int = 30,
+        page: int = 1,
+    ) -> Dict:
         """搜索用户
 
         Args:
@@ -482,7 +539,7 @@ class GitHubSource:
             "sort": sort,
             "order": order,
             "per_page": per_page,
-            "page": page
+            "page": page,
         }
         return await self._request("GET", endpoint, params=params)
 
@@ -500,9 +557,15 @@ class GitHubSource:
         endpoint = f"/orgs/{org}"
         return await self._request("GET", endpoint)
 
-    async def get_organization_repos(self, org: str, type: str = "all",
-                                    sort: str = "created", direction: str = "desc",
-                                    per_page: int = 30, page: int = 1) -> List[Dict]:
+    async def get_organization_repos(
+        self,
+        org: str,
+        type: str = "all",
+        sort: str = "created",
+        direction: str = "desc",
+        per_page: int = 30,
+        page: int = 1,
+    ) -> List[Dict]:
         """获取组织的仓库列表
 
         Args:
@@ -522,11 +585,13 @@ class GitHubSource:
             "sort": sort,
             "direction": direction,
             "per_page": per_page,
-            "page": page
+            "page": page,
         }
         return await self._request("GET", endpoint, params=params)
 
-    async def get_organization_members(self, org: str, per_page: int = 30, page: int = 1) -> List[Dict]:
+    async def get_organization_members(
+        self, org: str, per_page: int = 30, page: int = 1
+    ) -> List[Dict]:
         """获取组织成员列表
 
         Args:
@@ -538,10 +603,7 @@ class GitHubSource:
             成员列表
         """
         endpoint = f"/orgs/{org}/members"
-        params = {
-            "per_page": per_page,
-            "page": page
-        }
+        params = {"per_page": per_page, "page": page}
         return await self._request("GET", endpoint, params=params)
 
     # ===== 更复杂的操作 =====
@@ -559,7 +621,9 @@ class GitHubSource:
         endpoint = f"/repos/{owner}/{repo}/languages"
         return await self._request("GET", endpoint)
 
-    async def get_repository_stats_contributors(self, owner: str, repo: str) -> List[Dict]:
+    async def get_repository_stats_contributors(
+        self, owner: str, repo: str
+    ) -> List[Dict]:
         """获取仓库的贡献者统计
 
         Args:
@@ -572,7 +636,9 @@ class GitHubSource:
         endpoint = f"/repos/{owner}/{repo}/stats/contributors"
         return await self._request("GET", endpoint)
 
-    async def get_repository_stats_commit_activity(self, owner: str, repo: str) -> List[Dict]:
+    async def get_repository_stats_commit_activity(
+        self, owner: str, repo: str
+    ) -> List[Dict]:
         """获取仓库的提交活动
 
         Args:
@@ -585,6 +651,7 @@ class GitHubSource:
         endpoint = f"/repos/{owner}/{repo}/stats/commit_activity"
         return await self._request("GET", endpoint)
 
+
 async def example_usage():
     """GitHubSource使用示例"""
     # 创建客户端实例（可选传入API令牌）
@@ -595,10 +662,7 @@ async def example_usage():
         # 示例1：搜索热门Python仓库
         print("\n=== 示例1：搜索热门Python仓库 ===")
         repos = await github.search_repositories(
-            query="language:python stars:>1000",
-            sort="stars",
-            order="desc",
-            per_page=5
+            query="language:python stars:>1000", sort="stars", order="desc", per_page=5
         )
 
         if repos and "items" in repos:
@@ -638,8 +702,7 @@ async def example_usage():
         # 示例4：搜索代码
         print("\n=== 示例4：搜索代码 ===")
         code_results = await github.search_code(
-            query="filename:README.md language:markdown pytorch in:file",
-            per_page=3
+            query="filename:README.md language:markdown pytorch in:file", per_page=3
         )
         if code_results and "items" in code_results:
             print(f"共找到: {code_results['total_count']} 个结果")
@@ -692,7 +755,9 @@ async def example_usage():
     except Exception as e:
         print(f"发生错误: {str(e)}")
         import traceback
+
         print(traceback.format_exc())
+
 
 if __name__ == "__main__":
     import asyncio

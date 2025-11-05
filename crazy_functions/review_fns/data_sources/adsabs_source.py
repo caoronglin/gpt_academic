@@ -1,11 +1,15 @@
-from typing import List, Optional, Dict, Union
-from datetime import datetime
-import aiohttp
 import asyncio
-from crazy_functions.review_fns.data_sources.base_source import DataSource, PaperMetadata
 import json
-from tqdm import tqdm
 import random
+from datetime import datetime
+from typing import Dict, List, Optional, Union
+
+import aiohttp
+from tqdm import tqdm
+
+from crazy_functions.review_fns.data_sources.base_source import (DataSource,
+                                                                 PaperMetadata)
+
 
 class AdsabsSource(DataSource):
     """ADS (Astrophysics Data System) API实现"""
@@ -14,7 +18,7 @@ class AdsabsSource(DataSource):
     API_KEYS = [
         "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
         "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-        "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
     ]
 
     def __init__(self, api_key: str = None):
@@ -31,10 +35,12 @@ class AdsabsSource(DataSource):
         self.base_url = "https://api.adsabs.harvard.edu/v1"
         self.headers = {
             "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         }
 
-    async def _make_request(self, url: str, method: str = "GET", data: dict = None) -> Optional[dict]:
+    async def _make_request(
+        self, url: str, method: str = "GET", data: dict = None
+    ) -> Optional[dict]:
         """发送HTTP请求
 
         Args:
@@ -71,23 +77,27 @@ class AdsabsSource(DataSource):
         """
         try:
             return PaperMetadata(
-                title=doc.get('title', [''])[0] if doc.get('title') else '',
-                authors=doc.get('author', []),
-                abstract=doc.get('abstract', ''),
-                year=doc.get('year'),
-                doi=doc.get('doi', [''])[0] if doc.get('doi') else None,
-                url=f"https://ui.adsabs.harvard.edu/abs/{doc.get('bibcode')}/abstract" if doc.get('bibcode') else None,
-                citations=doc.get('citation_count'),
-                venue=doc.get('pub', ''),
-                institutions=doc.get('aff', []),
+                title=doc.get("title", [""])[0] if doc.get("title") else "",
+                authors=doc.get("author", []),
+                abstract=doc.get("abstract", ""),
+                year=doc.get("year"),
+                doi=doc.get("doi", [""])[0] if doc.get("doi") else None,
+                url=(
+                    f"https://ui.adsabs.harvard.edu/abs/{doc.get('bibcode')}/abstract"
+                    if doc.get("bibcode")
+                    else None
+                ),
+                citations=doc.get("citation_count"),
+                venue=doc.get("pub", ""),
+                institutions=doc.get("aff", []),
                 venue_type="journal",
-                venue_name=doc.get('pub', ''),
+                venue_name=doc.get("pub", ""),
                 venue_info={
-                    'volume': doc.get('volume'),
-                    'issue': doc.get('issue'),
-                    'pub_date': doc.get('pubdate', '')
+                    "volume": doc.get("volume"),
+                    "issue": doc.get("issue"),
+                    "pub_date": doc.get("pubdate", ""),
                 },
-                source='adsabs'
+                source="adsabs",
             )
         except Exception as e:
             print(f"解析文章时发生错误: {str(e)}")
@@ -98,7 +108,7 @@ class AdsabsSource(DataSource):
         query: str,
         limit: int = 100,
         sort_by: str = "relevance",
-        start_year: int = None
+        start_year: int = None,
     ) -> List[PaperMetadata]:
         """搜索论文
 
@@ -118,11 +128,11 @@ class AdsabsSource(DataSource):
 
             # 设置排序
             sort_mapping = {
-                'relevance': 'score desc',
-                'date': 'date desc',
-                'citations': 'citation_count desc'
+                "relevance": "score desc",
+                "date": "date desc",
+                "citations": "citation_count desc",
             }
-            sort = sort_mapping.get(sort_by, 'score desc')
+            sort = sort_mapping.get(sort_by, "score desc")
 
             # 构建搜索请求
             search_url = f"{self.base_url}/search/query"
@@ -130,16 +140,18 @@ class AdsabsSource(DataSource):
                 "q": query,
                 "rows": limit,
                 "sort": sort,
-                "fl": "title,author,abstract,year,doi,bibcode,citation_count,pub,aff,volume,issue,pubdate"
+                "fl": "title,author,abstract,year,doi,bibcode,citation_count,pub,aff,volume,issue,pubdate",
             }
 
-            response = await self._make_request(f"{search_url}?{self._build_query_string(params)}")
-            if not response or 'response' not in response:
+            response = await self._make_request(
+                f"{search_url}?{self._build_query_string(params)}"
+            )
+            if not response or "response" not in response:
                 return []
 
             # 解析结果
             papers = []
-            for doc in response['response']['docs']:
+            for doc in response["response"]["docs"]:
                 paper = self._parse_paper(doc)
                 if paper:
                     papers.append(paper)
@@ -159,58 +171,54 @@ class AdsabsSource(DataSource):
         search_url = f"{self.base_url}/search/query"
         params = {
             "q": f"identifier:{bibcode}",
-            "fl": "title,author,abstract,year,doi,bibcode,citation_count,pub,aff,volume,issue,pubdate"
+            "fl": "title,author,abstract,year,doi,bibcode,citation_count,pub,aff,volume,issue,pubdate",
         }
 
-        response = await self._make_request(f"{search_url}?{self._build_query_string(params)}")
-        if response and 'response' in response and response['response']['docs']:
-            return self._parse_paper(response['response']['docs'][0])
+        response = await self._make_request(
+            f"{search_url}?{self._build_query_string(params)}"
+        )
+        if response and "response" in response and response["response"]["docs"]:
+            return self._parse_paper(response["response"]["docs"][0])
         return None
 
-    async def get_related_papers(self, bibcode: str, limit: int = 100) -> List[PaperMetadata]:
+    async def get_related_papers(
+        self, bibcode: str, limit: int = 100
+    ) -> List[PaperMetadata]:
         """获取相关论文"""
         url = f"{self.base_url}/search/query"
         params = {
             "q": f"citations(identifier:{bibcode}) OR references(identifier:{bibcode})",
             "rows": limit,
-            "fl": "title,author,abstract,year,doi,bibcode,citation_count,pub,aff,volume,issue,pubdate"
+            "fl": "title,author,abstract,year,doi,bibcode,citation_count,pub,aff,volume,issue,pubdate",
         }
 
         response = await self._make_request(f"{url}?{self._build_query_string(params)}")
-        if not response or 'response' not in response:
+        if not response or "response" not in response:
             return []
 
         papers = []
-        for doc in response['response']['docs']:
+        for doc in response["response"]["docs"]:
             paper = self._parse_paper(doc)
             if paper:
                 papers.append(paper)
         return papers
 
     async def search_by_author(
-        self,
-        author: str,
-        limit: int = 100,
-        start_year: int = None
+        self, author: str, limit: int = 100, start_year: int = None
     ) -> List[PaperMetadata]:
         """按作者搜索论文"""
-        query = f"author:\"{author}\""
+        query = f'author:"{author}"'
         return await self.search(query, limit=limit, start_year=start_year)
 
     async def search_by_journal(
-        self,
-        journal: str,
-        limit: int = 100,
-        start_year: int = None
+        self, journal: str, limit: int = 100, start_year: int = None
     ) -> List[PaperMetadata]:
         """按期刊搜索论文"""
-        query = f"pub:\"{journal}\""
+        query = f'pub:"{journal}"'
         return await self.search(query, limit=limit, start_year=start_year)
 
     async def get_latest_papers(
-        self,
-        days: int = 7,
-        limit: int = 100
+        self, days: int = 7, limit: int = 100
     ) -> List[PaperMetadata]:
         """获取最新论文"""
         query = f"entdate:[NOW-{days}DAYS TO NOW]"
@@ -221,15 +229,15 @@ class AdsabsSource(DataSource):
         url = f"{self.base_url}/search/query"
         params = {
             "q": f"citations(identifier:{bibcode})",
-            "fl": "title,author,abstract,year,doi,bibcode,citation_count,pub,aff,volume,issue,pubdate"
+            "fl": "title,author,abstract,year,doi,bibcode,citation_count,pub,aff,volume,issue,pubdate",
         }
 
         response = await self._make_request(f"{url}?{self._build_query_string(params)}")
-        if not response or 'response' not in response:
+        if not response or "response" not in response:
             return []
 
         papers = []
-        for doc in response['response']['docs']:
+        for doc in response["response"]["docs"]:
             paper = self._parse_paper(doc)
             if paper:
                 papers.append(paper)
@@ -240,19 +248,20 @@ class AdsabsSource(DataSource):
         url = f"{self.base_url}/search/query"
         params = {
             "q": f"references(identifier:{bibcode})",
-            "fl": "title,author,abstract,year,doi,bibcode,citation_count,pub,aff,volume,issue,pubdate"
+            "fl": "title,author,abstract,year,doi,bibcode,citation_count,pub,aff,volume,issue,pubdate",
         }
 
         response = await self._make_request(f"{url}?{self._build_query_string(params)}")
-        if not response or 'response' not in response:
+        if not response or "response" not in response:
             return []
 
         papers = []
-        for doc in response['response']['docs']:
+        for doc in response["response"]["docs"]:
             paper = self._parse_paper(doc)
             if paper:
                 papers.append(paper)
         return papers
+
 
 async def example_usage():
     """AdsabsSource使用示例"""
@@ -273,6 +282,7 @@ async def example_usage():
 
     except Exception as e:
         print(f"发生错误: {str(e)}")
+
 
 if __name__ == "__main__":
     # python -m crazy_functions.review_fns.data_sources.adsabs_source

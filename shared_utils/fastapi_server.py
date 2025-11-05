@@ -44,34 +44,54 @@ queue cocurrent effectiveness
     -- websocket(yes)
 """
 
-import os, requests, threading, time
+import os
+import threading
+import time
+
+import requests
 import uvicorn
 
+
 def validate_path_safety(path_or_url, user):
-    from toolbox import get_conf, default_user_name
-    from toolbox import FriendlyException
-    PATH_PRIVATE_UPLOAD, PATH_LOGGING = get_conf('PATH_PRIVATE_UPLOAD', 'PATH_LOGGING')
+    from toolbox import FriendlyException, default_user_name, get_conf
+
+    PATH_PRIVATE_UPLOAD, PATH_LOGGING = get_conf("PATH_PRIVATE_UPLOAD", "PATH_LOGGING")
     sensitive_path = None
     path_or_url = os.path.relpath(path_or_url)
-    if path_or_url.startswith(PATH_LOGGING):    # 日志文件（按用户划分）
+    if path_or_url.startswith(PATH_LOGGING):  # 日志文件（按用户划分）
         sensitive_path = PATH_LOGGING
-    elif path_or_url.startswith(PATH_PRIVATE_UPLOAD):   # 用户的上传目录（按用户划分）
+    elif path_or_url.startswith(PATH_PRIVATE_UPLOAD):  # 用户的上传目录（按用户划分）
         sensitive_path = PATH_PRIVATE_UPLOAD
-    elif path_or_url.startswith('tests') or path_or_url.startswith('build'):   # 一个常用的测试目录
+    elif path_or_url.startswith("tests") or path_or_url.startswith(
+        "build"
+    ):  # 一个常用的测试目录
         return True
     else:
-        raise FriendlyException(f"输入文件的路径 ({path_or_url}) 存在，但位置非法。请将文件上传后再执行该任务。") # return False
+        raise FriendlyException(
+            f"输入文件的路径 ({path_or_url}) 存在，但位置非法。请将文件上传后再执行该任务。"
+        )  # return False
     if sensitive_path:
-        allowed_users = [user, 'autogen', 'arxiv_cache', default_user_name]  # three user path that can be accessed
+        allowed_users = [
+            user,
+            "autogen",
+            "arxiv_cache",
+            default_user_name,
+        ]  # three user path that can be accessed
         for user_allowed in allowed_users:
-            if f"{os.sep}".join(path_or_url.split(os.sep)[:2]) == os.path.join(sensitive_path, user_allowed):
+            if f"{os.sep}".join(path_or_url.split(os.sep)[:2]) == os.path.join(
+                sensitive_path, user_allowed
+            ):
                 return True
-        raise FriendlyException(f"输入文件的路径 ({path_or_url}) 存在，但属于其他用户。请将文件上传后再执行该任务。") # return False
+        raise FriendlyException(
+            f"输入文件的路径 ({path_or_url}) 存在，但属于其他用户。请将文件上传后再执行该任务。"
+        )  # return False
     return True
 
+
 def _authorize_user(path_or_url, request, gradio_app):
-    from toolbox import get_conf, default_user_name
-    PATH_PRIVATE_UPLOAD, PATH_LOGGING = get_conf('PATH_PRIVATE_UPLOAD', 'PATH_LOGGING')
+    from toolbox import default_user_name, get_conf
+
+    PATH_PRIVATE_UPLOAD, PATH_LOGGING = get_conf("PATH_PRIVATE_UPLOAD", "PATH_LOGGING")
     sensitive_path = None
     path_or_url = os.path.relpath(path_or_url)
     if path_or_url.startswith(PATH_LOGGING):
@@ -79,14 +99,23 @@ def _authorize_user(path_or_url, request, gradio_app):
     if path_or_url.startswith(PATH_PRIVATE_UPLOAD):
         sensitive_path = PATH_PRIVATE_UPLOAD
     if sensitive_path:
-        token = request.cookies.get("access-token") or request.cookies.get("access-token-unsecure")
+        token = request.cookies.get("access-token") or request.cookies.get(
+            "access-token-unsecure"
+        )
         user = gradio_app.tokens.get(token)  # get user
-        allowed_users = [user, 'autogen', 'arxiv_cache', default_user_name]  # three user path that can be accessed
+        allowed_users = [
+            user,
+            "autogen",
+            "arxiv_cache",
+            default_user_name,
+        ]  # three user path that can be accessed
         for user_allowed in allowed_users:
             # exact match
-            if f"{os.sep}".join(path_or_url.split(os.sep)[:2]) == os.path.join(sensitive_path, user_allowed):
+            if f"{os.sep}".join(path_or_url.split(os.sep)[:2]) == os.path.join(
+                sensitive_path, user_allowed
+            ):
                 return True
-        return False # "越权访问!"
+        return False  # "越权访问!"
     return True
 
 
@@ -106,22 +135,35 @@ class Server(uvicorn.Server):
         self.thread.join()
 
 
-def start_app(app_block, CONCURRENT_COUNT, AUTHENTICATION, PORT, SSL_KEYFILE, SSL_CERTFILE):
-    import uvicorn
+def start_app(
+    app_block, CONCURRENT_COUNT, AUTHENTICATION, PORT, SSL_KEYFILE, SSL_CERTFILE
+):
     import fastapi
     import gradio as gr
+    import uvicorn
     from fastapi import FastAPI
     from gradio.routes import App
+
     from toolbox import get_conf
-    CUSTOM_PATH, PATH_LOGGING = get_conf('CUSTOM_PATH', 'PATH_LOGGING')
+
+    CUSTOM_PATH, PATH_LOGGING = get_conf("CUSTOM_PATH", "PATH_LOGGING")
 
     # --- --- configurate gradio app block --- ---
-    app_block:gr.Blocks
+    app_block: gr.Blocks
     app_block.ssl_verify = False
-    app_block.auth_message = '请登录'
-    app_block.favicon_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "docs/logo.png")
+    app_block.auth_message = "请登录"
+    app_block.favicon_path = os.path.join(
+        os.path.dirname(os.path.dirname(__file__)), "docs/logo.png"
+    )
     app_block.auth = AUTHENTICATION if len(AUTHENTICATION) != 0 else None
-    app_block.blocked_paths = ["config.py", "__pycache__", "config_private.py", "docker-compose.yml", "Dockerfile", f"{PATH_LOGGING}/admin"]
+    app_block.blocked_paths = [
+        "config.py",
+        "__pycache__",
+        "config_private.py",
+        "docker-compose.yml",
+        "Dockerfile",
+        f"{PATH_LOGGING}/admin",
+    ]
     app_block.dev_mode = False
     app_block.config = app_block.get_config_file()
     app_block.enable_queue = True
@@ -152,6 +194,7 @@ def start_app(app_block, CONCURRENT_COUNT, AUTHENTICATION, PORT, SSL_KEYFILE, SS
                 dependencies = route.dependencies
                 endpoint = route.endpoint
                 gradio_app.router.routes.remove(route)
+
         @gradio_app.get("/file/{path:path}", dependencies=dependencies)
         @gradio_app.head("/file={path_or_url:path}", dependencies=dependencies)
         @gradio_app.get("/file={path_or_url:path}", dependencies=dependencies)
@@ -161,18 +204,22 @@ def start_app(app_block, CONCURRENT_COUNT, AUTHENTICATION, PORT, SSL_KEYFILE, SS
             stripped = path_or_url.lstrip().lower()
             if stripped.startswith("https://") or stripped.startswith("http://"):
                 return "账户密码授权模式下, 禁止链接!"
-            if '../' in stripped:
+            if "../" in stripped:
                 return "非法路径!"
             return await endpoint(path_or_url, request)
 
         from fastapi import Request, status
         from fastapi.responses import FileResponse, RedirectResponse
+
         @gradio_app.get("/academic_logout")
         async def logout():
-            response = RedirectResponse(url=CUSTOM_PATH, status_code=status.HTTP_302_FOUND)
-            response.delete_cookie('access-token')
-            response.delete_cookie('access-token-unsecure')
+            response = RedirectResponse(
+                url=CUSTOM_PATH, status_code=status.HTTP_302_FOUND
+            )
+            response.delete_cookie("access-token")
+            response.delete_cookie("access-token-unsecure")
             return response
+
     else:
         dependencies = []
         endpoint = None
@@ -183,6 +230,7 @@ def start_app(app_block, CONCURRENT_COUNT, AUTHENTICATION, PORT, SSL_KEYFILE, SS
                 dependencies = route.dependencies
                 endpoint = route.endpoint
                 gradio_app.router.routes.remove(route)
+
         @gradio_app.get("/file/{path:path}", dependencies=dependencies)
         @gradio_app.head("/file={path_or_url:path}", dependencies=dependencies)
         @gradio_app.get("/file={path_or_url:path}", dependencies=dependencies)
@@ -190,7 +238,7 @@ def start_app(app_block, CONCURRENT_COUNT, AUTHENTICATION, PORT, SSL_KEYFILE, SS
             stripped = path_or_url.lstrip().lower()
             if stripped.startswith("https://") or stripped.startswith("http://"):
                 return "账户密码授权模式下, 禁止链接!"
-            if '../' in stripped:
+            if "../" in stripped:
                 return "非法路径!"
             return await endpoint(path_or_url, request)
 
@@ -199,58 +247,75 @@ def start_app(app_block, CONCURRENT_COUNT, AUTHENTICATION, PORT, SSL_KEYFILE, SS
     if TTS_TYPE != "DISABLE":
         # audio generation functionality
         import httpx
-        from fastapi import FastAPI, Request, HTTPException
+        from fastapi import FastAPI, HTTPException, Request
         from starlette.responses import Response
+
         async def forward_request(request: Request, method: str) -> Response:
             async with httpx.AsyncClient() as client:
                 try:
                     # Forward the request to the target service
                     if TTS_TYPE == "EDGE_TTS":
                         import tempfile
-                        import edge_tts
-                        import wave
                         import uuid
+                        import wave
+
+                        import edge_tts
                         from pydub import AudioSegment
+
                         json = await request.json()
                         voice = get_conf("EDGE_TTS_VOICE")
-                        tts = edge_tts.Communicate(text=json['text'], voice=voice)
+                        tts = edge_tts.Communicate(text=json["text"], voice=voice)
                         temp_folder = tempfile.gettempdir()
                         temp_file_name = str(uuid.uuid4().hex)
-                        temp_file = os.path.join(temp_folder, f'{temp_file_name}.mp3')
+                        temp_file = os.path.join(temp_folder, f"{temp_file_name}.mp3")
                         await tts.save(temp_file)
                         try:
                             mp3_audio = AudioSegment.from_file(temp_file, format="mp3")
                             mp3_audio.export(temp_file, format="wav")
-                            with open(temp_file, 'rb') as wav_file: t = wav_file.read()
+                            with open(temp_file, "rb") as wav_file:
+                                t = wav_file.read()
                             os.remove(temp_file)
                             return Response(content=t)
                         except:
-                            raise RuntimeError("ffmpeg未安装，无法处理EdgeTTS音频。安装方法见`https://github.com/jiaaro/pydub#getting-ffmpeg-set-up`")
+                            raise RuntimeError(
+                                "ffmpeg未安装，无法处理EdgeTTS音频。安装方法见`https://github.com/jiaaro/pydub#getting-ffmpeg-set-up`"
+                            )
                     if TTS_TYPE == "LOCAL_SOVITS_API":
                         # Forward the request to the target service
                         TARGET_URL = get_conf("GPT_SOVITS_URL")
                         body = await request.body()
                         resp = await client.post(TARGET_URL, content=body, timeout=60)
                         # Return the response from the target service
-                        return Response(content=resp.content, status_code=resp.status_code, headers=dict(resp.headers))
+                        return Response(
+                            content=resp.content,
+                            status_code=resp.status_code,
+                            headers=dict(resp.headers),
+                        )
                 except httpx.RequestError as e:
-                    raise HTTPException(status_code=400, detail=f"Request to the target service failed: {str(e)}")
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Request to the target service failed: {str(e)}",
+                    )
+
         @gradio_app.post("/vits")
         async def forward_post_request(request: Request):
             return await forward_request(request, "POST")
 
     # --- --- app_lifespan --- ---
     from contextlib import asynccontextmanager
+
     @asynccontextmanager
     async def app_lifespan(app):
         async def startup_gradio_app():
             if gradio_app.get_blocks().enable_queue:
                 gradio_app.get_blocks().startup_events()
+
         async def shutdown_gradio_app():
             pass
-        await startup_gradio_app() # startup logic here
+
+        await startup_gradio_app()  # startup logic here
         yield  # The application will serve requests after this point
-        await shutdown_gradio_app() # cleanup/shutdown logic here
+        await shutdown_gradio_app()  # cleanup/shutdown logic here
 
     # --- --- FastAPI --- ---
     fastapi_app = FastAPI(lifespan=app_lifespan)
@@ -258,19 +323,20 @@ def start_app(app_block, CONCURRENT_COUNT, AUTHENTICATION, PORT, SSL_KEYFILE, SS
 
     # --- --- favicon and block fastapi api reference routes --- ---
     from starlette.responses import JSONResponse
-    if CUSTOM_PATH != '/':
+
+    if CUSTOM_PATH != "/":
         from fastapi.responses import FileResponse
+
         @fastapi_app.get("/favicon.ico")
         async def favicon():
             return FileResponse(app_block.favicon_path)
 
         @fastapi_app.middleware("http")
         async def middleware(request: Request, call_next):
-            if request.scope['path'] in ["/docs", "/redoc", "/openapi.json"]:
+            if request.scope["path"] in ["/docs", "/redoc", "/openapi.json"]:
                 return JSONResponse(status_code=404, content={"message": "Not Found"})
             response = await call_next(request)
             return response
-
 
     # --- --- uvicorn.Config --- ---
     ssl_keyfile = None if SSL_KEYFILE == "" else SSL_KEYFILE
@@ -295,8 +361,8 @@ def start_app(app_block, CONCURRENT_COUNT, AUTHENTICATION, PORT, SSL_KEYFILE, SS
         path_to_local_server = f"https://{url_host_name}:{PORT}/"
     else:
         path_to_local_server = f"http://{url_host_name}:{PORT}/"
-    if CUSTOM_PATH != '/':
-        path_to_local_server += CUSTOM_PATH.lstrip('/').rstrip('/') + '/'
+    if CUSTOM_PATH != "/":
+        path_to_local_server += CUSTOM_PATH.lstrip("/").rstrip("/") + "/"
     # --- --- begin  --- ---
     server.run_in_thread()
 
@@ -317,6 +383,10 @@ def start_app(app_block, CONCURRENT_COUNT, AUTHENTICATION, PORT, SSL_KEYFILE, SS
         "http": "",
         "https": "",
     }
-    requests.get(f"{app_block.local_url}startup-events", verify=app_block.ssl_verify, proxies=forbid_proxies)
+    requests.get(
+        f"{app_block.local_url}startup-events",
+        verify=app_block.ssl_verify,
+        proxies=forbid_proxies,
+    )
     app_block.is_running = True
     app_block.block_thread()

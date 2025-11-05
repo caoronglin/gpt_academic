@@ -73,4 +73,4 @@ Always generate English search terms regardless of the input language.
 Consider using field-specific search terms and appropriate filters to improve search accuracy.
 
 Remember: ADS is specifically for astronomy, astrophysics, and physics research. 
-Medical, biological, or general research queries should return "none".""" 
+Medical, biological, or general research queries should return "none"."""

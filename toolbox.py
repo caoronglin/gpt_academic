@@ -1,46 +1,45 @@
-
-import importlib
-import time
-import inspect
-import re
-import os
 import base64
-import gradio
-import shutil
 import glob
+import importlib
+import inspect
 import json
+import os
+import re
+import shutil
+import time
 import uuid
-from loguru import logger
 from functools import wraps
 from textwrap import dedent
-from shared_utils.config_loader import get_conf
-from shared_utils.config_loader import set_conf
-from shared_utils.config_loader import set_multi_conf
-from shared_utils.config_loader import read_single_conf_with_lru_cache
-from shared_utils.advanced_markdown_format import format_io
-from shared_utils.advanced_markdown_format import markdown_convertion
-from shared_utils.key_pattern_manager import select_api_key
-from shared_utils.key_pattern_manager import is_any_api_key
-from shared_utils.key_pattern_manager import what_keys
-from shared_utils.connect_void_terminal import get_chat_handle
-from shared_utils.connect_void_terminal import get_plugin_handle
-from shared_utils.connect_void_terminal import get_plugin_default_kwargs
-from shared_utils.connect_void_terminal import get_chat_default_kwargs
-from shared_utils.text_mask import apply_gpt_academic_string_mask
-from shared_utils.text_mask import build_gpt_academic_masked_string
-from shared_utils.text_mask import apply_gpt_academic_string_mask_langbased
-from shared_utils.text_mask import build_gpt_academic_masked_string_langbased
-from shared_utils.map_names import map_friendly_names_to_model
-from shared_utils.map_names import map_model_to_friendly_names
-from shared_utils.map_names import read_one_api_model_name
-from shared_utils.handle_upload import html_local_file
-from shared_utils.handle_upload import html_local_img
-from shared_utils.handle_upload import file_manifest_filter_type
-from shared_utils.handle_upload import extract_archive
-from shared_utils.context_clip_policy import clip_history
-from shared_utils.context_clip_policy import auto_context_clip_each_message
-from shared_utils.context_clip_policy import auto_context_clip_search_optimal
 from typing import List
+
+import gradio
+from loguru import logger
+
+from shared_utils.advanced_markdown_format import (format_io,
+                                                   markdown_convertion)
+from shared_utils.config_loader import (get_conf,
+                                        read_single_conf_with_lru_cache,
+                                        set_conf, set_multi_conf)
+from shared_utils.connect_void_terminal import (get_chat_default_kwargs,
+                                                get_chat_handle,
+                                                get_plugin_default_kwargs,
+                                                get_plugin_handle)
+from shared_utils.context_clip_policy import (auto_context_clip_each_message,
+                                              auto_context_clip_search_optimal,
+                                              clip_history)
+from shared_utils.handle_upload import (extract_archive,
+                                        file_manifest_filter_type,
+                                        html_local_file, html_local_img)
+from shared_utils.key_pattern_manager import (is_any_api_key, select_api_key,
+                                              what_keys)
+from shared_utils.map_names import (map_friendly_names_to_model,
+                                    map_model_to_friendly_names,
+                                    read_one_api_model_name)
+from shared_utils.text_mask import (apply_gpt_academic_string_mask,
+                                    apply_gpt_academic_string_mask_langbased,
+                                    build_gpt_academic_masked_string,
+                                    build_gpt_academic_masked_string_langbased)
+
 pj = os.path.join
 default_user_name = "default_user"
 
@@ -88,41 +87,58 @@ class ChatBotWithCookies(list):
     def get_user(self):
         return self._cookies.get("user_name", default_user_name)
 
+
 def ArgsGeneralWrapper(f):
     """
     装饰器函数ArgsGeneralWrapper，用于重组输入参数，改变输入参数的顺序与结构。
     该装饰器是大多数功能调用的入口。
     函数示意图：https://mermaid.live/edit#pako:eNqNVFtPGkEY_StkntoEDQtLoTw0sWqapjQxVWPabmOm7AiEZZcsQ9QiiW012qixqdeqqIn10geBh6ZR8PJnmAWe-hc6l3VhrWnLEzNzzvnO953ZyYOYoSIQAWOaMR5LQBN7hvoU3UN_g5iu7imAXEyT4wUF3Pd0dT3y9KGYYUJsmK8V0GPGs0-QjkyojZgwk0Fm82C2dVghX08U8EaoOHjOfoEMU0XmADRhOksVWnNLjdpM82qFzB6S5Q_WWsUhuqCc3JtAsVR_OoMnhyZwXgHWwbS1d4gnsLVZJp-P6mfVxveqAgqC70Jz_pQCOGDKM5xFdNNPDdilF6uSU_hOYqu4a3MHYDZLDzq5fodrC3PWcEaFGPUaRiqJWK_W9g9rvRITa4dhy_0nw67SiePMp3oSR6PPn41DGgllkvkizYwsrmtaejTFd8V4yekGmT1zqrt4XGlAy8WTuiPULF01LksZvukSajfQQRAxmYi5S0D81sDcyzapVdn6sYFHkjhhGyel3frVQnvsnbR23lEjlhIlaOJiFPWzU5G4tfNJo8ejwp47-TbvJkKKZvmxA6SKo16oaazJysfG6klr9T0pbTW2ZqzlL_XaT8fYbQLXe4mSmvoCZXMaa7FePW6s7jVqK9bujvse3WFjY5_Z4KfsA4oiPY4T7Drvn1tLJTbG1to1qR79ulgk89-oJbvZzbIwJty6u20LOReWa9BvwserUd9s9MIKc3x5TUWEoAhUyJK5y85w_yG-dFu_R9waoU7K581y8W_qLle35-rG9Nxcrz8QHRsc0K-r9NViYRT36KsFvCCNzDRMqvSVyzOKAnACpZECIvSvCs2UAhS9QHEwh43BST0GItjMIS_I8e-sLwnj9A262cxA_ZVh0OUY1LJiDSJ5MAEiUijYLUtBORR6KElyQPaCSRDpksNSd8AfluSgHPaFC17wjrOlbgbzyyFf4IFPDvoD_sJvnkdK-g
     """
-    def decorated(request: gradio.Request, cookies:dict, max_length:int, llm_model:str,
-                  txt:str, txt2:str, top_p:float, temperature:float, chatbot:list,
-                  json_history:str, system_prompt:str, plugin_advanced_arg:dict, *args):
+
+    def decorated(
+        request: gradio.Request,
+        cookies: dict,
+        max_length: int,
+        llm_model: str,
+        txt: str,
+        txt2: str,
+        top_p: float,
+        temperature: float,
+        chatbot: list,
+        json_history: str,
+        system_prompt: str,
+        plugin_advanced_arg: dict,
+        *args,
+    ):
         txt_passon = txt
         history = json.loads(json_history) if json_history else []
-        if txt == "" and txt2 != "": txt_passon = txt2
+        if txt == "" and txt2 != "":
+            txt_passon = txt2
         # 引入一个有cookie的chatbot
         if request.username is not None:
             user_name = request.username
         else:
             user_name = default_user_name
         embed_model = get_conf("EMBEDDING_MODEL")
-        cookies.update({
-            'top_p': top_p,
-            'api_key': cookies['api_key'],
-            'llm_model': llm_model,
-            'embed_model': embed_model,
-            'temperature': temperature,
-            'user_name': user_name,
-        })
+        cookies.update(
+            {
+                "top_p": top_p,
+                "api_key": cookies["api_key"],
+                "llm_model": llm_model,
+                "embed_model": embed_model,
+                "temperature": temperature,
+                "user_name": user_name,
+            }
+        )
         llm_kwargs = {
-            'api_key': cookies['api_key'],
-            'llm_model': llm_model,
-            'embed_model': embed_model,
-            'top_p': top_p,
-            'max_length': max_length,
-            'temperature': temperature,
-            'client_ip': request.client.host,
-            'most_recent_uploaded': cookies.get('most_recent_uploaded')
+            "api_key": cookies["api_key"],
+            "llm_model": llm_model,
+            "embed_model": embed_model,
+            "top_p": top_p,
+            "max_length": max_length,
+            "temperature": temperature,
+            "client_ip": request.client.host,
+            "most_recent_uploaded": cookies.get("most_recent_uploaded"),
         }
         if isinstance(plugin_advanced_arg, str):
             plugin_kwargs = {"advanced_arg": plugin_advanced_arg}
@@ -131,32 +147,70 @@ def ArgsGeneralWrapper(f):
         chatbot_with_cookie = ChatBotWithCookies(cookies)
         chatbot_with_cookie.write_list(chatbot)
 
-        if cookies.get('lock_plugin', None) is None:
+        if cookies.get("lock_plugin", None) is None:
             # 正常状态
             if len(args) == 0:  # 插件通道
-                yield from f(txt_passon, llm_kwargs, plugin_kwargs, chatbot_with_cookie, history, system_prompt, request)
-            else:               # 对话通道，或者基础功能通道
+                yield from f(
+                    txt_passon,
+                    llm_kwargs,
+                    plugin_kwargs,
+                    chatbot_with_cookie,
+                    history,
+                    system_prompt,
+                    request,
+                )
+            else:  # 对话通道，或者基础功能通道
                 # 基础对话通道，或者基础功能通道
-                if get_conf('AUTO_CONTEXT_CLIP_ENABLE'):
+                if get_conf("AUTO_CONTEXT_CLIP_ENABLE"):
                     txt_passon, history = auto_context_clip(txt_passon, history)
-                yield from f(txt_passon, llm_kwargs, plugin_kwargs, chatbot_with_cookie, history, system_prompt, *args)
+                yield from f(
+                    txt_passon,
+                    llm_kwargs,
+                    plugin_kwargs,
+                    chatbot_with_cookie,
+                    history,
+                    system_prompt,
+                    *args,
+                )
         else:
             # 处理少数情况下的特殊插件的锁定状态
-            module, fn_name = cookies['lock_plugin'].split('->')
+            module, fn_name = cookies["lock_plugin"].split("->")
             f_hot_reload = getattr(importlib.import_module(module, fn_name), fn_name)
-            yield from f_hot_reload(txt_passon, llm_kwargs, plugin_kwargs, chatbot_with_cookie, history, system_prompt, request)
+            yield from f_hot_reload(
+                txt_passon,
+                llm_kwargs,
+                plugin_kwargs,
+                chatbot_with_cookie,
+                history,
+                system_prompt,
+                request,
+            )
             # 判断一下用户是否错误地通过对话通道进入，如果是，则进行提醒
             final_cookies = chatbot_with_cookie.get_cookies()
             # len(args) != 0 代表“提交”键对话通道，或者基础功能通道
-            if len(args) != 0 and 'files_to_promote' in final_cookies and len(final_cookies['files_to_promote']) > 0:
+            if (
+                len(args) != 0
+                and "files_to_promote" in final_cookies
+                and len(final_cookies["files_to_promote"]) > 0
+            ):
                 chatbot_with_cookie.append(
-                    ["检测到**滞留的缓存文档**，请及时处理。", "请及时点击“**保存当前对话**”获取所有滞留文档。"])
-                yield from update_ui(chatbot_with_cookie, final_cookies['history'], msg="检测到被滞留的缓存文档")
+                    [
+                        "检测到**滞留的缓存文档**，请及时处理。",
+                        "请及时点击“**保存当前对话**”获取所有滞留文档。",
+                    ]
+                )
+                yield from update_ui(
+                    chatbot_with_cookie,
+                    final_cookies["history"],
+                    msg="检测到被滞留的缓存文档",
+                )
 
     return decorated
 
 
-def update_ui(chatbot:ChatBotWithCookies, history:list, msg:str="正常", **kwargs):  # 刷新界面
+def update_ui(
+    chatbot: ChatBotWithCookies, history: list, msg: str = "正常", **kwargs
+):  # 刷新界面
     """
     刷新用户界面
     """
@@ -184,12 +238,20 @@ def update_ui(chatbot:ChatBotWithCookies, history:list, msg:str="正常", **kwar
     else:
         chatbot_gr = chatbot
 
-    history = [str(history_item) for history_item in history] # ensure all items are string
+    history = [
+        str(history_item) for history_item in history
+    ]  # ensure all items are string
     json_history = json.dumps(history, ensure_ascii=False)
     yield cookies, chatbot_gr, json_history, msg
 
 
-def update_ui_latest_msg(lastmsg:str, chatbot:ChatBotWithCookies, history:list, delay:float=1, msg:str="正常"):  # 刷新界面
+def update_ui_latest_msg(
+    lastmsg: str,
+    chatbot: ChatBotWithCookies,
+    history: list,
+    delay: float = 1,
+    msg: str = "正常",
+):  # 刷新界面
     """
     刷新用户界面
     """
@@ -202,7 +264,8 @@ def update_ui_latest_msg(lastmsg:str, chatbot:ChatBotWithCookies, history:list, 
 
 
 def trimmed_format_exc():
-    import os, traceback
+    import os
+    import traceback
 
     str = traceback.format_exc()
     current_path = os.getcwd()
@@ -211,16 +274,18 @@ def trimmed_format_exc():
 
 
 def trimmed_format_exc_markdown():
-    return '\n\n```\n' + trimmed_format_exc() + '```'
+    return "\n\n```\n" + trimmed_format_exc() + "```"
 
 
 class FriendlyException(Exception):
     def generate_error_html(self):
-        return dedent(f"""
+        return dedent(
+            f"""
             <div class="center-div" style="color: crimson;text-align: center;">
                 {"<br>".join(self.args)}
             </div>
-        """)
+        """
+        )
 
 
 def CatchException(f):
@@ -229,24 +294,49 @@ def CatchException(f):
     """
 
     @wraps(f)
-    def decorated(main_input:str, llm_kwargs:dict, plugin_kwargs:dict,
-                  chatbot_with_cookie:ChatBotWithCookies, history:list, *args, **kwargs):
+    def decorated(
+        main_input: str,
+        llm_kwargs: dict,
+        plugin_kwargs: dict,
+        chatbot_with_cookie: ChatBotWithCookies,
+        history: list,
+        *args,
+        **kwargs,
+    ):
         try:
-            yield from f(main_input, llm_kwargs, plugin_kwargs, chatbot_with_cookie, history, *args, **kwargs)
+            yield from f(
+                main_input,
+                llm_kwargs,
+                plugin_kwargs,
+                chatbot_with_cookie,
+                history,
+                *args,
+                **kwargs,
+            )
         except FriendlyException as e:
-            tb_str = '```\n' + trimmed_format_exc() + '```'
+            tb_str = "```\n" + trimmed_format_exc() + "```"
             if len(chatbot_with_cookie) == 0:
                 chatbot_with_cookie.clear()
                 chatbot_with_cookie.append(["插件调度异常:\n" + tb_str, None])
-            chatbot_with_cookie[-1] = [chatbot_with_cookie[-1][0], e.generate_error_html()]
-            yield from update_ui(chatbot=chatbot_with_cookie, history=history, msg=f'异常')  # 刷新界面
+            chatbot_with_cookie[-1] = [
+                chatbot_with_cookie[-1][0],
+                e.generate_error_html(),
+            ]
+            yield from update_ui(
+                chatbot=chatbot_with_cookie, history=history, msg=f"异常"
+            )  # 刷新界面
         except Exception as e:
-            tb_str = '```\n' + trimmed_format_exc() + '```'
+            tb_str = "```\n" + trimmed_format_exc() + "```"
             if len(chatbot_with_cookie) == 0:
                 chatbot_with_cookie.clear()
                 chatbot_with_cookie.append(["插件调度异常", "异常原因"])
-            chatbot_with_cookie[-1] = [chatbot_with_cookie[-1][0], f"[Local Message] 插件调用出错: \n\n{tb_str} \n"]
-            yield from update_ui(chatbot=chatbot_with_cookie, history=history, msg=f'异常 {e}')  # 刷新界面
+            chatbot_with_cookie[-1] = [
+                chatbot_with_cookie[-1][0],
+                f"[Local Message] 插件调用出错: \n\n{tb_str} \n",
+            ]
+            yield from update_ui(
+                chatbot=chatbot_with_cookie, history=history, msg=f"异常 {e}"
+            )  # 刷新界面
 
     return decorated
 
@@ -293,7 +383,7 @@ def HotReload(f):
 """
 
 
-def get_reduce_token_percent(text:str):
+def get_reduce_token_percent(text: str):
     """
     * 此函数未来将被弃用
     """
@@ -312,7 +402,10 @@ def get_reduce_token_percent(text:str):
 
 
 def write_history_to_file(
-    history:list, file_basename:str=None, file_fullname:str=None, auto_caption:bool=True
+    history: list,
+    file_basename: str = None,
+    file_fullname: str = None,
+    auto_caption: bool = True,
 ):
     """
     将对话记录history以Markdown格式写入文件中。如果没有指定文件名，则使用当前时间生成文件名。
@@ -346,7 +439,7 @@ def write_history_to_file(
     return res
 
 
-def regular_txt_to_markdown(text:str):
+def regular_txt_to_markdown(text: str):
     """
     将普通文本转换为Markdown格式的文本。
     """
@@ -356,7 +449,7 @@ def regular_txt_to_markdown(text:str):
     return text
 
 
-def report_exception(chatbot:ChatBotWithCookies, history:list, a:str, b:str):
+def report_exception(chatbot: ChatBotWithCookies, history: list, a: str, b: str):
     """
     向chatbot中添加错误信息
     """
@@ -364,7 +457,7 @@ def report_exception(chatbot:ChatBotWithCookies, history:list, a:str, b:str):
     history.extend([a, b])
 
 
-def find_free_port()->int:
+def find_free_port() -> int:
     """
     返回当前系统中可用的未使用端口。
     """
@@ -377,7 +470,7 @@ def find_free_port()->int:
         return s.getsockname()[1]
 
 
-def find_recent_files(directory:str)->List[str]:
+def find_recent_files(directory: str) -> List[str]:
     """
     Find files that is created with in one minutes under a directory with python, write a function
     """
@@ -402,7 +495,7 @@ def find_recent_files(directory:str)->List[str]:
     return recent_files
 
 
-def file_already_in_downloadzone(file:str, user_path:str):
+def file_already_in_downloadzone(file: str, user_path: str):
     try:
         parent_path = os.path.abspath(user_path)
         child_path = os.path.abspath(file)
@@ -414,7 +507,9 @@ def file_already_in_downloadzone(file:str, user_path:str):
         return False
 
 
-def promote_file_to_downloadzone(file:str, rename_file:str=None, chatbot:ChatBotWithCookies=None):
+def promote_file_to_downloadzone(
+    file: str, rename_file: str = None, chatbot: ChatBotWithCookies = None
+):
     # 将文件复制一份到下载区
     import shutil
 
@@ -449,12 +544,12 @@ def promote_file_to_downloadzone(file:str, rename_file:str=None, chatbot:ChatBot
     return new_path
 
 
-def disable_auto_promotion(chatbot:ChatBotWithCookies):
+def disable_auto_promotion(chatbot: ChatBotWithCookies):
     chatbot._cookies.update({"files_to_promote": []})
     return
 
 
-def del_outdated_uploads(outdate_time_seconds:float, target_path_base:str=None):
+def del_outdated_uploads(outdate_time_seconds: float, target_path_base: str = None):
     if target_path_base is None:
         user_upload_dir = get_conf("PATH_PRIVATE_UPLOAD")
     else:
@@ -473,8 +568,9 @@ def del_outdated_uploads(outdate_time_seconds:float, target_path_base:str=None):
     return
 
 
-
-def to_markdown_tabs(head: list, tabs: list, alignment=":---:", column=False, omit_path=None):
+def to_markdown_tabs(
+    head: list, tabs: list, alignment=":---:", column=False, omit_path=None
+):
     """
     Args:
         head: 表头：[]
@@ -507,8 +603,13 @@ def to_markdown_tabs(head: list, tabs: list, alignment=":---:", column=False, om
 
 
 def on_file_uploaded(
-    request: gradio.Request, files:List[str], chatbot:ChatBotWithCookies,
-    txt:str, txt2:str, checkboxes:List[str], cookies:dict
+    request: gradio.Request,
+    files: List[str],
+    chatbot: ChatBotWithCookies,
+    txt: str,
+    txt2: str,
+    checkboxes: List[str],
+    cookies: dict,
 ):
     """
     当文件被上传时的回调函数
@@ -541,17 +642,22 @@ def on_file_uploaded(
     moved_files = [fp for fp in files]
     max_file_to_show = 10
     if len(moved_files) > max_file_to_show:
-        moved_files = moved_files[:max_file_to_show//2] + [f'... ( 📌省略{len(moved_files) - max_file_to_show}个文件的显示 ) ...'] + \
-                      moved_files[-max_file_to_show//2:]
-    moved_files_str = to_markdown_tabs(head=["文件"], tabs=[moved_files], omit_path=target_path_base)
+        moved_files = (
+            moved_files[: max_file_to_show // 2]
+            + [f"... ( 📌省略{len(moved_files) - max_file_to_show}个文件的显示 ) ..."]
+            + moved_files[-max_file_to_show // 2 :]
+        )
+    moved_files_str = to_markdown_tabs(
+        head=["文件"], tabs=[moved_files], omit_path=target_path_base
+    )
     chatbot.append(
         [
             "我上传了文件，请查收",
-            f"[Local Message] 收到以下文件 （上传到路径：{target_path_base}）: " +
-            f"\n\n{moved_files_str}" +
-            f"\n\n调用路径参数已自动修正到: \n\n{txt}" +
-            f"\n\n现在您点击任意函数插件时，以上文件将被作为输入参数" +
-            upload_msg,
+            f"[Local Message] 收到以下文件 （上传到路径：{target_path_base}）: "
+            + f"\n\n{moved_files_str}"
+            + f"\n\n调用路径参数已自动修正到: \n\n{txt}"
+            + f"\n\n现在您点击任意函数插件时，以上文件将被作为输入参数"
+            + upload_msg,
         ]
     )
 
@@ -572,7 +678,7 @@ def on_file_uploaded(
     return chatbot, txt, txt2, cookies
 
 
-def generate_file_link(report_files:List[str]):
+def generate_file_link(report_files: List[str]):
     file_links = ""
     for f in report_files:
         file_links += (
@@ -581,7 +687,7 @@ def generate_file_link(report_files:List[str]):
     return file_links
 
 
-def on_report_generated(cookies:dict, files:List[str], chatbot:ChatBotWithCookies):
+def on_report_generated(cookies: dict, files: List[str], chatbot: ChatBotWithCookies):
     if "files_to_promote" in cookies:
         report_files = cookies["files_to_promote"]
         cookies.pop("files_to_promote")
@@ -594,7 +700,12 @@ def on_report_generated(cookies:dict, files:List[str], chatbot:ChatBotWithCookie
         file_links += (
             f'<br/><a href="file={os.path.abspath(f)}" target="_blank">{f}</a>'
         )
-    chatbot.append([None, f"已经添加到右侧“文件下载区”（可能处于折叠状态），请查收。您也可以点击以下链接直接下载：{file_links}"])
+    chatbot.append(
+        [
+            None,
+            f"已经添加到右侧“文件下载区”（可能处于折叠状态），请查收。您也可以点击以下链接直接下载：{file_links}",
+        ]
+    )
     return cookies, report_files, chatbot
 
 
@@ -704,8 +815,8 @@ def run_gradio_in_subpath(demo, auth, port, custom_path):
 
     if not is_path_legal(custom_path):
         raise RuntimeError("Illegal custom path")
-    import uvicorn
     import gradio as gr
+    import uvicorn
     from fastapi import FastAPI
 
     app = FastAPI()
@@ -718,14 +829,14 @@ def run_gradio_in_subpath(demo, auth, port, custom_path):
     app = gr.mount_gradio_app(app, demo, path=custom_path)
     uvicorn.run(app, host="0.0.0.0", port=port)  # , auth=auth
 
-def auto_context_clip(current, history, policy='search_optimal'):
-    if policy == 'each_message':
+
+def auto_context_clip(current, history, policy="search_optimal"):
+    if policy == "each_message":
         return auto_context_clip_each_message(current, history)
-    elif policy == 'search_optimal':
+    elif policy == "search_optimal":
         return auto_context_clip_search_optimal(current, history)
     else:
         raise RuntimeError(f"未知的自动上下文裁剪策略: {policy}。")
-
 
 
 """
@@ -741,8 +852,8 @@ def auto_context_clip(current, history, policy='search_optimal'):
 
 
 def zip_folder(source_folder, dest_folder, zip_name):
-    import zipfile
     import os
+    import zipfile
 
     # Make sure the source folder exists
     if not os.path.exists(source_folder):
@@ -819,7 +930,7 @@ def is_the_upload_folder(string):
         return False
 
 
-def get_user(chatbotwithcookies:ChatBotWithCookies):
+def get_user(chatbotwithcookies: ChatBotWithCookies):
     return chatbotwithcookies._cookies.get("user_name", default_user_name)
 
 
@@ -885,7 +996,7 @@ def get_pictures_list(path):
     return file_manifest
 
 
-def have_any_recent_upload_image_files(chatbot:ChatBotWithCookies, pop:bool=False):
+def have_any_recent_upload_image_files(chatbot: ChatBotWithCookies, pop: bool = False):
     _5min = 5 * 60
     if chatbot is None:
         return False, None  # chatbot is None
@@ -905,8 +1016,9 @@ def have_any_recent_upload_image_files(chatbot:ChatBotWithCookies, pop:bool=Fals
     else:
         return False, None  # most_recent_uploaded is too old
 
+
 # Claude3 model supports graphic context dialogue, reads all images
-def every_image_file_in_path(chatbot:ChatBotWithCookies):
+def every_image_file_in_path(chatbot: ChatBotWithCookies):
     if chatbot is None:
         return False, []  # chatbot is None
     most_recent_uploaded = chatbot._cookies.get("most_recent_uploaded", None)
@@ -917,6 +1029,7 @@ def every_image_file_in_path(chatbot:ChatBotWithCookies):
     if len(file_manifest) == 0:
         return False, []
     return True, file_manifest
+
 
 # Function to encode the image
 def encode_image(image_path):
@@ -942,7 +1055,7 @@ def check_packages(packages=[]):
 def map_file_to_sha256(file_path):
     import hashlib
 
-    with open(file_path, 'rb') as file:
+    with open(file_path, "rb") as file:
         content = file.read()
 
     # Calculate the SHA-256 hash of the file contents
@@ -952,19 +1065,22 @@ def map_file_to_sha256(file_path):
 
 
 def check_repeat_upload(new_pdf_path, pdf_hash):
-    '''
+    """
     检查历史上传的文件是否与新上传的文件相同，如果相同则返回(True, 重复文件路径)，否则返回(False，None)
-    '''
-    from toolbox import get_conf
+    """
     import PyPDF2
+
+    from toolbox import get_conf
 
     user_upload_dir = os.path.dirname(os.path.dirname(new_pdf_path))
     file_name = os.path.basename(new_pdf_path)
 
-    file_manifest = [f for f in glob.glob(f'{user_upload_dir}/**/{file_name}', recursive=True)]
+    file_manifest = [
+        f for f in glob.glob(f"{user_upload_dir}/**/{file_name}", recursive=True)
+    ]
 
     for saved_file in file_manifest:
-        with open(new_pdf_path, 'rb') as file1, open(saved_file, 'rb') as file2:
+        with open(new_pdf_path, "rb") as file1, open(saved_file, "rb") as file2:
             reader1 = PyPDF2.PdfFileReader(file1)
             reader2 = PyPDF2.PdfFileReader(file2)
 
@@ -979,8 +1095,9 @@ def check_repeat_upload(new_pdf_path, pdf_hash):
                 if page1 != page2:
                     continue
 
-        maybe_project_dir = glob.glob('{}/**/{}'.format(get_log_folder(), pdf_hash + ".tag"), recursive=True)
-
+        maybe_project_dir = glob.glob(
+            "{}/**/{}".format(get_log_folder(), pdf_hash + ".tag"), recursive=True
+        )
 
         if len(maybe_project_dir) > 0:
             return True, os.path.dirname(maybe_project_dir[0])
@@ -988,14 +1105,16 @@ def check_repeat_upload(new_pdf_path, pdf_hash):
     # 如果所有页的内容都相同，返回 True
     return False, None
 
+
 def log_chat(llm_model: str, input_str: str, output_str: str):
     try:
         if output_str and input_str and llm_model:
             uid = str(uuid.uuid4().hex)
-            input_str = input_str.rstrip('\n')
-            output_str = output_str.rstrip('\n')
-            logger.bind(chat_msg=True).info(dedent(
-            """
+            input_str = input_str.rstrip("\n")
+            output_str = output_str.rstrip("\n")
+            logger.bind(chat_msg=True).info(
+                dedent(
+                    """
             ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
             [UID]
             {uid}
@@ -1006,6 +1125,13 @@ def log_chat(llm_model: str, input_str: str, output_str: str):
             [Response]
             {output_str}
             ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-            """).format(uid=uid, llm_model=llm_model, input_str=input_str, output_str=output_str))
+            """
+                ).format(
+                    uid=uid,
+                    llm_model=llm_model,
+                    input_str=input_str,
+                    output_str=output_str,
+                )
+            )
     except:
         logger.error(trimmed_format_exc())

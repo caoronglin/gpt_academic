@@ -1,29 +1,30 @@
-import aiohttp
-from typing import List, Dict, Optional
 from datetime import datetime
+from typing import Dict, List, Optional
+
+import aiohttp
+
 from .base_source import DataSource, PaperMetadata
+
 
 class UnpaywallSource(DataSource):
     """Unpaywall API实现"""
-    
+
     def _initialize(self) -> None:
         self.base_url = "https://api.unpaywall.org/v2"
         self.email = self.api_key  # Unpaywall使用email作为API key
-        
+
     async def search(self, query: str, limit: int = 100) -> List[PaperMetadata]:
         async with aiohttp.ClientSession() as session:
             async with session.get(
                 f"{self.base_url}/search",
-                params={
-                    "query": query,
-                    "email": self.email,
-                    "limit": limit
-                }
+                params={"query": query, "email": self.email, "limit": limit},
             ) as response:
                 data = await response.json()
-                return [self._parse_response(item.response) 
-                        for item in data.get("results", [])]
-                
+                return [
+                    self._parse_response(item.response)
+                    for item in data.get("results", [])
+                ]
+
     def _parse_response(self, data: Dict) -> PaperMetadata:
         """解析Unpaywall返回的数据"""
         return PaperMetadata(
@@ -42,5 +43,5 @@ class UnpaywallSource(DataSource):
             doi=data.get("doi"),
             url=data.get("doi_url"),
             citations=None,  # Unpaywall不提供引用计数
-            venue=data.get("journal_name")
-        ) 
+            venue=data.get("journal_name"),
+        )

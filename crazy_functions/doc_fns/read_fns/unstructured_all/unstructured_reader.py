@@ -1,16 +1,15 @@
 from __future__ import annotations
 
-from pathlib import Path
-from typing import Optional, Set, Dict, Union, List
-from dataclasses import dataclass, field
 import logging
 import os
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Dict, List, Optional, Set, Union
 
+from unstructured.documents.elements import (Address, Footer, Header, Image,
+                                             ListItem, NarrativeText,
+                                             PageBreak, Table, Text, Title)
 from unstructured.partition.auto import partition
-from unstructured.documents.elements import (
-    Text, Title, NarrativeText, ListItem, Table,
-    Footer, Header, PageBreak, Image, Address
-)
 
 
 @dataclass

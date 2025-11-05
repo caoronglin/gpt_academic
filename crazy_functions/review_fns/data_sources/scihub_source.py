@@ -1,35 +1,36 @@
+import io
+import time
 from pathlib import Path
+
+import PyPDF2
 import requests
 from bs4 import BeautifulSoup
-import time
 from loguru import logger
-import PyPDF2
-import io
 
 
 class SciHub:
     # 更新的镜像列表，包含更多可用的镜像
     MIRRORS = [
-        'https://sci-hub.se/',
-        'https://sci-hub.st/',
-        'https://sci-hub.ru/',
-        'https://sci-hub.wf/',
-        'https://sci-hub.ee/',
-        'https://sci-hub.ren/',
-        'https://sci-hub.tf/',
-        'https://sci-hub.si/',
-        'https://sci-hub.do/',
-        'https://sci-hub.hkvisa.net/',
-        'https://sci-hub.mksa.top/',
-        'https://sci-hub.shop/',
-        'https://sci-hub.yncjkj.com/',
-        'https://sci-hub.41610.org/',
-        'https://sci-hub.automic.us/',
-        'https://sci-hub.et-fine.com/',
-        'https://sci-hub.pooh.mu/',
-        'https://sci-hub.bban.top/',
-        'https://sci-hub.usualwant.com/',
-        'https://sci-hub.unblockit.kim/'
+        "https://sci-hub.se/",
+        "https://sci-hub.st/",
+        "https://sci-hub.ru/",
+        "https://sci-hub.wf/",
+        "https://sci-hub.ee/",
+        "https://sci-hub.ren/",
+        "https://sci-hub.tf/",
+        "https://sci-hub.si/",
+        "https://sci-hub.do/",
+        "https://sci-hub.hkvisa.net/",
+        "https://sci-hub.mksa.top/",
+        "https://sci-hub.shop/",
+        "https://sci-hub.yncjkj.com/",
+        "https://sci-hub.41610.org/",
+        "https://sci-hub.automic.us/",
+        "https://sci-hub.et-fine.com/",
+        "https://sci-hub.pooh.mu/",
+        "https://sci-hub.bban.top/",
+        "https://sci-hub.usualwant.com/",
+        "https://sci-hub.unblockit.kim/",
     ]
 
     def __init__(self, doi: str, path: Path, url=None, timeout=60, use_proxy=True):
@@ -38,29 +39,28 @@ class SciHub:
         self.doi = str(doi)
         self.use_proxy = use_proxy
         self.headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         }
-        self.payload = {
-            'sci-hub-plugin-check': '',
-            'request': self.doi
-        }
+        self.payload = {"sci-hub-plugin-check": "", "request": self.doi}
         self.url = url if url else self.MIRRORS[0]
-        self.proxies = {
-            "http": "socks5h://localhost:10880",
-            "https": "socks5h://localhost:10880",
-        } if use_proxy else None
+        self.proxies = (
+            {
+                "http": "socks5h://localhost:10880",
+                "https": "socks5h://localhost:10880",
+            }
+            if use_proxy
+            else None
+        )
 
     def _test_proxy_connection(self):
         """测试代理连接是否可用"""
         if not self.use_proxy:
             return True
-            
+
         try:
             # 测试代理连接
             test_response = requests.get(
-                'https://httpbin.org/ip', 
-                proxies=self.proxies, 
-                timeout=10
+                "https://httpbin.org/ip", proxies=self.proxies, timeout=10
             )
             if test_response.status_code == 200:
                 logger.info("代理连接测试成功")
@@ -92,16 +92,13 @@ class SciHub:
 
         last_exception = None
         working_mirrors = []
-        
+
         # 先测试哪些镜像可用
         logger.info("正在测试镜像站点可用性...")
         for mirror in self.MIRRORS:
             try:
                 test_response = requests.get(
-                    mirror, 
-                    headers=self.headers,
-                    proxies=self.proxies,
-                    timeout=10
+                    mirror, headers=self.headers, proxies=self.proxies, timeout=10
                 )
                 if test_response.status_code == 200:
                     working_mirrors.append(mirror)
@@ -111,21 +108,21 @@ class SciHub:
             except Exception as e:
                 logger.debug(f"镜像 {mirror} 不可用: {str(e)}")
                 continue
-        
+
         if not working_mirrors:
             raise Exception("没有找到可用的镜像站点")
-        
+
         logger.info(f"找到 {len(working_mirrors)} 个可用镜像，开始尝试下载...")
-        
+
         # 使用可用的镜像进行下载
         for mirror in working_mirrors:
             try:
                 res = requests.post(
-                    mirror, 
-                    headers=self.headers, 
-                    data=self.payload, 
+                    mirror,
+                    headers=self.headers,
+                    data=self.payload,
                     proxies=self.proxies,
-                    timeout=self.timeout
+                    timeout=self.timeout,
                 )
                 if res.ok:
                     logger.info(f"成功使用镜像站点: {mirror}")
@@ -136,47 +133,52 @@ class SciHub:
                 logger.error(f"尝试镜像 {mirror} 失败: {str(e)}")
                 last_exception = e
                 continue
-        
+
         if last_exception:
             raise last_exception
         raise Exception("所有可用镜像站点均无法完成下载")
 
     def _extract_url(self, response):
         """从响应中提取PDF下载链接"""
-        soup = BeautifulSoup(response.content, 'html.parser')
+        soup = BeautifulSoup(response.content, "html.parser")
         try:
             # 尝试多种方式提取PDF链接
-            pdf_element = soup.find(id='pdf')
+            pdf_element = soup.find(id="pdf")
             if pdf_element:
-                content_url = pdf_element.get('src')
+                content_url = pdf_element.get("src")
             else:
                 # 尝试其他可能的选择器
-                pdf_element = soup.find('iframe')
+                pdf_element = soup.find("iframe")
                 if pdf_element:
-                    content_url = pdf_element.get('src')
+                    content_url = pdf_element.get("src")
                 else:
                     # 查找直接的PDF链接
-                    pdf_links = soup.find_all('a', href=lambda x: x and '.pdf' in x)
+                    pdf_links = soup.find_all("a", href=lambda x: x and ".pdf" in x)
                     if pdf_links:
-                        content_url = pdf_links[0].get('href')
+                        content_url = pdf_links[0].get("href")
                     else:
                         raise AttributeError("未找到PDF链接")
-            
+
             if content_url:
-                content_url = content_url.replace('#navpanes=0&view=FitH', '').replace('//', '/')
-                if not content_url.endswith('.pdf') and 'pdf' not in content_url.lower():
+                content_url = content_url.replace("#navpanes=0&view=FitH", "").replace(
+                    "//", "/"
+                )
+                if (
+                    not content_url.endswith(".pdf")
+                    and "pdf" not in content_url.lower()
+                ):
                     raise AttributeError("找到的链接不是PDF文件")
         except AttributeError:
             logger.error(f"未找到论文 {self.doi}")
             return None
 
-        current_mirror = self.url.rstrip('/')
-        if content_url.startswith('/'):
+        current_mirror = self.url.rstrip("/")
+        if content_url.startswith("/"):
             return current_mirror + content_url
-        elif content_url.startswith('http'):
+        elif content_url.startswith("http"):
             return content_url
         else:
-            return 'https:/' + content_url
+            return "https:/" + content_url
 
     def _download_pdf(self, pdf_url):
         """下载PDF文件并验证其完整性"""
@@ -184,13 +186,30 @@ class SciHub:
             # 尝试不同的下载方式
             download_methods = [
                 # 方法1：直接下载
-                lambda: requests.get(pdf_url, proxies=self.proxies, timeout=self.timeout),
+                lambda: requests.get(
+                    pdf_url, proxies=self.proxies, timeout=self.timeout
+                ),
                 # 方法2：添加 Referer 头
-                lambda: requests.get(pdf_url, proxies=self.proxies, timeout=self.timeout, 
-                                   headers={**self.headers, 'Referer': self.url}),
+                lambda: requests.get(
+                    pdf_url,
+                    proxies=self.proxies,
+                    timeout=self.timeout,
+                    headers={**self.headers, "Referer": self.url},
+                ),
                 # 方法3：使用原始域名作为 Referer
-                lambda: requests.get(pdf_url, proxies=self.proxies, timeout=self.timeout,
-                                   headers={**self.headers, 'Referer': pdf_url.split('/downloads')[0] if '/downloads' in pdf_url else self.url})
+                lambda: requests.get(
+                    pdf_url,
+                    proxies=self.proxies,
+                    timeout=self.timeout,
+                    headers={
+                        **self.headers,
+                        "Referer": (
+                            pdf_url.split("/downloads")[0]
+                            if "/downloads" in pdf_url
+                            else self.url
+                        ),
+                    },
+                ),
             ]
 
             for i, download_method in enumerate(download_methods):
@@ -199,7 +218,9 @@ class SciHub:
                     response = download_method()
                     if response.status_code == 200:
                         content = response.content
-                        if len(content) > 1000 and self._check_pdf_validity(content):  # 确保文件不是太小
+                        if len(content) > 1000 and self._check_pdf_validity(
+                            content
+                        ):  # 确保文件不是太小
                             logger.info(f"PDF下载成功，文件大小: {len(content)} bytes")
                             return content
                         else:
@@ -218,8 +239,8 @@ class SciHub:
             try:
                 logger.info("尝试使用替代镜像下载...")
                 # 从原始URL提取关键信息
-                if '/downloads/' in pdf_url:
-                    file_part = pdf_url.split('/downloads/')[-1]
+                if "/downloads/" in pdf_url:
+                    file_part = pdf_url.split("/downloads/")[-1]
                     alternative_mirrors = [
                         f"https://sci-hub.se/downloads/{file_part}",
                         f"https://sci-hub.st/downloads/{file_part}",
@@ -227,20 +248,25 @@ class SciHub:
                         f"https://sci-hub.wf/downloads/{file_part}",
                         f"https://sci-hub.ee/downloads/{file_part}",
                         f"https://sci-hub.ren/downloads/{file_part}",
-                        f"https://sci-hub.tf/downloads/{file_part}"
+                        f"https://sci-hub.tf/downloads/{file_part}",
                     ]
-                    
+
                     for alt_url in alternative_mirrors:
                         try:
                             response = requests.get(
-                                alt_url, 
-                                proxies=self.proxies, 
+                                alt_url,
+                                proxies=self.proxies,
                                 timeout=self.timeout,
-                                headers={**self.headers, 'Referer': alt_url.split('/downloads')[0]}
+                                headers={
+                                    **self.headers,
+                                    "Referer": alt_url.split("/downloads")[0],
+                                },
                             )
                             if response.status_code == 200:
                                 content = response.content
-                                if len(content) > 1000 and self._check_pdf_validity(content):
+                                if len(content) > 1000 and self._check_pdf_validity(
+                                    content
+                                ):
                                     logger.info(f"使用替代镜像成功下载: {alt_url}")
                                     return content
                         except Exception as e:
@@ -249,9 +275,9 @@ class SciHub:
 
             except Exception as e:
                 logger.error(f"所有下载方式都失败: {str(e)}")
-            
+
             return None
-        
+
         except Exception as e:
             logger.error(f"下载PDF文件失败: {str(e)}")
             return None
@@ -261,7 +287,7 @@ class SciHub:
         for attempt in range(2):  # 最多重试3次
             try:
                 logger.info(f"开始第 {attempt + 1} 次尝试下载论文: {self.doi}")
-                
+
                 # 获取PDF下载链接
                 response = self._send_request()
                 pdf_url = self._extract_url(response)
@@ -281,8 +307,10 @@ class SciHub:
                 pdf_name = f"{self.doi.replace('/', '_').replace(':', '_')}.pdf"
                 pdf_path = self.path.joinpath(pdf_name)
                 pdf_path.write_bytes(pdf_content)
-                
-                logger.info(f"成功下载论文: {pdf_name}，文件大小: {len(pdf_content)} bytes")
+
+                logger.info(
+                    f"成功下载论文: {pdf_name}，文件大小: {len(pdf_content)} bytes"
+                )
                 return str(pdf_path)
 
             except Exception as e:
@@ -292,27 +320,28 @@ class SciHub:
                     logger.info(f"等待 {wait_time} 秒后重试...")
                     time.sleep(wait_time)
                 continue
-                
+
         raise Exception(f"无法下载论文 {self.doi}，所有重试都失败了")
 
+
 # Usage Example
-if __name__ == '__main__':
+if __name__ == "__main__":
     # 创建一个用于保存PDF的目录
-    save_path = Path('./downloaded_papers')
+    save_path = Path("./downloaded_papers")
     save_path.mkdir(exist_ok=True)
-    
+
     # DOI示例
-    sample_doi = '10.3897/rio.7.e67379'  # 这是一篇Nature的论文DOI
-    
+    sample_doi = "10.3897/rio.7.e67379"  # 这是一篇Nature的论文DOI
+
     try:
         # 初始化SciHub下载器，先尝试使用代理
         logger.info("尝试使用代理模式...")
         downloader = SciHub(doi=sample_doi, path=save_path, use_proxy=True)
-        
+
         # 开始下载
         result = downloader.fetch()
         print(f"论文已保存到: {result}")
-        
+
     except Exception as e:
         print(f"使用代理模式失败: {str(e)}")
         try:

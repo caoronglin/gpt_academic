@@ -1,7 +1,12 @@
-from toolbox import get_log_folder, update_ui, gen_time_str, get_conf, promote_file_to_downloadzone
-from crazy_functions.agent_fns.watchdog import WatchDog
+import os
+import time
+
 from loguru import logger
-import time, os
+
+from crazy_functions.agent_fns.watchdog import WatchDog
+from toolbox import (gen_time_str, get_conf, get_log_folder,
+                     promote_file_to_downloadzone, update_ui)
+
 
 class PipeCom:
     def __init__(self, cmd, content) -> None:
@@ -10,7 +15,9 @@ class PipeCom:
 
 
 class PluginMultiprocessManager:
-    def __init__(self, llm_kwargs, plugin_kwargs, chatbot, history, system_prompt, user_request):
+    def __init__(
+        self, llm_kwargs, plugin_kwargs, chatbot, history, system_prompt, user_request
+    ):
         # ⭐ run in main process
         self.autogen_work_dir = os.path.join(get_log_folder("autogen"), gen_time_str())
         self.previous_work_dir_files = {}
@@ -25,7 +32,9 @@ class PluginMultiprocessManager:
         self.last_user_input = ""
         # create a thread to monitor self.heartbeat, terminate the instance if no heartbeat for a long time
         timeout_seconds = 5 * 60
-        self.heartbeat_watchdog = WatchDog(timeout=timeout_seconds, bark_fn=self.terminate, interval=5)
+        self.heartbeat_watchdog = WatchDog(
+            timeout=timeout_seconds, bark_fn=self.terminate, interval=5
+        )
         self.heartbeat_watchdog.begin_watch()
 
     def feed_heartbeat_watchdog(self):
@@ -37,7 +46,7 @@ class PluginMultiprocessManager:
 
     def launch_subprocess_with_pipe(self):
         # ⭐ run in main process
-        from multiprocessing import Process, Pipe
+        from multiprocessing import Pipe, Process
 
         parent_conn, child_conn = Pipe()
         self.p = Process(target=self.subprocess_worker, args=(child_conn,))
@@ -68,14 +77,16 @@ class PluginMultiprocessManager:
     def immediate_showoff_when_possible(self, fp):
         # ⭐ 主进程
         # 获取fp的拓展名
-        file_type = fp.split('.')[-1]
+        file_type = fp.split(".")[-1]
         # 如果是文本文件, 则直接显示文本内容
-        if file_type.lower() in ['png', 'jpg']:
+        if file_type.lower() in ["png", "jpg"]:
             image_path = os.path.abspath(fp)
-            self.chatbot.append([
-                '检测到新生图像:',
-                f'本地文件预览: <br/><div align="center"><img src="file={image_path}"></div>'
-            ])
+            self.chatbot.append(
+                [
+                    "检测到新生图像:",
+                    f'本地文件预览: <br/><div align="center"><img src="file={image_path}"></div>',
+                ]
+            )
             yield from update_ui(chatbot=self.chatbot, history=self.history)
 
     def overwatch_workdir_file_change(self):
@@ -104,18 +115,17 @@ class PluginMultiprocessManager:
                 file_links += f'<br/><a href="file={res}" target="_blank">{res}</a>'
                 yield from self.immediate_showoff_when_possible(f)
 
-            self.chatbot.append(['检测到新生文档.', f'文档清单如下: {file_links}'])
+            self.chatbot.append(["检测到新生文档.", f"文档清单如下: {file_links}"])
             yield from update_ui(chatbot=self.chatbot, history=self.history)
         return change_list
 
-
     def main_process_ui_control(self, txt, create_or_resume) -> str:
         # ⭐ 主进程
-        if create_or_resume == 'create':
+        if create_or_resume == "create":
             self.cnt = 1
-            self.parent_conn = self.launch_subprocess_with_pipe() # ⭐⭐⭐
+            self.parent_conn = self.launch_subprocess_with_pipe()  # ⭐⭐⭐
         repeated, cmd_to_autogen = self.send_command(txt)
-        if txt == 'exit':
+        if txt == "exit":
             self.chatbot.append([f"结束", "结束信号已明确，终止AutoGen程序。"])
             yield from update_ui(chatbot=self.chatbot, history=self.history)
             self.terminate()
@@ -135,9 +145,9 @@ class PluginMultiprocessManager:
                     self.chatbot.pop(-1)  # remove the last line
                 if "等待您的进一步指令" in self.chatbot[-1][-1]:
                     self.chatbot.pop(-1)  # remove the last line
-                if '[GPT-Academic] 等待中' in self.chatbot[-1][-1]:
-                    self.chatbot.pop(-1)    # remove the last line
-                msg = self.parent_conn.recv() # PipeCom
+                if "[GPT-Academic] 等待中" in self.chatbot[-1][-1]:
+                    self.chatbot.pop(-1)  # remove the last line
+                msg = self.parent_conn.recv()  # PipeCom
                 if msg.cmd == "done":
                     self.chatbot.append([f"结束", msg.content])
                     self.cnt += 1
@@ -147,27 +157,47 @@ class PluginMultiprocessManager:
                 if msg.cmd == "show":
                     yield from self.overwatch_workdir_file_change()
                     notice = ""
-                    if repeated: notice = "（自动忽略重复的输入）"
-                    self.chatbot.append([f"运行阶段-{self.cnt}（上次用户反馈输入为: 「{cmd_to_autogen}」{notice}", msg.content])
+                    if repeated:
+                        notice = "（自动忽略重复的输入）"
+                    self.chatbot.append(
+                        [
+                            f"运行阶段-{self.cnt}（上次用户反馈输入为: 「{cmd_to_autogen}」{notice}",
+                            msg.content,
+                        ]
+                    )
                     self.cnt += 1
                     yield from update_ui(chatbot=self.chatbot, history=self.history)
                 if msg.cmd == "interact":
                     yield from self.overwatch_workdir_file_change()
-                    self.chatbot.append([f"程序抵达用户反馈节点.", msg.content +
-                                         "\n\n等待您的进一步指令." +
-                                         "\n\n(1) 一般情况下您不需要说什么, 清空输入区, 然后直接点击“提交”以继续. " +
-                                         "\n\n(2) 如果您需要补充些什么, 输入要反馈的内容, 直接点击“提交”以继续. " +
-                                         "\n\n(3) 如果您想终止程序, 输入exit, 直接点击“提交”以终止AutoGen并解锁. "
-                    ])
+                    self.chatbot.append(
+                        [
+                            f"程序抵达用户反馈节点.",
+                            msg.content
+                            + "\n\n等待您的进一步指令."
+                            + "\n\n(1) 一般情况下您不需要说什么, 清空输入区, 然后直接点击“提交”以继续. "
+                            + "\n\n(2) 如果您需要补充些什么, 输入要反馈的内容, 直接点击“提交”以继续. "
+                            + "\n\n(3) 如果您想终止程序, 输入exit, 直接点击“提交”以终止AutoGen并解锁. ",
+                        ]
+                    )
                     yield from update_ui(chatbot=self.chatbot, history=self.history)
                     # do not terminate here, leave the subprocess_worker instance alive
                     return "wait_feedback"
             else:
                 self.feed_heartbeat_watchdog()
-                if '[GPT-Academic] 等待中' not in self.chatbot[-1][-1]:
+                if "[GPT-Academic] 等待中" not in self.chatbot[-1][-1]:
                     # begin_waiting_time = time.time()
-                    self.chatbot.append(["[GPT-Academic] 等待AutoGen执行结果 ...", "[GPT-Academic] 等待中"])
-                self.chatbot[-1] = [self.chatbot[-1][0], self.chatbot[-1][1].replace("[GPT-Academic] 等待中", "[GPT-Academic] 等待中.")]
+                    self.chatbot.append(
+                        [
+                            "[GPT-Academic] 等待AutoGen执行结果 ...",
+                            "[GPT-Academic] 等待中",
+                        ]
+                    )
+                self.chatbot[-1] = [
+                    self.chatbot[-1][0],
+                    self.chatbot[-1][1].replace(
+                        "[GPT-Academic] 等待中", "[GPT-Academic] 等待中."
+                    ),
+                ]
                 yield from update_ui(chatbot=self.chatbot, history=self.history)
                 # if time.time() - begin_waiting_time > patience:
                 #     self.chatbot.append([f"结束", "等待超时, 终止AutoGen程序。"])

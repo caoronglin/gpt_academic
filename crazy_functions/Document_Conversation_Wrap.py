@@ -1,7 +1,9 @@
 import random
-from toolbox import get_conf
+
 from crazy_functions.Document_Conversation import 批量文件询问
-from crazy_functions.plugin_template.plugin_class_template import GptAcademicPluginTemplate, ArgProperty
+from crazy_functions.plugin_template.plugin_class_template import (
+    ArgProperty, GptAcademicPluginTemplate)
+from toolbox import get_conf
 
 
 class Document_Conversation_Wrap(GptAcademicPluginTemplate):
@@ -21,16 +23,36 @@ class Document_Conversation_Wrap(GptAcademicPluginTemplate):
 
         """
         gui_definition = {
-            "main_input":
-                ArgProperty(title="已上传的文件", description="上传文件后自动填充", default_value="", type="string").model_dump_json(),
-            "searxng_url":
-                ArgProperty(title="对材料提问", description="提问", default_value="", type="string").model_dump_json(), # 主输入，自动从输入框同步
+            "main_input": ArgProperty(
+                title="已上传的文件",
+                description="上传文件后自动填充",
+                default_value="",
+                type="string",
+            ).model_dump_json(),
+            "searxng_url": ArgProperty(
+                title="对材料提问", description="提问", default_value="", type="string"
+            ).model_dump_json(),  # 主输入，自动从输入框同步
         }
         return gui_definition
 
-    def execute(txt, llm_kwargs, plugin_kwargs:dict, chatbot, history, system_prompt, user_request):
+    def execute(
+        txt,
+        llm_kwargs,
+        plugin_kwargs: dict,
+        chatbot,
+        history,
+        system_prompt,
+        user_request,
+    ):
         """
         执行插件
         """
-        yield from 批量文件询问(txt, llm_kwargs, plugin_kwargs, chatbot, history, system_prompt, user_request)
-
+        yield from 批量文件询问(
+            txt,
+            llm_kwargs,
+            plugin_kwargs,
+            chatbot,
+            history,
+            system_prompt,
+            user_request,
+        )

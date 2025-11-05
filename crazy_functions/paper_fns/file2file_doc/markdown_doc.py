@@ -19,21 +19,24 @@ class MarkdownFormatter:
             str: 生成的Markdown文本
         """
         self.content = []
-        
+
         # 添加标题和说明
         self.content.append(f"# 文档处理结果\n")
         self.content.append(f"## 处理方式: {processing_type}\n")
-        
+
         # 添加处理时间
         from datetime import datetime
-        self.content.append(f"*处理时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*\n")
-        
+
+        self.content.append(
+            f"*处理时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*\n"
+        )
+
         # 添加分隔线
         self.content.append("---\n")
-        
+
         # 添加原始内容，保留结构
         self.content.append(content)
-            
+
         # 添加结尾分隔线
         self.content.append("\n---\n")
 

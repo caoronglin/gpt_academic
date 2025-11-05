@@ -1,10 +1,15 @@
-from toolbox import CatchException, update_ui, gen_time_str
-from crazy_functions.crazy_utils import request_gpt_model_in_new_thread_with_ui_alive
-from crazy_functions.crazy_utils import input_clipping
-import copy, json
+import copy
+import json
+
+from crazy_functions.crazy_utils import (
+    input_clipping, request_gpt_model_in_new_thread_with_ui_alive)
+from toolbox import CatchException, gen_time_str, update_ui
+
 
 @CatchException
-def Commandline_Assistant(txt, llm_kwargs, plugin_kwargs, chatbot, history, system_prompt, user_request):
+def Commandline_Assistant(
+    txt, llm_kwargs, plugin_kwargs, chatbot, history, system_prompt, user_request
+):
     """
     txt             输入栏用户输入的文本, 例如需要翻译的一段话, 再例如一个包含了待处理文件的路径
     llm_kwargs      gpt模型参数, 如温度和top_p等, 一般原样传递下去就行
@@ -21,11 +26,11 @@ def Commandline_Assistant(txt, llm_kwargs, plugin_kwargs, chatbot, history, syst
     i_say = "请写bash命令实现以下功能：" + txt
     # 开始
     gpt_say = yield from request_gpt_model_in_new_thread_with_ui_alive(
-        inputs=i_say, inputs_show_user=txt,
-        llm_kwargs=llm_kwargs, chatbot=chatbot, history=[],
-        sys_prompt="你是一个Linux大师级用户。注意，当我要求你写bash命令时，尽可能地仅用一行命令解决我的要求。"
+        inputs=i_say,
+        inputs_show_user=txt,
+        llm_kwargs=llm_kwargs,
+        chatbot=chatbot,
+        history=[],
+        sys_prompt="你是一个Linux大师级用户。注意，当我要求你写bash命令时，尽可能地仅用一行命令解决我的要求。",
     )
-    yield from update_ui(chatbot=chatbot, history=history) # 刷新界面 # 界面更新
-
-
-
+    yield from update_ui(chatbot=chatbot, history=history)  # 刷新界面 # 界面更新

@@ -1,5 +1,6 @@
 import random
 
+
 def Singleton(cls):
     _instance = {}
 
@@ -12,8 +13,8 @@ def Singleton(cls):
 
 
 @Singleton
-class OpenAI_ApiKeyManager():
-    def __init__(self, mode='blacklist') -> None:
+class OpenAI_ApiKeyManager:
+    def __init__(self, mode="blacklist") -> None:
         # self.key_avail_list = []
         self.key_black_list = []
 

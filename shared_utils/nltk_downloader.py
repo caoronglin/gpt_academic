@@ -174,7 +174,8 @@ from xml.etree import ElementTree
 
 try:
     TKINTER = True
-    from tkinter import Button, Canvas, Entry, Frame, IntVar, Label, Menu, TclError, Tk
+    from tkinter import (Button, Canvas, Entry, Frame, IntVar, Label, Menu,
+                         TclError, Tk)
     from tkinter.messagebox import showerror
 
     from nltk.draw.table import Table
@@ -188,6 +189,7 @@ from urllib.request import urlopen
 
 import nltk
 from loguru import logger
+
 # urllib2 = nltk.internals.import_from_stdlib('urllib2')
 
 
@@ -1496,7 +1498,7 @@ class DownloaderGUI:
             ("download_dir", "Download Directory:", self._set_download_dir),
         ]
         self._info = {}
-        for (i, (key, label, callback)) in enumerate(info):
+        for i, (key, label, callback) in enumerate(info):
             Label(infoframe, text=label).grid(column=0, row=i, sticky="e")
             entry = Entry(
                 infoframe,
@@ -1613,7 +1615,7 @@ class DownloaderGUI:
         self.top.config(menu=menubar)
 
     def _select_columns(self):
-        for (column, var) in self._column_vars.items():
+        for column, var in self._column_vars.items():
             if var.get():
                 self._table.show_column(column)
             else:

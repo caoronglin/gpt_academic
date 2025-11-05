@@ -4,18 +4,21 @@ import pickle
 class SafeUnpickler(pickle.Unpickler):
 
     def get_safe_classes(self):
-        from crazy_functions.latex_fns.latex_actions import LatexPaperFileGroup, LatexPaperSplit
-        from crazy_functions.latex_fns.latex_toolbox import LinkedListNode
-        from numpy.core.multiarray import scalar
         from numpy import dtype
+        from numpy.core.multiarray import scalar
+
+        from crazy_functions.latex_fns.latex_actions import (
+            LatexPaperFileGroup, LatexPaperSplit)
+        from crazy_functions.latex_fns.latex_toolbox import LinkedListNode
+
         # 定义允许的安全类
         safe_classes = {
             # 在这里添加其他安全的类
-            'LatexPaperFileGroup': LatexPaperFileGroup,
-            'LatexPaperSplit': LatexPaperSplit,
-            'LinkedListNode': LinkedListNode,
-            'scalar': scalar,
-            'dtype': dtype,
+            "LatexPaperFileGroup": LatexPaperFileGroup,
+            "LatexPaperSplit": LatexPaperSplit,
+            "LinkedListNode": LinkedListNode,
+            "scalar": scalar,
+            "dtype": dtype,
         }
         return safe_classes
 
@@ -24,12 +27,15 @@ class SafeUnpickler(pickle.Unpickler):
         self.safe_classes = self.get_safe_classes()
         match_class_name = None
         for class_name in self.safe_classes.keys():
-            if (class_name in f'{module}.{name}'):
+            if class_name in f"{module}.{name}":
                 match_class_name = class_name
         if match_class_name is not None:
             return self.safe_classes[match_class_name]
         # 如果尝试加载未授权的类，则抛出异常
-        raise pickle.UnpicklingError(f"Attempted to deserialize unauthorized class '{name}' from module '{module}'")
+        raise pickle.UnpicklingError(
+            f"Attempted to deserialize unauthorized class '{name}' from module '{module}'"
+        )
+
 
 def objdump(obj, file="objdump.tmp"):
 

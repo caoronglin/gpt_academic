@@ -4,6 +4,7 @@
 https://github.com/acheong08/EdgeGPT
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 """
+
 from .edge_gpt_free import Chatbot as NewbingChatbot
 
 load_message = "等待NewBing响应。"
@@ -13,15 +14,16 @@ load_message = "等待NewBing响应。"
 第二部分：子进程Worker（调用主体）
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 """
-import time
-import json
-import re
-import logging
 import asyncio
 import importlib
+import json
+import logging
+import re
 import threading
-from toolbox import update_ui, get_conf, trimmed_format_exc
-from multiprocessing import Process, Pipe
+import time
+from multiprocessing import Pipe, Process
+
+from toolbox import get_conf, trimmed_format_exc, update_ui
 
 
 def preprocess_newbing_out(s):
@@ -62,7 +64,9 @@ class NewBingHandle(Process):
     def check_dependency(self):
         try:
             self.success = False
-            import certifi, httpx, rich
+            import certifi
+            import httpx
+            import rich
 
             self.info = "依赖检测通过，等待NewBing响应。注意目前不能多人同时调用NewBing接口（有线程锁），否则将导致每个人的NewBing问询历史互相渗透。调用NewBing时，会自动使用已配置的代理。"
             self.success = True
@@ -143,7 +147,9 @@ class NewBingHandle(Process):
                 except:
                     self.success = False
                     tb_str = "\n```\n" + trimmed_format_exc() + "\n```\n"
-                    self.child.send(f"[Local Message] NEWBING_COOKIES未填写或有格式错误。")
+                    self.child.send(
+                        f"[Local Message] NEWBING_COOKIES未填写或有格式错误。"
+                    )
                     self.child.send("[Fail]")
                     self.child.send("[Finish]")
                     raise RuntimeError(f"NEWBING_COOKIES未填写或有格式错误。")
@@ -162,7 +168,9 @@ class NewBingHandle(Process):
                 )
                 self.child.send("[Fail]")
                 self.child.send("[Finish]")
-                raise RuntimeError(f"不能加载Newbing组件，请注意Newbing组件已不再维护。")
+                raise RuntimeError(
+                    f"不能加载Newbing组件，请注意Newbing组件已不再维护。"
+                )
 
         self.success = True
         try:
@@ -289,7 +297,9 @@ def predict(
     chatbot[-1] = (inputs, "[Local Message] 等待NewBing响应中 ...")
     response = "[Local Message] 等待NewBing响应中 ..."
     yield from update_ui(
-        chatbot=chatbot, history=history, msg="NewBing响应缓慢，尚未完成全部响应，请耐心完成后再提交新问题。"
+        chatbot=chatbot,
+        history=history,
+        msg="NewBing响应缓慢，尚未完成全部响应，请耐心完成后再提交新问题。",
     )
     for response in newbingfree_handle.stream_chat(
         query=inputs,
@@ -301,11 +311,15 @@ def predict(
     ):
         chatbot[-1] = (inputs, preprocess_newbing_out(response))
         yield from update_ui(
-            chatbot=chatbot, history=history, msg="NewBing响应缓慢，尚未完成全部响应，请耐心完成后再提交新问题。"
+            chatbot=chatbot,
+            history=history,
+            msg="NewBing响应缓慢，尚未完成全部响应，请耐心完成后再提交新问题。",
         )
     if response == "[Local Message] 等待NewBing响应中 ...":
         response = "[Local Message] NewBing响应异常，请刷新界面重试 ..."
     history.extend([inputs, response])
     logging.info(f"[raw_input] {inputs}")
     logging.info(f"[response] {response}")
-    yield from update_ui(chatbot=chatbot, history=history, msg="完成全部响应，请提交新问题。")
+    yield from update_ui(
+        chatbot=chatbot, history=history, msg="完成全部响应，请提交新问题。"
+    )

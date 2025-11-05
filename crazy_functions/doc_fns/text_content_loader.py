@@ -1,23 +1,30 @@
-import os
-import re
 import glob
-import time
-import queue
-import threading
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import List, Generator, Tuple, Set, Optional, Dict
-from dataclasses import dataclass
-from loguru import logger
-from toolbox import update_ui
-from crazy_functions.rag_fns.rag_file_support import extract_text
-from crazy_functions.doc_fns.content_folder import ContentFoldingManager, FileMetadata, FoldingOptions, FoldingStyle, FoldingError
-from shared_utils.fastapi_server import validate_path_safety
-from datetime import datetime
 import mimetypes
+import os
+import queue
+import re
+import threading
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from dataclasses import dataclass
+from datetime import datetime
+from typing import Dict, Generator, List, Optional, Set, Tuple
+
+from loguru import logger
+
+from crazy_functions.doc_fns.content_folder import (ContentFoldingManager,
+                                                    FileMetadata, FoldingError,
+                                                    FoldingOptions,
+                                                    FoldingStyle)
+from crazy_functions.rag_fns.rag_file_support import extract_text
+from shared_utils.fastapi_server import validate_path_safety
+from toolbox import update_ui
+
 
 @dataclass
 class FileInfo:
     """文件信息数据类"""
+
     path: str  # 完整路径
     rel_path: str  # 相对路径
     size: float  # 文件大小(MB)
@@ -29,7 +36,15 @@ class TextContentLoader:
     """优化版本的文本内容加载器 - 保持原有接口"""
 
     # 压缩文件扩展名
-    COMPRESSED_EXTENSIONS: Set[str] = {'.zip', '.rar', '.7z', '.tar', '.gz', '.bz2', '.xz'}
+    COMPRESSED_EXTENSIONS: Set[str] = {
+        ".zip",
+        ".rar",
+        ".7z",
+        ".tar",
+        ".gz",
+        ".bz2",
+        ".xz",
+    }
 
     # 系统配置
     MAX_FILE_SIZE: int = 100 * 1024 * 1024  # 最大文件大小（100MB）
@@ -69,13 +84,16 @@ class TextContentLoader:
                 rel_path=os.path.relpath(entry.path, root_path),
                 size=stats.st_size / (1024 * 1024),
                 extension=os.path.splitext(entry.path)[1].lower(),
-                last_modified=time.strftime('%Y-%m-%d %H:%M:%S',
-                                          time.localtime(stats.st_mtime))
+                last_modified=time.strftime(
+                    "%Y-%m-%d %H:%M:%S", time.localtime(stats.st_mtime)
+                ),
             )
         except (OSError, ValueError) as e:
             return None
 
-    def _process_file_batch(self, file_batch: List[FileInfo]) -> List[Tuple[FileInfo, Optional[str]]]:
+    def _process_file_batch(
+        self, file_batch: List[FileInfo]
+    ) -> List[Tuple[FileInfo, Optional[str]]]:
         """批量处理文件
 
         Args:
@@ -95,8 +113,10 @@ class TextContentLoader:
             if file_info.size * 1024 * 1024 > self.MAX_FILE_SIZE:
                 with self._lock:
                     self.failed_files.append(
-                        (file_info.rel_path,
-                         f"文件过大（{file_info.size:.2f}MB > {self.MAX_FILE_SIZE / (1024 * 1024)}MB）")
+                        (
+                            file_info.rel_path,
+                            f"文件过大（{file_info.size:.2f}MB > {self.MAX_FILE_SIZE / (1024 * 1024)}MB）",
+                        )
                     )
                 continue
 
@@ -114,7 +134,9 @@ class TextContentLoader:
                     results.append((file_info, content))
             except Exception as e:
                 with self._lock:
-                    self.failed_files.append((file_info.rel_path, f"读取失败: {str(e)}"))
+                    self.failed_files.append(
+                        (file_info.rel_path, f"读取失败: {str(e)}")
+                    )
 
         return results
 
@@ -149,9 +171,11 @@ class TextContentLoader:
             return False
 
         extension = os.path.splitext(file_path)[1].lower()
-        if (extension in self.COMPRESSED_EXTENSIONS or
-            os.path.basename(file_path).startswith('.') or
-            not os.access(file_path, os.R_OK)):
+        if (
+            extension in self.COMPRESSED_EXTENSIONS
+            or os.path.basename(file_path).startswith(".")
+            or not os.access(file_path, os.R_OK)
+        ):
             return False
 
         # 只要文件可以访问且不在排除列表中就认为是有效的
@@ -172,7 +196,9 @@ class TextContentLoader:
         # 处理单个文件的情况
         if os.path.isfile(path):
             if self._is_valid_file(path):
-                file_info = self._create_file_info(os.DirEntry(os.path.dirname(path)), os.path.dirname(path))
+                file_info = self._create_file_info(
+                    os.DirEntry(os.path.dirname(path)), os.path.dirname(path)
+                )
                 if file_info:
                     return [file_info]
             return []
@@ -183,7 +209,9 @@ class TextContentLoader:
             for root, _, filenames in os.walk(path):
                 for filename in filenames:
                     if len(files) >= self.MAX_FILES:
-                        self.failed_files.append((filename, f"超出最大文件数限制({self.MAX_FILES})"))
+                        self.failed_files.append(
+                            (filename, f"超出最大文件数限制({self.MAX_FILES})")
+                        )
                         continue
 
                     file_path = os.path.join(root, filename)
@@ -196,8 +224,12 @@ class TextContentLoader:
                         file_size = stats.st_size / (1024 * 1024)  # 转换为MB
 
                         if file_size * 1024 * 1024 > self.MAX_FILE_SIZE:
-                            self.failed_files.append((file_path,
-                                f"文件过大（{file_size:.2f}MB > {self.MAX_FILE_SIZE / (1024 * 1024)}MB）"))
+                            self.failed_files.append(
+                                (
+                                    file_path,
+                                    f"文件过大（{file_size:.2f}MB > {self.MAX_FILE_SIZE / (1024 * 1024)}MB）",
+                                )
+                            )
                             continue
 
                         if total_size + file_size * 1024 * 1024 > self.MAX_TOTAL_SIZE:
@@ -209,8 +241,9 @@ class TextContentLoader:
                             rel_path=os.path.relpath(file_path, path),
                             size=file_size,
                             extension=os.path.splitext(file_path)[1].lower(),
-                            last_modified=time.strftime('%Y-%m-%d %H:%M:%S',
-                                                      time.localtime(stats.st_mtime))
+                            last_modified=time.strftime(
+                                "%Y-%m-%d %H:%M:%S", time.localtime(stats.st_mtime)
+                            ),
                         )
 
                         total_size += file_size * 1024 * 1024
@@ -232,10 +265,8 @@ class TextContentLoader:
             metadata = FileMetadata(
                 rel_path=file_info.rel_path,
                 size=file_info.size,
-                last_modified=datetime.fromtimestamp(
-                    os.path.getmtime(file_info.path)
-                ),
-                mime_type=mimetypes.guess_type(file_info.path)[0]
+                last_modified=datetime.fromtimestamp(os.path.getmtime(file_info.path)),
+                mime_type=mimetypes.guess_type(file_info.path)[0],
             )
 
             options = FoldingOptions(
@@ -243,20 +274,22 @@ class TextContentLoader:
                 code_language=self.folding_manager._guess_language(
                     os.path.splitext(file_info.path)[1]
                 ),
-                show_timestamp=True
+                show_timestamp=True,
             )
 
             return self.folding_manager.format_content(
                 content=content,
-                formatter_type='file',
+                formatter_type="file",
                 metadata=metadata,
-                options=options
+                options=options,
             )
 
         except Exception as e:
             return f"Error formatting content: {str(e)}"
 
-    def _format_content_for_llm(self, file_infos: List[FileInfo], contents: List[str]) -> str:
+    def _format_content_for_llm(
+        self, file_infos: List[FileInfo], contents: List[str]
+    ) -> str:
         """格式化用于LLM的内容
 
         Args:
@@ -271,16 +304,18 @@ class TextContentLoader:
 
         result = [
             "以下是多个文件的内容集合。每个文件的内容都以 '===== 文件 {序号}: {文件名} =====' 开始，",
-            "以 '===== 文件 {序号} 结束 =====' 结束。你可以根据这些分隔符来识别不同文件的内容。\n\n"
+            "以 '===== 文件 {序号} 结束 =====' 结束。你可以根据这些分隔符来识别不同文件的内容。\n\n",
         ]
 
         for idx, (file_info, content) in enumerate(zip(file_infos, contents), 1):
-            result.extend([
-                f"===== 文件 {idx}: {file_info.rel_path} =====",
-                "文件内容:",
-                content.strip(),
-                f"===== 文件 {idx} 结束 =====\n"
-            ])
+            result.extend(
+                [
+                    f"===== 文件 {idx}: {file_info.rel_path} =====",
+                    "文件内容:",
+                    content.strip(),
+                    f"===== 文件 {idx} 结束 =====\n",
+                ]
+            )
 
         return "\n".join(result)
 
@@ -318,12 +353,14 @@ class TextContentLoader:
             # 批量处理文件
             content_blocks = []
             for i in range(0, len(files), self.BATCH_SIZE):
-                batch = files[i:i + self.BATCH_SIZE]
+                batch = files[i : i + self.BATCH_SIZE]
                 results = self._process_file_batch(batch)
 
                 for file_info, content in results:
                     if content:
-                        content_blocks.append(self._format_content_with_fold(file_info, content))
+                        content_blocks.append(
+                            self._format_content_with_fold(file_info, content)
+                        )
                         successful_files.append(file_info)
                         successful_contents.append(content)
 
@@ -332,10 +369,14 @@ class TextContentLoader:
                 # 移除之前的提示信息
                 self.chatbot.pop()
                 self.chatbot.append(["文件内容", "\n".join(content_blocks)])
-                self.history.extend([
-                    self._format_content_for_llm(successful_files, successful_contents),
-                    "我已经接收到你上传的文件的内容，请提问"
-                ])
+                self.history.extend(
+                    [
+                        self._format_content_for_llm(
+                            successful_files, successful_contents
+                        ),
+                        "我已经接收到你上传的文件的内容，请提问",
+                    ]
+                )
                 yield from update_ui(chatbot=self.chatbot, history=self.history)
 
             yield from update_ui(chatbot=self.chatbot, history=self.history)
@@ -391,7 +432,12 @@ class TextContentLoader:
 
                 if file_size * 1024 * 1024 > self.MAX_FILE_SIZE:
                     self.chatbot.pop()
-                    self.chatbot.append(["错误", f"文件过大（{file_size:.2f}MB > {self.MAX_FILE_SIZE / (1024 * 1024)}MB）"])
+                    self.chatbot.append(
+                        [
+                            "错误",
+                            f"文件过大（{file_size:.2f}MB > {self.MAX_FILE_SIZE / (1024 * 1024)}MB）",
+                        ]
+                    )
                     yield from update_ui(chatbot=self.chatbot, history=self.history)
                     return
 
@@ -400,8 +446,9 @@ class TextContentLoader:
                     rel_path=os.path.basename(file_path),
                     size=file_size,
                     extension=os.path.splitext(file_path)[1].lower(),
-                    last_modified=time.strftime('%Y-%m-%d %H:%M:%S',
-                                              time.localtime(stats.st_mtime))
+                    last_modified=time.strftime(
+                        "%Y-%m-%d %H:%M:%S", time.localtime(stats.st_mtime)
+                    ),
                 )
             except Exception as e:
                 self.chatbot.pop()
@@ -414,7 +461,9 @@ class TextContentLoader:
                 content = self._read_file_content(file_info)
                 if not content:
                     self.chatbot.pop()
-                    self.chatbot.append(["提示", f"文件内容为空或无法提取: {file_path}"])
+                    self.chatbot.append(
+                        ["提示", f"文件内容为空或无法提取: {file_path}"]
+                    )
                     yield from update_ui(chatbot=self.chatbot, history=self.history)
                     return
             except Exception as e:
@@ -445,7 +494,7 @@ class TextContentLoader:
 
     def __del__(self):
         """析构函数 - 确保资源被正确释放"""
-        if hasattr(self, 'executor'):
+        if hasattr(self, "executor"):
             self.executor.shutdown(wait=False)
-        if hasattr(self, 'file_cache'):
+        if hasattr(self, "file_cache"):
             self.file_cache.clear()

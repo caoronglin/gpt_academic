@@ -1,7 +1,9 @@
 import os
+
 import gradio as gr
-from toolbox import get_conf, ProxyNetworkActivate
 from loguru import logger
+
+from toolbox import ProxyNetworkActivate, get_conf
 
 CODE_HIGHLIGHT, ADD_WAIFU, LAYOUT = get_conf("CODE_HIGHLIGHT", "ADD_WAIFU", "LAYOUT")
 theme_dir = os.path.dirname(__file__)
@@ -38,8 +40,9 @@ def adjust_theme():
                 logger.error("下载Gradio主题时出现异常。")
 
         from themes.common import get_common_html_javascript_code
+
         js = get_common_html_javascript_code()
-        
+
         if not hasattr(gr, "RawTemplateResponse"):
             gr.RawTemplateResponse = gr.routes.templates.TemplateResponse
         gradio_original_template_fn = gr.RawTemplateResponse

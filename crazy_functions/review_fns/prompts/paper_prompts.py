@@ -44,4 +44,4 @@ Please analyze the query and respond ONLY with XML tags containing paper informa
 
 PAPER_IDENTIFY_SYSTEM_PROMPT = """You are an expert at identifying academic paper references.
 Your task is to extract paper identification information from queries.
-Look for arXiv IDs, DOIs, and paper titles.""" 
+Look for arXiv IDs, DOIs, and paper titles."""

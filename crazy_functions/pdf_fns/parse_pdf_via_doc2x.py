@@ -1,13 +1,14 @@
-from toolbox import get_log_folder, gen_time_str, get_conf
-from toolbox import update_ui, promote_file_to_downloadzone
-from toolbox import promote_file_to_downloadzone, extract_archive
-from toolbox import generate_file_link, zip_folder
+import os
+import time
+
+import requests
+from loguru import logger
+
 from crazy_functions.crazy_utils import get_files_from_everything
 from shared_utils.colorful import *
-from loguru import logger
-import os
-import requests
-import time
+from toolbox import (extract_archive, gen_time_str, generate_file_link,
+                     get_conf, get_log_folder, promote_file_to_downloadzone,
+                     update_ui, zip_folder)
 
 
 def retry_request(max_retries=3, delay=3):
@@ -131,12 +132,7 @@ def 解析PDF_DOC2X(pdf_file_path, format="tex"):
 
     # < ------ 第3步：提交转化 ------ >
     logger.info("Doc2x 第3步：提交转化")
-    data = {
-        "uid": uuid,
-        "to": format,
-        "formula_mode": "dollar",
-        "filename": "output"
-    }
+    data = {"uid": uuid, "to": format, "formula_mode": "dollar", "filename": "output"}
     res = make_request(
         "POST",
         "https://v2.doc2x.noedgeai.com/api/v2/convert/parse",
@@ -201,6 +197,7 @@ def 解析PDF_DOC2X(pdf_file_path, format="tex"):
 
     # < ------ 解压 ------ >
     import zipfile
+
     with zipfile.ZipFile(zip_path, "r") as zip_ref:
         zip_ref.extractall(unzip_path)
     return zip_path, unzip_path
@@ -229,8 +226,10 @@ def 解析PDF_DOC2X_单文件(
         return md_zip_path
 
     def deliver_to_markdown_plugin(md_zip_path, user_request):
+        import re
+        import shutil
+
         from crazy_functions.Markdown_Translate import Markdown英译中
-        import shutil, re
 
         time_tag = gen_time_str()
         target_path_base = get_log_folder(chatbot.get_user())
@@ -262,9 +261,8 @@ def 解析PDF_DOC2X_单文件(
             # 生成在线预览html
             file_name = "在线预览翻译（原文）" + gen_time_str() + ".html"
             preview_fp = os.path.join(ex_folder, file_name)
-            from shared_utils.advanced_markdown_format import (
-                markdown_convertion_for_file,
-            )
+            from shared_utils.advanced_markdown_format import \
+                markdown_convertion_for_file
 
             with open(generated_fp, "r", encoding="utf-8") as f:
                 md = f.read()
@@ -305,9 +303,8 @@ def 解析PDF_DOC2X_单文件(
             # 生成在线预览html
             file_name = "在线预览翻译" + gen_time_str() + ".html"
             preview_fp = os.path.join(ex_folder, file_name)
-            from shared_utils.advanced_markdown_format import (
-                markdown_convertion_for_file,
-            )
+            from shared_utils.advanced_markdown_format import \
+                markdown_convertion_for_file
 
             with open(generated_fp, "r", encoding="utf-8") as f:
                 md = f.read()

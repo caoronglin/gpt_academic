@@ -1,20 +1,25 @@
 import re
+from textwrap import dedent
+from typing import Dict, List
+
 import requests
 from loguru import logger
-from typing import List, Dict
-from urllib3.util import Retry
 from requests.adapters import HTTPAdapter
-from textwrap import dedent
+from urllib3.util import Retry
+
 from request_llms.bridge_all import predict_no_ui_long_connection
+
 
 class BGELLMRanker:
     """使用LLM进行论文相关性判断的类"""
+
     def __init__(self, llm_kwargs):
         self.llm_kwargs = llm_kwargs
 
     def is_paper_relevant(self, query: str, paper_text: str) -> bool:
         """判断论文是否与查询相关"""
-        prompt = dedent(f"""
+        prompt = dedent(
+            f"""
             Evaluate if this academic paper contains information that directly addresses the user's query.
 
             Query: {query}
@@ -46,17 +51,19 @@ class BGELLMRanker:
             inputs=prompt,
             history=[],
             llm_kwargs=self.llm_kwargs,
-            sys_prompt="You are an expert at determining paper relevance to queries. Respond only with <decision>true</decision> or <decision>false</decision>."
+            sys_prompt="You are an expert at determining paper relevance to queries. Respond only with <decision>true</decision> or <decision>false</decision>.",
         )
         # 提取decision标签中的内容
-        match = re.search(r'<decision>(.*?)</decision>', response, re.IGNORECASE)
+        match = re.search(r"<decision>(.*?)</decision>", response, re.IGNORECASE)
         if match:
             decision = match.group(1).lower()
             return decision == "true"
         else:
             return False
 
-    def batch_check_relevance(self, query: str, paper_texts: List[str], show_progress: bool = True) -> List[bool]:
+    def batch_check_relevance(
+        self, query: str, paper_texts: List[str], show_progress: bool = True
+    ) -> List[bool]:
         """批量检查论文相关性
 
         Args:
@@ -68,6 +75,7 @@ class BGELLMRanker:
             List[bool]: 相关性判断结果列表
         """
         from concurrent.futures import ThreadPoolExecutor, as_completed
+
         from tqdm import tqdm
 
         results = [False] * len(paper_texts)
@@ -92,6 +100,7 @@ class BGELLMRanker:
                     results[idx] = False
         return results
 
+
 def main():
     # 测试代码
     ranker = BGELLMRanker()
@@ -104,6 +113,7 @@ def main():
 
     is_relevant = ranker.is_paper_relevant(query, paper_text)
     print(f"Paper relevant: {is_relevant}")
+
 
 if __name__ == "__main__":
     main()

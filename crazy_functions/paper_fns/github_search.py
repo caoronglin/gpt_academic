@@ -1,34 +1,48 @@
-from typing import List, Dict, Tuple
 import asyncio
-from dataclasses import dataclass
-from toolbox import CatchException, update_ui, promote_file_to_downloadzone, get_log_folder, get_user
-from toolbox import update_ui, CatchException, report_exception, write_history_to_file
-from crazy_functions.paper_fns.auto_git.query_analyzer import QueryAnalyzer, SearchCriteria
-from crazy_functions.paper_fns.auto_git.handlers.repo_handler import RepositoryHandler
-from crazy_functions.paper_fns.auto_git.handlers.code_handler import CodeSearchHandler
-from crazy_functions.paper_fns.auto_git.handlers.user_handler import UserSearchHandler
-from crazy_functions.paper_fns.auto_git.handlers.topic_handler import TopicHandler
-from crazy_functions.paper_fns.auto_git.sources.github_source import GitHubSource
-from crazy_functions.crazy_utils import request_gpt_model_in_new_thread_with_ui_alive
-import re
-from datetime import datetime
-import os
 import json
-from pathlib import Path
+import os
+import re
 import time
+from dataclasses import dataclass
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Tuple
 
+from crazy_functions.crazy_utils import \
+    request_gpt_model_in_new_thread_with_ui_alive
+from crazy_functions.paper_fns.auto_git.handlers.code_handler import \
+    CodeSearchHandler
+from crazy_functions.paper_fns.auto_git.handlers.repo_handler import \
+    RepositoryHandler
+from crazy_functions.paper_fns.auto_git.handlers.topic_handler import \
+    TopicHandler
+from crazy_functions.paper_fns.auto_git.handlers.user_handler import \
+    UserSearchHandler
+from crazy_functions.paper_fns.auto_git.query_analyzer import (QueryAnalyzer,
+                                                               SearchCriteria)
+from crazy_functions.paper_fns.auto_git.sources.github_source import \
+    GitHubSource
 # 导入格式化器
-from crazy_functions.paper_fns.file2file_doc import (
-    TxtFormatter,
-    MarkdownFormatter,
-    HtmlFormatter,
-    WordFormatter
-)
+from crazy_functions.paper_fns.file2file_doc import (HtmlFormatter,
+                                                     MarkdownFormatter,
+                                                     TxtFormatter,
+                                                     WordFormatter)
 from crazy_functions.paper_fns.file2file_doc.word2pdf import WordToPdfConverter
+from toolbox import (CatchException, get_log_folder, get_user,
+                     promote_file_to_downloadzone, report_exception, update_ui,
+                     write_history_to_file)
+
 
 @CatchException
-def GitHub项目智能检索(txt: str, llm_kwargs: Dict, plugin_kwargs: Dict, chatbot: List,
-           history: List, system_prompt: str, user_request: str):
+def GitHub项目智能检索(
+    txt: str,
+    llm_kwargs: Dict,
+    plugin_kwargs: Dict,
+    chatbot: List,
+    history: List,
+    system_prompt: str,
+    user_request: str,
+):
     """GitHub项目智能检索主函数"""
 
     # 初始化GitHub API调用源
@@ -47,9 +61,7 @@ def GitHub项目智能检索(txt: str, llm_kwargs: Dict, plugin_kwargs: Dict, ch
     yield from update_ui(chatbot=chatbot, history=history)
 
     query_analyzer = QueryAnalyzer()
-    search_criteria = yield from query_analyzer.analyze_query(
-        txt, chatbot, llm_kwargs
-    )
+    search_criteria = yield from query_analyzer.analyze_query(txt, chatbot, llm_kwargs)
 
     # 根据查询类型选择处理器
     handler = handlers.get(search_criteria.query_type)
@@ -57,17 +69,21 @@ def GitHub项目智能检索(txt: str, llm_kwargs: Dict, plugin_kwargs: Dict, ch
         handler = handlers["repo"]  # 默认使用仓库处理器
 
     # 处理查询
-    chatbot.append(["开始搜索", f"使用{handler.__class__.__name__}处理您的请求，正在搜索GitHub..."])
+    chatbot.append(
+        ["开始搜索", f"使用{handler.__class__.__name__}处理您的请求，正在搜索GitHub..."]
+    )
     yield from update_ui(chatbot=chatbot, history=history)
 
-    final_prompt = asyncio.run(handler.handle(
-        criteria=search_criteria,
-        chatbot=chatbot,
-        history=history,
-        system_prompt=system_prompt,
-        llm_kwargs=llm_kwargs,
-        plugin_kwargs=plugin_kwargs
-    ))
+    final_prompt = asyncio.run(
+        handler.handle(
+            criteria=search_criteria,
+            chatbot=chatbot,
+            history=history,
+            system_prompt=system_prompt,
+            llm_kwargs=llm_kwargs,
+            plugin_kwargs=plugin_kwargs,
+        )
+    )
 
     if final_prompt:
         # 检查是否是道歉提示
@@ -97,7 +113,7 @@ def GitHub项目智能检索(txt: str, llm_kwargs: Dict, plugin_kwargs: Dict, ch
             llm_kwargs=llm_kwargs,
             chatbot=chatbot,
             history=[],
-            sys_prompt=f"你是一个熟悉GitHub生态系统的专业助手，能帮助用户找到合适的项目、代码和开发者。除非用户指定，否则请使用中文回复。"
+            sys_prompt=f"你是一个熟悉GitHub生态系统的专业助手，能帮助用户找到合适的项目、代码和开发者。除非用户指定，否则请使用中文回复。",
         )
 
         # 1. 获取项目列表
@@ -108,19 +124,29 @@ def GitHub项目智能检索(txt: str, llm_kwargs: Dict, plugin_kwargs: Dict, ch
             references = ""
             for idx, repo in enumerate(repos_list, 1):
                 # 构建仓库引用
-                stars_str = f"⭐ {repo.get('stargazers_count', 'N/A')}" if repo.get('stargazers_count') else ""
-                forks_str = f"🍴 {repo.get('forks_count', 'N/A')}" if repo.get('forks_count') else ""
+                stars_str = (
+                    f"⭐ {repo.get('stargazers_count', 'N/A')}"
+                    if repo.get("stargazers_count")
+                    else ""
+                )
+                forks_str = (
+                    f"🍴 {repo.get('forks_count', 'N/A')}"
+                    if repo.get("forks_count")
+                    else ""
+                )
                 stats = f"{stars_str} {forks_str}".strip()
                 stats = f" ({stats})" if stats else ""
 
-                language = f" [{repo.get('language', '')}]" if repo.get('language') else ""
+                language = (
+                    f" [{repo.get('language', '')}]" if repo.get("language") else ""
+                )
 
                 reference = f"[{idx}] **{repo.get('name', '')}**{language}{stats}  \n"
                 reference += f"👤 {repo.get('owner', {}).get('login', 'N/A') if repo.get('owner') is not None else 'N/A'} | "
                 reference += f"📅 {repo.get('updated_at', 'N/A')[:10]} | "
                 reference += f"<a href='{repo.get('html_url', '')}' target='_blank'>GitHub</a>  \n"
 
-                if repo.get('description'):
+                if repo.get("description"):
                     reference += f"{repo.get('description')}  \n"
                 reference += "  \n"
 
@@ -132,7 +158,7 @@ def GitHub项目智能检索(txt: str, llm_kwargs: Dict, plugin_kwargs: Dict, ch
 
         # 2. 保存结果到文件
         # 创建保存目录
-        save_dir = get_log_folder(get_user(chatbot), plugin_name='github_search')
+        save_dir = get_log_folder(get_user(chatbot), plugin_name="github_search")
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
 
@@ -141,7 +167,7 @@ def GitHub项目智能检索(txt: str, llm_kwargs: Dict, plugin_kwargs: Dict, ch
             # 获取文本前max_length个字符作为文件名
             filename = txt[:max_length].strip()
             # 移除不安全的文件名字符
-            filename = re.sub(r'[\\/:*?"<>|]', '', filename)
+            filename = re.sub(r'[\\/:*?"<>|]', "", filename)
             # 如果文件名为空，使用时间戳
             if not filename:
                 filename = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -188,9 +214,11 @@ def GitHub项目智能检索(txt: str, llm_kwargs: Dict, plugin_kwargs: Dict, ch
                 md_content += f"- **最近更新**: {repo.get('updated_at', 'N/A')[:10]}\n"
                 md_content += f"- **创建时间**: {repo.get('created_at', 'N/A')[:10]}\n"
                 md_content += f"- **开源许可**: {repo.get('license', {}).get('name', 'N/A') if repo.get('license') is not None else 'N/A'}\n"
-                if repo.get('topics'):
-                    md_content += f"- **主题标签**: {', '.join(repo.get('topics', []))}\n"
-                if repo.get('homepage'):
+                if repo.get("topics"):
+                    md_content += (
+                        f"- **主题标签**: {', '.join(repo.get('topics', []))}\n"
+                    )
+                if repo.get("homepage"):
                     md_content += f"- **项目主页**: [{repo.get('homepage')}]({repo.get('homepage')})\n"
                 md_content += "\n"
 
@@ -210,7 +238,7 @@ def GitHub项目智能检索(txt: str, llm_kwargs: Dict, plugin_kwargs: Dict, ch
             txt_formatter = TxtFormatter()
             txt_content = txt_formatter.create_document(md_content)
             txt_file = os.path.join(save_dir, f"github_results_{base_filename}.txt")
-            with open(txt_file, 'w', encoding='utf-8') as f:
+            with open(txt_file, "w", encoding="utf-8") as f:
                 f.write(txt_content)
             promote_file_to_downloadzone(txt_file, chatbot=chatbot)
             saved_files.append("TXT")
@@ -220,9 +248,11 @@ def GitHub项目智能检索(txt: str, llm_kwargs: Dict, plugin_kwargs: Dict, ch
         # 2. 保存为Markdown
         try:
             md_formatter = MarkdownFormatter()
-            formatted_md_content = md_formatter.create_document(md_content, "GitHub项目搜索")
+            formatted_md_content = md_formatter.create_document(
+                md_content, "GitHub项目搜索"
+            )
             md_file = os.path.join(save_dir, f"github_results_{base_filename}.md")
-            with open(md_file, 'w', encoding='utf-8') as f:
+            with open(md_file, "w", encoding="utf-8") as f:
                 f.write(formatted_md_content)
             promote_file_to_downloadzone(md_file, chatbot=chatbot)
             saved_files.append("Markdown")
@@ -234,7 +264,7 @@ def GitHub项目智能检索(txt: str, llm_kwargs: Dict, plugin_kwargs: Dict, ch
             html_formatter = HtmlFormatter(processing_type="GitHub项目搜索")
             html_content = html_formatter.create_document(md_content)
             html_file = os.path.join(save_dir, f"github_results_{base_filename}.html")
-            with open(html_file, 'w', encoding='utf-8') as f:
+            with open(html_file, "w", encoding="utf-8") as f:
                 f.write(html_content)
             promote_file_to_downloadzone(html_file, chatbot=chatbot)
             saved_files.append("HTML")
@@ -268,11 +298,15 @@ def GitHub项目智能检索(txt: str, llm_kwargs: Dict, plugin_kwargs: Dict, ch
             success_message = f"成功保存以下格式: {', '.join(saved_files)}"
             if failed_files:
                 failure_message = f"以下格式保存失败: {', '.join(failed_files)}"
-                chatbot.append(["部分格式保存成功", f"{success_message}。{failure_message}"])
+                chatbot.append(
+                    ["部分格式保存成功", f"{success_message}。{failure_message}"]
+                )
             else:
                 chatbot.append(["所有格式保存成功", success_message])
         else:
-            chatbot.append(["保存失败", f"所有格式均保存失败: {', '.join(failed_files)}"])
+            chatbot.append(
+                ["保存失败", f"所有格式均保存失败: {', '.join(failed_files)}"]
+            )
     else:
         report_exception(chatbot, history, a=f"处理失败", b=f"请尝试其他查询")
         yield from update_ui(chatbot=chatbot, history=history)

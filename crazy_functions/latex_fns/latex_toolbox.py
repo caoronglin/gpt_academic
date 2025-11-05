@@ -1,6 +1,7 @@
 import os
 import re
 import shutil
+
 import numpy as np
 from loguru import logger
 
@@ -135,7 +136,10 @@ def post_process(root):
     expansion = 2
     while True:
         n_l = node.string.count("\n")
-        node.range = [n_line - expansion, n_line + n_l + expansion]  # 失败时，扭转的范围
+        node.range = [
+            n_line - expansion,
+            n_line + n_l + expansion,
+        ]  # 失败时，扭转的范围
         n_line = n_line + n_l
         node = node.next
         if node is None:
@@ -341,7 +345,9 @@ def rm_comments(main_file):
             new_file_remove_comment_lines.append(l)
     main_file = "\n".join(new_file_remove_comment_lines)
     # main_file = re.sub(r"\\include{(.*?)}", r"\\input{\1}", main_file)  # 将 \include 命令转换为 \input 命令
-    main_file = re.sub(r"(?<!\\)%.*", "", main_file)  # 使用正则表达式查找半行注释, 并替换为空字符串
+    main_file = re.sub(
+        r"(?<!\\)%.*", "", main_file
+    )  # 使用正则表达式查找半行注释, 并替换为空字符串
     return main_file
 
 
@@ -654,7 +660,8 @@ def _merge_pdfs(pdf1_path, pdf2_path, output_path):
 
 def _merge_pdfs_ng(pdf1_path, pdf2_path, output_path):
     import PyPDF2  # PyPDF2这个库有严重的内存泄露问题，把它放到子进程中运行，从而方便内存的释放
-    from PyPDF2.generic import NameObject, TextStringObject, ArrayObject, FloatObject, NumberObject
+    from PyPDF2.generic import (ArrayObject, FloatObject, NameObject,
+                                NumberObject, TextStringObject)
 
     Percent = 1
     # raise RuntimeError('PyPDF2 has a serious memory leak problem, please use other tools to merge PDF files.')
@@ -716,9 +723,9 @@ def _merge_pdfs_ng(pdf1_path, pdf2_path, output_path):
                                     if dest and page2.annotations:
                                         if annot in page2.annotations:
                                             # 获取原始文件中跳转信息，包括跳转页面
-                                            destination = pdf2_reader.named_destinations[
-                                                dest
-                                            ]
+                                            destination = (
+                                                pdf2_reader.named_destinations[dest]
+                                            )
                                             page_number = (
                                                 pdf2_reader.get_destination_page_number(
                                                     destination
@@ -731,8 +738,12 @@ def _merge_pdfs_ng(pdf1_path, pdf2_path, output_path):
                                                     {
                                                         NameObject("/D"): ArrayObject(
                                                             [
-                                                                NumberObject(page_number),
-                                                                destination.dest_array[1],
+                                                                NumberObject(
+                                                                    page_number
+                                                                ),
+                                                                destination.dest_array[
+                                                                    1
+                                                                ],
                                                                 FloatObject(
                                                                     destination.dest_array[
                                                                         2
@@ -741,8 +752,12 @@ def _merge_pdfs_ng(pdf1_path, pdf2_path, output_path):
                                                                         page1.mediaBox.getWidth()
                                                                     )
                                                                 ),
-                                                                destination.dest_array[3],
-                                                                destination.dest_array[4],
+                                                                destination.dest_array[
+                                                                    3
+                                                                ],
+                                                                destination.dest_array[
+                                                                    4
+                                                                ],
                                                             ]
                                                         )  # 确保键和值是 PdfObject
                                                     }
@@ -752,8 +767,12 @@ def _merge_pdfs_ng(pdf1_path, pdf2_path, output_path):
                                                     {
                                                         NameObject("/D"): ArrayObject(
                                                             [
-                                                                NumberObject(page_number),
-                                                                destination.dest_array[1],
+                                                                NumberObject(
+                                                                    page_number
+                                                                ),
+                                                                destination.dest_array[
+                                                                    1
+                                                                ],
                                                             ]
                                                         )  # 确保键和值是 PdfObject
                                                     }
@@ -787,9 +806,9 @@ def _merge_pdfs_ng(pdf1_path, pdf2_path, output_path):
                                     if dest and page1.annotations:
                                         if annot in page1.annotations:
                                             # 获取原始文件中跳转信息，包括跳转页面
-                                            destination = pdf1_reader.named_destinations[
-                                                dest
-                                            ]
+                                            destination = (
+                                                pdf1_reader.named_destinations[dest]
+                                            )
                                             page_number = (
                                                 pdf1_reader.get_destination_page_number(
                                                     destination
@@ -802,15 +821,23 @@ def _merge_pdfs_ng(pdf1_path, pdf2_path, output_path):
                                                     {
                                                         NameObject("/D"): ArrayObject(
                                                             [
-                                                                NumberObject(page_number),
-                                                                destination.dest_array[1],
+                                                                NumberObject(
+                                                                    page_number
+                                                                ),
+                                                                destination.dest_array[
+                                                                    1
+                                                                ],
                                                                 FloatObject(
                                                                     destination.dest_array[
                                                                         2
                                                                     ]
                                                                 ),
-                                                                destination.dest_array[3],
-                                                                destination.dest_array[4],
+                                                                destination.dest_array[
+                                                                    3
+                                                                ],
+                                                                destination.dest_array[
+                                                                    4
+                                                                ],
                                                             ]
                                                         )  # 确保键和值是 PdfObject
                                                     }
@@ -820,8 +847,12 @@ def _merge_pdfs_ng(pdf1_path, pdf2_path, output_path):
                                                     {
                                                         NameObject("/D"): ArrayObject(
                                                             [
-                                                                NumberObject(page_number),
-                                                                destination.dest_array[1],
+                                                                NumberObject(
+                                                                    page_number
+                                                                ),
+                                                                destination.dest_array[
+                                                                    1
+                                                                ],
                                                             ]
                                                         )  # 确保键和值是 PdfObject
                                                     }
@@ -903,4 +934,6 @@ def _merge_pdfs_legacy(pdf1_path, pdf2_path, output_path):
                 output_writer.write(output_file)
 
 
-merge_pdfs = run_in_subprocess(_merge_pdfs)  # PyPDF2这个库有严重的内存泄露问题，把它放到子进程中运行，从而方便内存的释放
+merge_pdfs = run_in_subprocess(
+    _merge_pdfs
+)  # PyPDF2这个库有严重的内存泄露问题，把它放到子进程中运行，从而方便内存的释放

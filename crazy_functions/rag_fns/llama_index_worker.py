@@ -1,10 +1,10 @@
 import atexit
-from loguru import logger
 from typing import List
 
 from llama_index.core import Document
 from llama_index.core.ingestion import run_transformations
 from llama_index.core.schema import TextNode
+from loguru import logger
 
 from crazy_functions.rag_fns.vector_store_index import GptacVectorStoreIndex
 from request_llms.embed_models.openai_embed import OpenAiEmbeddingModel
@@ -28,27 +28,38 @@ QUESTION_ANSWER_RECORD = """\
 """
 
 
-class SaveLoad():
+class SaveLoad:
 
     def does_checkpoint_exist(self, checkpoint_dir=None):
-        import os, glob
-        if checkpoint_dir is None: checkpoint_dir = self.checkpoint_dir
-        if not os.path.exists(checkpoint_dir): return False
-        if len(glob.glob(os.path.join(checkpoint_dir, "*.json"))) == 0: return False
+        import glob
+        import os
+
+        if checkpoint_dir is None:
+            checkpoint_dir = self.checkpoint_dir
+        if not os.path.exists(checkpoint_dir):
+            return False
+        if len(glob.glob(os.path.join(checkpoint_dir, "*.json"))) == 0:
+            return False
         return True
 
     def save_to_checkpoint(self, checkpoint_dir=None):
-        logger.info(f'saving vector store to: {checkpoint_dir}')
-        if checkpoint_dir is None: checkpoint_dir = self.checkpoint_dir
+        logger.info(f"saving vector store to: {checkpoint_dir}")
+        if checkpoint_dir is None:
+            checkpoint_dir = self.checkpoint_dir
         self.vs_index.storage_context.persist(persist_dir=checkpoint_dir)
 
     def load_from_checkpoint(self, checkpoint_dir=None):
-        if checkpoint_dir is None: checkpoint_dir = self.checkpoint_dir
+        if checkpoint_dir is None:
+            checkpoint_dir = self.checkpoint_dir
         if self.does_checkpoint_exist(checkpoint_dir=checkpoint_dir):
-            logger.info('loading checkpoint from disk')
-            from llama_index.core import StorageContext, load_index_from_storage
+            logger.info("loading checkpoint from disk")
+            from llama_index.core import (StorageContext,
+                                          load_index_from_storage)
+
             storage_context = StorageContext.from_defaults(persist_dir=checkpoint_dir)
-            self.vs_index = load_index_from_storage(storage_context, embed_model=self.embed_model)
+            self.vs_index = load_index_from_storage(
+                storage_context, embed_model=self.embed_model
+            )
             return self.vs_index
         else:
             return self.create_new_vs()
@@ -58,12 +69,15 @@ class SaveLoad():
 
     def purge(self):
         import shutil
+
         shutil.rmtree(self.checkpoint_dir, ignore_errors=True)
         self.vs_index = self.create_new_vs(self.checkpoint_dir)
 
 
 class LlamaIndexRagWorker(SaveLoad):
-    def __init__(self, user_name, llm_kwargs, auto_load_checkpoint=True, checkpoint_dir=None) -> None:
+    def __init__(
+        self, user_name, llm_kwargs, auto_load_checkpoint=True, checkpoint_dir=None
+    ) -> None:
         self.debug_mode = True
         self.embed_model = OpenAiEmbeddingModel(llm_kwargs)
         self.user_name = user_name
@@ -81,10 +95,12 @@ class LlamaIndexRagWorker(SaveLoad):
         # This function is for debugging
         self.vs_index.storage_context.index_store.to_dict()
         docstore = self.vs_index.storage_context.docstore.docs
-        vector_store_preview = "\n".join([ f"{_id} | {tn.text}" for _id, tn in docstore.items() ])
-        logger.info('\n++ --------inspect_vector_store begin--------')
+        vector_store_preview = "\n".join(
+            [f"{_id} | {tn.text}" for _id, tn in docstore.items()]
+        )
+        logger.info("\n++ --------inspect_vector_store begin--------")
         logger.info(vector_store_preview)
-        logger.info('oo --------inspect_vector_store end--------')
+        logger.info("oo --------inspect_vector_store end--------")
         return vector_store_preview
 
     def add_documents_to_vector_store(self, document_list: List[Document]):
@@ -95,7 +111,7 @@ class LlamaIndexRagWorker(SaveLoad):
         documents_nodes = run_transformations(
             documents,  # type: ignore
             self.vs_index._transformations,
-            show_progress=True
+            show_progress=True,
         )
         self.vs_index.insert_nodes(documents_nodes)
         if self.debug_mode:
@@ -104,9 +120,7 @@ class LlamaIndexRagWorker(SaveLoad):
     def add_text_to_vector_store(self, text: str):
         node = TextNode(text=text)
         documents_nodes = run_transformations(
-            [node],
-            self.vs_index._transformations,
-            show_progress=True
+            [node], self.vs_index._transformations, show_progress=True
         )
         self.vs_index.insert_nodes(documents_nodes)
         if self.debug_mode:
@@ -124,11 +138,21 @@ class LlamaIndexRagWorker(SaveLoad):
 
     def build_prompt(self, query, nodes):
         context_str = self.generate_node_array_preview(nodes)
-        return DEFAULT_QUERY_GENERATION_PROMPT.format(context_str=context_str, query_str=query)
+        return DEFAULT_QUERY_GENERATION_PROMPT.format(
+            context_str=context_str, query_str=query
+        )
 
     def generate_node_array_preview(self, nodes):
-        buf = "\n".join(([f"(No.{i+1} | score {n.score:.3f}): {n.text}" for i, n in enumerate(nodes)]))
-        if self.debug_mode: logger.info(buf)
+        buf = "\n".join(
+            (
+                [
+                    f"(No.{i+1} | score {n.score:.3f}): {n.text}"
+                    for i, n in enumerate(nodes)
+                ]
+            )
+        )
+        if self.debug_mode:
+            logger.info(buf)
         return buf
 
     def purge_vector_store(self):

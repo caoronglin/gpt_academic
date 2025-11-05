@@ -1,7 +1,10 @@
-from typing import List, Dict, Any, Tuple
-from .base_handler import BaseHandler
-from crazy_functions.review_fns.query_analyzer import SearchCriteria
 import asyncio
+from typing import Any, Dict, List, Tuple
+
+from crazy_functions.review_fns.query_analyzer import SearchCriteria
+
+from .base_handler import BaseHandler
+
 
 class 文献综述功能(BaseHandler):
     """文献综述处理器"""
@@ -30,9 +33,7 @@ class 文献综述功能(BaseHandler):
             return self._generate_apology_prompt(criteria)
 
         self.ranked_papers = self.paper_ranker.rank_papers(
-            query=criteria.original_query,
-            papers=all_papers,
-            search_criteria=criteria
+            query=criteria.original_query, papers=all_papers, search_criteria=criteria
         )
 
         # 检查排序后的论文数量
@@ -40,8 +41,10 @@ class 文献综述功能(BaseHandler):
             return self._generate_apology_prompt(criteria)
 
         # 检查是否包含PubMed论文
-        has_pubmed_papers = any(paper.url and 'pubmed.ncbi.nlm.nih.gov' in paper.url
-                               for paper in self.ranked_papers)
+        has_pubmed_papers = any(
+            paper.url and "pubmed.ncbi.nlm.nih.gov" in paper.url
+            for paper in self.ranked_papers
+        )
 
         if has_pubmed_papers:
             return self._generate_medical_review_prompt(criteria)
@@ -190,4 +193,3 @@ Language requirement:
 """
 
         return final_prompt
-

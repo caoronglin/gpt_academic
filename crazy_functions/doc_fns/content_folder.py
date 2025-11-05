@@ -1,10 +1,9 @@
-from abc import ABC, abstractmethod
-from typing import Any, Dict, Optional, Type, TypeVar, Generic, Union
-
-from dataclasses import dataclass
-from enum import Enum, auto
 import logging
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from datetime import datetime
+from enum import Enum, auto
+from typing import Any, Dict, Generic, Optional, Type, TypeVar, Union
 
 # 设置日志
 logger = logging.getLogger(__name__)
@@ -13,26 +12,31 @@ logger = logging.getLogger(__name__)
 # 自定义异常类定义
 class FoldingError(Exception):
     """折叠相关的自定义异常基类"""
+
     pass
 
 
 class FormattingError(FoldingError):
     """格式化过程中的错误"""
+
     pass
 
 
 class MetadataError(FoldingError):
     """元数据相关的错误"""
+
     pass
 
 
 class ValidationError(FoldingError):
     """验证错误"""
+
     pass
 
 
 class FoldingStyle(Enum):
     """折叠样式枚举"""
+
     SIMPLE = auto()  # 简单折叠
     DETAILED = auto()  # 详细折叠（带有额外信息）
     NESTED = auto()  # 嵌套折叠
@@ -41,6 +45,7 @@ class FoldingStyle(Enum):
 @dataclass
 class FoldingOptions:
     """折叠选项配置"""
+
     style: FoldingStyle = FoldingStyle.DETAILED
     code_language: Optional[str] = None  # 代码块的语言
     show_timestamp: bool = False  # 是否显示时间戳
@@ -48,7 +53,7 @@ class FoldingOptions:
     custom_css: Optional[str] = None  # 自定义CSS类
 
 
-T = TypeVar('T')  # 用于泛型类型
+T = TypeVar("T")  # 用于泛型类型
 
 
 class BaseMetadata(ABC):
@@ -67,11 +72,12 @@ class BaseMetadata(ABC):
 @dataclass
 class FileMetadata(BaseMetadata):
     """文件元数据"""
+
     rel_path: str
     size: float
     last_modified: Optional[datetime] = None
     mime_type: Optional[str] = None
-    encoding: str = 'utf-8'
+    encoding: str = "utf-8"
 
     def validate(self) -> bool:
         """验证文件元数据的有效性"""
@@ -86,8 +92,6 @@ class FileMetadata(BaseMetadata):
             return False
 
 
-
-
 class ContentFormatter(ABC, Generic[T]):
     """内容格式化抽象基类
 
@@ -95,10 +99,9 @@ class ContentFormatter(ABC, Generic[T]):
     """
 
     @abstractmethod
-    def format(self,
-               content: str,
-               metadata: T,
-               options: Optional[FoldingOptions] = None) -> str:
+    def format(
+        self, content: str, metadata: T, options: Optional[FoldingOptions] = None
+    ) -> str:
         """格式化内容
 
         Args:
@@ -118,9 +121,9 @@ class ContentFormatter(ABC, Generic[T]):
         """创建折叠摘要，可被子类重写"""
         return str(metadata)
 
-    def _format_content_block(self,
-                              content: str,
-                              options: Optional[FoldingOptions]) -> str:
+    def _format_content_block(
+        self, content: str, options: Optional[FoldingOptions]
+    ) -> str:
         """格式化内容块，处理代码块等特殊格式"""
         if not options:
             return content
@@ -140,10 +143,12 @@ class ContentFormatter(ABC, Generic[T]):
 class FileContentFormatter(ContentFormatter[FileMetadata]):
     """文件内容格式化器"""
 
-    def format(self,
-               content: str,
-               metadata: FileMetadata,
-               options: Optional[FoldingOptions] = None) -> str:
+    def format(
+        self,
+        content: str,
+        metadata: FileMetadata,
+        options: Optional[FoldingOptions] = None,
+    ) -> str:
         """格式化文件内容"""
         if not metadata.validate():
             raise MetadataError("Invalid file metadata")
@@ -155,22 +160,25 @@ class FileContentFormatter(ContentFormatter[FileMetadata]):
             summary_parts = [
                 f"{metadata.rel_path} ({metadata.size:.2f}MB)",
                 f"Type: {metadata.mime_type}" if metadata.mime_type else None,
-                (f"Modified: {metadata.last_modified.strftime('%Y-%m-%d %H:%M:%S')}"
-                 if metadata.last_modified and options.show_timestamp else None)
+                (
+                    f"Modified: {metadata.last_modified.strftime('%Y-%m-%d %H:%M:%S')}"
+                    if metadata.last_modified and options.show_timestamp
+                    else None
+                ),
             ]
             summary = " | ".join(filter(None, summary_parts))
 
             # 构建HTML类
-            css_class = f' class="{options.custom_css}"' if options.custom_css else ''
+            css_class = f' class="{options.custom_css}"' if options.custom_css else ""
 
             # 格式化内容
             formatted_content = self._format_content_block(content, options)
 
             # 组装最终结果
             result = (
-                f'<details{css_class}><summary>{summary}</summary>\n\n'
-                f'{formatted_content}\n\n'
-                f'</details>\n\n'
+                f"<details{css_class}><summary>{summary}</summary>\n\n"
+                f"{formatted_content}\n\n"
+                f"</details>\n\n"
             )
 
             return self._add_indent(result, options.indent_level)
@@ -190,7 +198,7 @@ class ContentFoldingManager:
 
     def _register_default_formatters(self) -> None:
         """注册默认的格式化器"""
-        self.register_formatter('file', FileContentFormatter())
+        self.register_formatter("file", FileContentFormatter())
 
     def register_formatter(self, name: str, formatter: ContentFormatter) -> None:
         """注册新的格式化器"""
@@ -200,31 +208,33 @@ class ContentFoldingManager:
 
     def _guess_language(self, extension: str) -> Optional[str]:
         """根据文件扩展名猜测编程语言"""
-        extension = extension.lower().lstrip('.')
+        extension = extension.lower().lstrip(".")
         language_map = {
-            'py': 'python',
-            'js': 'javascript',
-            'java': 'java',
-            'cpp': 'cpp',
-            'cs': 'csharp',
-            'html': 'html',
-            'css': 'css',
-            'md': 'markdown',
-            'json': 'json',
-            'xml': 'xml',
-            'sql': 'sql',
-            'sh': 'bash',
-            'yaml': 'yaml',
-            'yml': 'yaml',
-            'txt': None  # 纯文本不需要语言标识
+            "py": "python",
+            "js": "javascript",
+            "java": "java",
+            "cpp": "cpp",
+            "cs": "csharp",
+            "html": "html",
+            "css": "css",
+            "md": "markdown",
+            "json": "json",
+            "xml": "xml",
+            "sql": "sql",
+            "sh": "bash",
+            "yaml": "yaml",
+            "yml": "yaml",
+            "txt": None,  # 纯文本不需要语言标识
         }
         return language_map.get(extension)
 
-    def format_content(self,
-                       content: str,
-                       formatter_type: str,
-                       metadata: Union[FileMetadata],
-                       options: Optional[FoldingOptions] = None) -> str:
+    def format_content(
+        self,
+        content: str,
+        formatter_type: str,
+        metadata: Union[FileMetadata],
+        options: Optional[FoldingOptions] = None,
+    ) -> str:
         """格式化内容"""
         formatter = self._formatters.get(formatter_type)
         if not formatter:
@@ -234,4 +244,3 @@ class ContentFoldingManager:
             raise TypeError("Invalid metadata type")
 
         return formatter.format(content, metadata, options)
-

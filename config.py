@@ -1,20 +1,27 @@
 """
-    以下所有配置也都支持利用环境变量覆写，环境变量配置格式见docker-compose.yml。
-    读取优先级：环境变量 > config_private.py > config.py
-    --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
-    All the following configurations also support using environment variables to override,
-    and the environment variable configuration format can be seen in docker-compose.yml.
-    Configuration reading priority: environment variable > config_private.py > config.py
+以下所有配置也都支持利用环境变量覆写，环境变量配置格式见docker-compose.yml。
+读取优先级：环境变量 > config_private.py > config.py
+--- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+All the following configurations also support using environment variables to override,
+and the environment variable configuration format can be seen in docker-compose.yml.
+Configuration reading priority: environment variable > config_private.py > config.py
 """
 
 # [step 1-1]>> ( 接入OpenAI模型家族 ) API_KEY = "sk-123456789xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx123456789"。极少数情况下，还需要填写组织（格式如org-123456789abcdefghijklmno的），请向下翻，找 API_ORG 设置项
-API_KEY = "在此处填写APIKEY"    # 可同时填写多个API-KEY，用英文逗号分割，例如API_KEY = "sk-openaikey1,sk-openaikey2,fkxxxx-api2dkey3,azure-apikey4"
+API_KEY = "在此处填写APIKEY"  # 可同时填写多个API-KEY，用英文逗号分割，例如API_KEY = "sk-openaikey1,sk-openaikey2,fkxxxx-api2dkey3,azure-apikey4"
 
 # [step 1-2]>> ( 强烈推荐！接入通义家族 & 大模型服务平台百炼 ) 接入通义千问在线大模型，api-key获取地址 https://dashscope.console.aliyun.com/
-DASHSCOPE_API_KEY = "" # 阿里灵积云API_KEY（用于接入qwen-max，dashscope-qwen3-14b，dashscope-deepseek-r1等）
+DASHSCOPE_API_KEY = ""  # 阿里灵积云API_KEY（用于接入qwen-max，dashscope-qwen3-14b，dashscope-deepseek-r1等）
 
 # [step 1-3]>> ( 接入 deepseek-reasoner, 即 deepseek-r1 ) 深度求索(DeepSeek) API KEY，默认请求地址为"https://api.deepseek.com/v1/chat/completions"
 DEEPSEEK_API_KEY = ""
+
+# [step 1-4]>> ( 接入西北农林科技大学DeepSeek平台 ) 学校部署的DeepSeek平台，基于Ollama和OpenWebUI部署，API地址为"https://deepseek.nwafu.edu.cn/api"
+DEEPSEEK_NWAFU_API_BASE = "https://deepseek.nwafu.edu.cn/api"
+
+# [step 1-5]>> ( 配置指定模型支持 ) 支持Qwen3系列模型和BGE嵌入模型
+# 通义千问API KEY，用于接入Qwen3系列模型
+DASHSCOPE_API_KEY = ""  # 阿里灵积云API_KEY（用于接入qwen3-235b-a22b，qwen3-32b，qwen3-vl-235b-a22b-instruct等）
 
 # [step 2]>> 改为True应用代理。如果使用本地或无地域限制的大模型时，此处不修改；如果直接在海外服务器部署，此处不修改
 USE_PROXY = False
@@ -29,27 +36,60 @@ if USE_PROXY:
     """
     proxies = {
         #          [协议]://  [地址]  :[端口]
-        "http":  "socks5h://localhost:11284",  # 再例如  "http":  "http://127.0.0.1:7890",
+        "http": "socks5h://localhost:11284",  # 再例如  "http":  "http://127.0.0.1:7890",
         "https": "socks5h://localhost:11284",  # 再例如  "https": "http://127.0.0.1:7890",
     }
 else:
     proxies = None
 
 # [step 3]>> 模型选择是 (注意: LLM_MODEL是默认选中的模型, 它*必须*被包含在AVAIL_LLM_MODELS列表中 )
-LLM_MODEL = "gpt-3.5-turbo-16k" # 可选 ↓↓↓
-AVAIL_LLM_MODELS = ["qwen-max", "o1-mini", "o1-mini-2024-09-12", "o1", "o1-2024-12-17", "o1-preview", "o1-preview-2024-09-12",
-                    "gpt-4-1106-preview", "gpt-4-turbo-preview", "gpt-4-vision-preview",
-                    "gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-4-turbo-2024-04-09",
-                    "gpt-3.5-turbo-1106", "gpt-3.5-turbo-16k", "gpt-3.5-turbo", "azure-gpt-3.5",
-                    "gpt-4", "gpt-4-32k", "azure-gpt-4", "glm-4", "glm-4v", "glm-3-turbo",
-                    "gemini-1.5-pro", "chatglm3", "chatglm4",
-                    "deepseek-chat", "deepseek-coder", "deepseek-reasoner",
-                    "volcengine-deepseek-r1-250120", "volcengine-deepseek-v3-241226",
-                    "dashscope-deepseek-r1", "dashscope-deepseek-v3",
-                    "dashscope-qwen3-14b", "dashscope-qwen3-235b-a22b", "dashscope-qwen3-32b",
-                    ]
+LLM_MODEL = "dashscope-qwen3-235b-a22b"  # 默认使用Qwen3-235B-A22B模型
+AVAIL_LLM_MODELS = [
+    "dashscope-qwen3-235b-a22b",
+    "dashscope-qwen3-32b",
+    "dashscope-qwen3-vl-235b-a22b-instruct",
+    "qwen-max",
+    "o1-mini",
+    "o1-mini-2024-09-12",
+    "o1",
+    "o1-2024-12-17",
+    "o1-preview",
+    "o1-preview-2024-09-12",
+    "gpt-4-1106-preview",
+    "gpt-4-turbo-preview",
+    "gpt-4-vision-preview",
+    "gpt-4o",
+    "gpt-4o-mini",
+    "gpt-4-turbo",
+    "gpt-4-turbo-2024-04-09",
+    "gpt-3.5-turbo-1106",
+    "gpt-3.5-turbo-16k",
+    "gpt-3.5-turbo",
+    "azure-gpt-3.5",
+    "gpt-4",
+    "gpt-4-32k",
+    "azure-gpt-4",
+    "glm-4",
+    "glm-4v",
+    "glm-3-turbo",
+    "gemini-1.5-pro",
+    "chatglm3",
+    "chatglm4",
+    "deepseek-chat",
+    "deepseek-coder",
+    "deepseek-reasoner",
+    "deepseek-nwafu-chat",
+    "deepseek-nwafu-coder",
+    "deepseek-nwafu-reasoner",
+    "volcengine-deepseek-r1-250120",
+    "volcengine-deepseek-v3-241226",
+    "dashscope-deepseek-r1",
+    "dashscope-deepseek-v3",
+    "dashscope-qwen3-14b",
+]
 
-EMBEDDING_MODEL = "text-embedding-3-small"
+EMBEDDING_MODEL = "bge-m3"  # 使用BGE-M3嵌入模型
+AVAIL_EMBEDDING_MODELS = ["bge-m3", "bge-reranker-large", "text-embedding-3-small"]
 
 # --- --- --- ---
 # P.S. 其他可用的模型还包括
@@ -90,7 +130,13 @@ DEFAULT_WORKER_NUM = 8
 # 色彩主题, 可选 ["Default", "Chuanhu-Small-and-Beautiful", "High-Contrast"]
 # 更多主题, 请查阅Gradio主题商店: https://huggingface.co/spaces/gradio/theme-gallery 可选 ["Gstaff/Xkcd", "NoCrypt/Miku", ...]
 THEME = "Default"
-AVAIL_THEMES = ["Default", "Chuanhu-Small-and-Beautiful", "High-Contrast", "Gstaff/Xkcd", "NoCrypt/Miku"]
+AVAIL_THEMES = [
+    "Default",
+    "Chuanhu-Small-and-Beautiful",
+    "High-Contrast",
+    "Gstaff/Xkcd",
+    "NoCrypt/Miku",
+]
 
 FONT = "Theme-Default-Font"
 AVAIL_FONTS = [
@@ -114,7 +160,7 @@ AVAIL_FONTS = [
     "Helvetica",
     "ui-sans-serif",
     "sans-serif",
-    "system-ui"
+    "system-ui",
 ]
 
 
@@ -131,7 +177,7 @@ CODE_HIGHLIGHT = True
 
 
 # 窗口布局
-LAYOUT = "LEFT-RIGHT"   # "LEFT-RIGHT"（左右布局） # "TOP-DOWN"（上下布局）
+LAYOUT = "LEFT-RIGHT"  # "LEFT-RIGHT"（左右布局） # "TOP-DOWN"（上下布局）
 
 
 # 暗色模式 / 亮色模式
@@ -155,7 +201,7 @@ MAX_RETRY = 2
 
 
 # 插件分类默认选项
-DEFAULT_FN_GROUPS = ['对话', '编程', '学术', '智能体']
+DEFAULT_FN_GROUPS = ["对话", "编程", "学术", "智能体"]
 
 
 # 定义界面上“询问多个GPT模型”插件应该使用哪些模型，请从AVAIL_LLM_MODELS中选择，并在不同模型之间用`&`间隔，例如"gpt-3.5-turbo&chatglm3&azure-gpt-4"
@@ -169,21 +215,25 @@ QWEN_LOCAL_MODEL_SELECTION = "Qwen/Qwen-1_8B-Chat-Int8"
 
 
 # 百度千帆（LLM_MODEL="qianfan"）
-BAIDU_CLOUD_API_KEY = ''
-BAIDU_CLOUD_SECRET_KEY = ''
-BAIDU_CLOUD_QIANFAN_MODEL = 'ERNIE-Bot'    # 可选 "ERNIE-Bot-4"(文心大模型4.0), "ERNIE-Bot"(文心一言), "ERNIE-Bot-turbo", "BLOOMZ-7B", "Llama-2-70B-Chat", "Llama-2-13B-Chat", "Llama-2-7B-Chat", "ERNIE-Speed-128K", "ERNIE-Speed-8K", "ERNIE-Lite-8K"
+BAIDU_CLOUD_API_KEY = ""
+BAIDU_CLOUD_SECRET_KEY = ""
+BAIDU_CLOUD_QIANFAN_MODEL = "ERNIE-Bot"  # 可选 "ERNIE-Bot-4"(文心大模型4.0), "ERNIE-Bot"(文心一言), "ERNIE-Bot-turbo", "BLOOMZ-7B", "Llama-2-70B-Chat", "Llama-2-13B-Chat", "Llama-2-7B-Chat", "ERNIE-Speed-128K", "ERNIE-Speed-8K", "ERNIE-Lite-8K"
 
 
 # 如果使用ChatGLM3或ChatGLM4本地模型，请把 LLM_MODEL="chatglm3" 或LLM_MODEL="chatglm4"，并在此处指定模型路径
-CHATGLM_LOCAL_MODEL_PATH = "THUDM/glm-4-9b-chat" # 例如"/home/hmp/ChatGLM3-6B/"
+CHATGLM_LOCAL_MODEL_PATH = "THUDM/glm-4-9b-chat"  # 例如"/home/hmp/ChatGLM3-6B/"
 
 # 如果使用ChatGLM2微调模型，请把 LLM_MODEL="chatglmft"，并在此处指定模型路径
-CHATGLM_PTUNING_CHECKPOINT = "" # 例如"/home/hmp/ChatGLM2-6B/ptuning/output/6b-pt-128-1e-2/checkpoint-100"
+CHATGLM_PTUNING_CHECKPOINT = (
+    ""  # 例如"/home/hmp/ChatGLM2-6B/ptuning/output/6b-pt-128-1e-2/checkpoint-100"
+)
 
 
 # 本地LLM模型如ChatGLM的执行方式 CPU/GPU
-LOCAL_MODEL_DEVICE = "cpu" # 可选 "cuda"
-LOCAL_MODEL_QUANT = "FP16" # 默认 "FP16" "INT4" 启用量化INT4版本 "INT8" 启用量化INT8版本
+LOCAL_MODEL_DEVICE = "cpu"  # 可选 "cuda"
+LOCAL_MODEL_QUANT = (
+    "FP16"  # 默认 "FP16" "INT4" 启用量化INT4版本 "INT8" 启用量化INT8版本
+)
 
 
 # 设置gradio的并行线程数（不需要修改）
@@ -218,14 +268,16 @@ API_ORG = ""
 
 
 # 如果需要使用Slack Claude，使用教程详情见 request_llms/README.md
-SLACK_CLAUDE_BOT_ID = ''
-SLACK_CLAUDE_USER_TOKEN = ''
+SLACK_CLAUDE_BOT_ID = ""
+SLACK_CLAUDE_USER_TOKEN = ""
 
 
 # 如果需要使用AZURE（方法一：单个azure模型部署）详情请见额外文档 docs\use_azure.md
 AZURE_ENDPOINT = "https://你亲手写的api名称.openai.azure.com/"
-AZURE_API_KEY = "填入azure openai api的密钥"    # 建议直接在API_KEY处填写，该选项即将被弃用
-AZURE_ENGINE = "填入你亲手写的部署名"            # 读 docs\use_azure.md
+AZURE_API_KEY = (
+    "填入azure openai api的密钥"  # 建议直接在API_KEY处填写，该选项即将被弃用
+)
+AZURE_ENGINE = "填入你亲手写的部署名"  # 读 docs\use_azure.md
 
 
 # 如果需要使用AZURE（方法二：多个azure模型部署+动态切换）详情请见额外文档 docs\use_azure.md
@@ -235,14 +287,14 @@ AZURE_CFG_ARRAY = {}
 # 阿里云实时语音识别 配置难度较高
 # 参考 https://github.com/binary-husky/gpt_academic/blob/master/docs/use_audio.md
 ENABLE_AUDIO = False
-ALIYUN_TOKEN=""     # 例如 f37f30e0f9934c34a992f6f64f7eba4f
-ALIYUN_APPKEY=""    # 例如 RoPlZrM88DnAFkZK
-ALIYUN_ACCESSKEY="" # （无需填写）
-ALIYUN_SECRET=""    # （无需填写）
+ALIYUN_TOKEN = ""  # 例如 f37f30e0f9934c34a992f6f64f7eba4f
+ALIYUN_APPKEY = ""  # 例如 RoPlZrM88DnAFkZK
+ALIYUN_ACCESSKEY = ""  # （无需填写）
+ALIYUN_SECRET = ""  # （无需填写）
 
 
 # GPT-SOVITS 文本转语音服务的运行地址（将语言模型的生成文本朗读出来）
-TTS_TYPE = "EDGE_TTS" # EDGE_TTS / LOCAL_SOVITS_API / DISABLE
+TTS_TYPE = "EDGE_TTS"  # EDGE_TTS / LOCAL_SOVITS_API / DISABLE
 GPT_SOVITS_URL = ""
 EDGE_TTS_VOICE = "zh-CN-XiaoxiaoNeural"
 
@@ -255,7 +307,7 @@ XFYUN_API_KEY = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 
 # 接入智谱大模型
 ZHIPUAI_API_KEY = ""
-ZHIPUAI_MODEL = "" # 此选项已废弃，不再需要填写
+ZHIPUAI_MODEL = ""  # 此选项已废弃，不再需要填写
 
 
 # Claude API KEY
@@ -271,7 +323,7 @@ YIMODEL_API_KEY = ""
 
 
 # 接入火山引擎的在线大模型)，api-key获取地址 https://console.volcengine.com/ark/region:ark+cn-beijing/endpoint
-ARK_API_KEY = "00000000-0000-0000-0000-000000000000" # 火山引擎 API KEY
+ARK_API_KEY = "00000000-0000-0000-0000-000000000000"  # 火山引擎 API KEY
 
 
 # 紫东太初大模型 https://ai-maas.wair.ac.cn
@@ -294,7 +346,7 @@ CUSTOM_API_KEY_PATTERN = ""
 
 
 # Google Gemini API-Key
-GEMINI_API_KEY = ''
+GEMINI_API_KEY = ""
 
 
 # HUGGINGFACE的TOKEN，下载LLAMA时起作用 https://huggingface.co/docs/hub/security-tokens
@@ -304,14 +356,19 @@ HUGGINGFACE_ACCESS_TOKEN = "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"
 # GROBID服务器地址（填写多个可以均衡负载），用于高质量地读取PDF文档
 # 获取方法：复制以下空间https://huggingface.co/spaces/qingxu98/grobid，设为public，然后GROBID_URL = "https://(你的hf用户名如qingxu98)-(你的填写的空间名如grobid).hf.space"
 GROBID_URLS = [
-    "https://qingxu98-grobid.hf.space","https://qingxu98-grobid2.hf.space","https://qingxu98-grobid3.hf.space",
-    "https://qingxu98-grobid4.hf.space","https://qingxu98-grobid5.hf.space", "https://qingxu98-grobid6.hf.space",
-    "https://qingxu98-grobid7.hf.space", "https://qingxu98-grobid8.hf.space",
+    "https://qingxu98-grobid.hf.space",
+    "https://qingxu98-grobid2.hf.space",
+    "https://qingxu98-grobid3.hf.space",
+    "https://qingxu98-grobid4.hf.space",
+    "https://qingxu98-grobid5.hf.space",
+    "https://qingxu98-grobid6.hf.space",
+    "https://qingxu98-grobid7.hf.space",
+    "https://qingxu98-grobid8.hf.space",
 ]
 
 
 # Searxng互联网检索服务（这是一个huggingface空间，请前往huggingface复制该空间，然后把自己新的空间地址填在这里）
-SEARXNG_URLS = [ f"https://kaletianlre-beardvs{i}dd.hf.space/" for i in range(1,5) ]
+SEARXNG_URLS = [f"https://kaletianlre-beardvs{i}dd.hf.space/" for i in range(1, 5)]
 
 
 # 是否允许通过自然语言描述修改本页的配置，该功能具有一定的危险性，默认关闭
@@ -335,8 +392,16 @@ ARXIV_CACHE_DIR = "gpt_log/arxiv_cache"
 
 
 # 除了连接OpenAI之外，还有哪些场合允许使用代理，请尽量不要修改
-WHEN_TO_USE_PROXY = ["Connect_OpenAI", "Download_LLM", "Download_Gradio_Theme", "Connect_Grobid",
-                     "Warmup_Modules", "Nougat_Download", "AutoGen", "Connect_OpenAI_Embedding"]
+WHEN_TO_USE_PROXY = [
+    "Connect_OpenAI",
+    "Download_LLM",
+    "Download_Gradio_Theme",
+    "Connect_Grobid",
+    "Warmup_Modules",
+    "Nougat_Download",
+    "AutoGen",
+    "Connect_OpenAI_Embedding",
+]
 
 
 # 启用插件热加载
@@ -348,7 +413,7 @@ NUM_CUSTOM_BASIC_BTN = 4
 
 
 # 媒体智能体的服务地址（这是一个huggingface空间，请前往huggingface复制该空间，然后把自己新的空间地址填在这里）
-DAAS_SERVER_URLS = [ f"https://niuziniu-biligpt{i}.hf.space/stream" for i in range(1,5) ]
+DAAS_SERVER_URLS = [f"https://niuziniu-biligpt{i}.hf.space/stream" for i in range(1, 5)]
 
 
 # 在互联网搜索组件中，负责将搜索结果整理成干净的Markdown
@@ -362,11 +427,30 @@ SEMANTIC_SCHOLAR_KEY = ""
 # 是否自动裁剪上下文长度（是否启动，默认不启动）
 AUTO_CONTEXT_CLIP_ENABLE = False
 # 目标裁剪上下文的token长度（如果超过这个长度，则会自动裁剪）
-AUTO_CONTEXT_CLIP_TRIGGER_TOKEN_LEN = 30*1000
+AUTO_CONTEXT_CLIP_TRIGGER_TOKEN_LEN = 30 * 1000
 # 无条件丢弃x以上的轮数
 AUTO_CONTEXT_MAX_ROUND = 64
 # 在裁剪上下文时，倒数第x次对话能“最多”保留的上下文token的比例占 AUTO_CONTEXT_CLIP_TRIGGER_TOKEN_LEN 的多少
-AUTO_CONTEXT_MAX_CLIP_RATIO = [0.80, 0.60, 0.45, 0.25, 0.20, 0.18, 0.16, 0.14, 0.12, 0.10, 0.08, 0.07, 0.06, 0.05, 0.04, 0.03, 0.02, 0.01]
+AUTO_CONTEXT_MAX_CLIP_RATIO = [
+    0.80,
+    0.60,
+    0.45,
+    0.25,
+    0.20,
+    0.18,
+    0.16,
+    0.14,
+    0.12,
+    0.10,
+    0.08,
+    0.07,
+    0.06,
+    0.05,
+    0.04,
+    0.03,
+    0.02,
+    0.01,
+]
 
 
 """

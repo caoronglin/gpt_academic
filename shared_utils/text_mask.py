@@ -20,6 +20,7 @@ const_extract_langbased_re = re.compile(
     flags=re.DOTALL,
 )
 
+
 @lru_cache(maxsize=128)
 def apply_gpt_academic_string_mask(string, mode="show_all"):
     """
@@ -28,7 +29,7 @@ def apply_gpt_academic_string_mask(string, mode="show_all"):
     """
     if not string:
         return string
-    if "<gpt_academic_string_mask>" not in string: # No need to process
+    if "<gpt_academic_string_mask>" not in string:  # No need to process
         return string
 
     if mode == "show_all":
@@ -69,11 +70,11 @@ def apply_gpt_academic_string_mask_langbased(string, lang_reference):
             "注意，lang_reference这段文字是中文"            # 原样返回
     """
 
-    if "<gpt_academic_string_mask>" not in string: # No need to process
+    if "<gpt_academic_string_mask>" not in string:  # No need to process
         return string
 
     def contains_chinese(string):
-        chinese_regex = re.compile(u'[\u4e00-\u9fff]+')
+        chinese_regex = re.compile("[\u4e00-\u9fff]+")
         return chinese_regex.search(string) is not None
 
     mode = "english" if not contains_chinese(lang_reference) else "chinese"
@@ -87,7 +88,9 @@ def apply_gpt_academic_string_mask_langbased(string, lang_reference):
 
 
 @lru_cache(maxsize=128)
-def build_gpt_academic_masked_string_langbased(text_show_english="", text_show_chinese=""):
+def build_gpt_academic_masked_string_langbased(
+    text_show_english="", text_show_chinese=""
+):
     """
     根据语言，选择提示词，对字符串进行处理，返回处理后的字符串
     """

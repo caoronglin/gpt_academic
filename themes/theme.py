@@ -1,10 +1,9 @@
-import pickle
 import base64
+import json
+import pickle
 import uuid
-import json
-from toolbox import get_conf
-import json
 
+from toolbox import get_conf
 
 """
 -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -27,8 +26,7 @@ def load_dynamic_theme(THEME):
 
         theme_declaration = ""
     elif "/" in THEME:
-        from .gradios import adjust_theme, advanced_css
-        from .gradios import dynamic_set_theme
+        from .gradios import adjust_theme, advanced_css, dynamic_set_theme
 
         adjust_dynamic_theme = dynamic_set_theme(THEME)
         theme_declaration = ""
@@ -48,6 +46,8 @@ adjust_theme, advanced_css, theme_declaration, _ = load_dynamic_theme(get_conf("
 cookie相关工具函数
 -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 """
+
+
 def assign_user_uuid(cookies):
     # 为每一位访问的用户赋予一个独一无二的uuid编码
     cookies.update({"uuid": uuid.uuid4()})
@@ -57,7 +57,7 @@ def assign_user_uuid(cookies):
 def to_cookie_str(d):
     # serialize the dictionary and encode it as a string
     serialized_dict = json.dumps(d)
-    cookie_value = base64.b64encode(serialized_dict.encode('utf8')).decode("utf-8")
+    cookie_value = base64.b64encode(serialized_dict.encode("utf8")).decode("utf-8")
     return cookie_value
 
 
@@ -140,4 +140,3 @@ setTimeout(() => {
 }, 50);
 }
 """
-

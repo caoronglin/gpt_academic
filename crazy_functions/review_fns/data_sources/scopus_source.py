@@ -1,18 +1,18 @@
-from typing import List, Optional, Dict, Union
-from datetime import datetime
-import aiohttp
 import random
-from .base_source import DataSource, PaperMetadata
+from datetime import datetime
+from typing import Dict, List, Optional, Union
+
+import aiohttp
 from tqdm import tqdm
+
+from .base_source import DataSource, PaperMetadata
+
 
 class ScopusSource(DataSource):
     """Scopus API实现"""
 
     # 定义API密钥列表
-    API_KEYS = [
-        "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-        "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-    ]
+    API_KEYS = ["xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"]
 
     def __init__(self, api_key: str = None):
         """初始化
@@ -26,10 +26,7 @@ class ScopusSource(DataSource):
     def _initialize(self) -> None:
         """初始化基础URL和请求头"""
         self.base_url = "https://api.elsevier.com/content"
-        self.headers = {
-            "X-ELS-APIKey": self.api_key,
-            "Accept": "application/json"
-        }
+        self.headers = {"X-ELS-APIKey": self.api_key, "Accept": "application/json"}
 
     async def _make_request(self, url: str, params: Dict = None) -> Optional[Dict]:
         """发送HTTP请求
@@ -72,12 +69,16 @@ class ScopusSource(DataSource):
                 if isinstance(data["author"], list):
                     for author in data["author"]:
                         if "given-name" in author and "surname" in author:
-                            authors.append(f"{author['given-name']} {author['surname']}")
+                            authors.append(
+                                f"{author['given-name']} {author['surname']}"
+                            )
                         elif "indexed-name" in author:
                             authors.append(author["indexed-name"])
                 elif isinstance(data["author"], dict):
                     if "given-name" in data["author"] and "surname" in data["author"]:
-                        authors.append(f"{data['author']['given-name']} {data['author']['surname']}")
+                        authors.append(
+                            f"{data['author']['given-name']} {data['author']['surname']}"
+                        )
                     elif "indexed-name" in data["author"]:
                         authors.append(data["author"]["indexed-name"])
 
@@ -125,7 +126,7 @@ class ScopusSource(DataSource):
                 "issue": data.get("prism:issueIdentifier"),
                 "page_range": data.get("prism:pageRange"),
                 "article_number": data.get("article-number"),
-                "publication_date": data.get("prism:coverDate")
+                "publication_date": data.get("prism:coverDate"),
             }
 
             return PaperMetadata(
@@ -140,7 +141,7 @@ class ScopusSource(DataSource):
                 institutions=institutions,
                 venue_type="journal",
                 venue_name=venue,
-                venue_info=venue_info
+                venue_info=venue_info,
             )
 
         except Exception as e:
@@ -148,11 +149,7 @@ class ScopusSource(DataSource):
             return None
 
     async def search(
-        self,
-        query: str,
-        limit: int = 100,
-        sort_by: str = None,
-        start_year: int = None
+        self, query: str, limit: int = 100, sort_by: str = None, start_year: int = None
     ) -> List[PaperMetadata]:
         """搜索论文
 
@@ -170,7 +167,7 @@ class ScopusSource(DataSource):
             params = {
                 "query": query,
                 "count": min(limit, 100),  # Scopus API单次请求限制
-                "start": 0
+                "start": 0,
             }
 
             # 添加年份过滤
@@ -182,7 +179,7 @@ class ScopusSource(DataSource):
                 sort_map = {
                     "relevance": "-score",
                     "date": "-coverDate",
-                    "citations": "-citedby-count"
+                    "citations": "-citedby-count",
                 }
                 if sort_by in sort_map:
                     params["sort"] = sort_map[sort_by]
@@ -298,10 +295,7 @@ class ScopusSource(DataSource):
             return []
 
     async def search_by_author(
-        self,
-        author: str,
-        limit: int = 100,
-        start_year: int = None
+        self, author: str, limit: int = 100, start_year: int = None
     ) -> List[PaperMetadata]:
         """按作者搜索论文"""
         query = f"AUTHOR-NAME({author})"
@@ -310,10 +304,7 @@ class ScopusSource(DataSource):
         return await self.search(query, limit=limit)
 
     async def search_by_journal(
-        self,
-        journal: str,
-        limit: int = 100,
-        start_year: int = None
+        self, journal: str, limit: int = 100, start_year: int = None
     ) -> List[PaperMetadata]:
         """按期刊搜索论文"""
         query = f"SRCTITLE({journal})"
@@ -322,13 +313,12 @@ class ScopusSource(DataSource):
         return await self.search(query, limit=limit)
 
     async def get_latest_papers(
-        self,
-        days: int = 7,
-        limit: int = 100
+        self, days: int = 7, limit: int = 100
     ) -> List[PaperMetadata]:
         """获取最新论文"""
         query = f"LOAD-DATE > NOW() - {days}d"
         return await self.search(query, limit=limit, sort_by="date")
+
 
 async def example_usage():
     """ScopusSource使用示例"""
@@ -374,7 +364,7 @@ async def example_usage():
             query=keywords,
             limit=5,
             sort_by="citations",  # 按引用次数排序
-            start_year=2020  # 只搜索2020年之后的论文
+            start_year=2020,  # 只搜索2020年之后的论文
         )
 
         print(f"\n找到 {len(papers)} 篇相关论文:")
@@ -393,8 +383,11 @@ async def example_usage():
     except Exception as e:
         print(f"发生错误: {str(e)}")
         import traceback
+
         print(traceback.format_exc())
+
 
 if __name__ == "__main__":
     import asyncio
+
     asyncio.run(example_usage())

@@ -1,6 +1,6 @@
 class HtmlFormatter:
     """聊天记录HTML格式生成器"""
-    
+
     def __init__(self):
         self.css_styles = """
         :root {
@@ -131,7 +131,9 @@ class HtmlFormatter:
         }
         """
 
-    def create_document(self, question: str, answer: str, ranked_papers: list = None) -> str:
+    def create_document(
+        self, question: str, answer: str, ranked_papers: list = None
+    ) -> str:
         """生成完整的HTML文档
         Args:
             question: str, 用户问题
@@ -140,63 +142,91 @@ class HtmlFormatter:
         Returns:
             str: 完整的HTML文档字符串
         """
-        chat_content = f'''
+        chat_content = f"""
         <div class="QaBox">
             <div class="Question">{question}</div>
             <div class="Answer markdown-body" id="answer-content">{answer}</div>
         </div>
-        '''
+        """
 
         references_content = ""
         if ranked_papers:
-            references_content = '<div class="history-section"><h2 class="history-title">参考文献</h2>'
+            references_content = (
+                '<div class="history-section"><h2 class="history-title">参考文献</h2>'
+            )
             for idx, paper in enumerate(ranked_papers, 1):
-                authors = ', '.join(paper.authors)
-                
+                authors = ", ".join(paper.authors)
+
                 # 构建引用信息
-                citations_info = f"被引用次数：{paper.citations}" if paper.citations is not None else "引用信息未知"
-                
+                citations_info = (
+                    f"被引用次数：{paper.citations}"
+                    if paper.citations is not None
+                    else "引用信息未知"
+                )
+
                 # 构建下载链接
                 download_links = []
                 if paper.doi:
                     # 检查是否是arXiv链接
-                    if 'arxiv.org' in paper.doi:
+                    if "arxiv.org" in paper.doi:
                         # 如果DOI中包含完整的arXiv URL，直接使用
-                        arxiv_url = paper.doi if paper.doi.startswith('http') else f'http://{paper.doi}'
+                        arxiv_url = (
+                            paper.doi
+                            if paper.doi.startswith("http")
+                            else f"http://{paper.doi}"
+                        )
                         download_links.append(f'<a href="{arxiv_url}">arXiv链接</a>')
                         # 提取arXiv ID并添加PDF链接
-                        arxiv_id = arxiv_url.split('abs/')[-1].split('v')[0]
-                        download_links.append(f'<a href="https://arxiv.org/pdf/{arxiv_id}.pdf">PDF下载</a>')
+                        arxiv_id = arxiv_url.split("abs/")[-1].split("v")[0]
+                        download_links.append(
+                            f'<a href="https://arxiv.org/pdf/{arxiv_id}.pdf">PDF下载</a>'
+                        )
                     else:
                         # 非arXiv的DOI使用标准格式
-                        download_links.append(f'<a href="https://doi.org/{paper.doi}">DOI: {paper.doi}</a>')
+                        download_links.append(
+                            f'<a href="https://doi.org/{paper.doi}">DOI: {paper.doi}</a>'
+                        )
 
-                if hasattr(paper, 'url') and paper.url and 'arxiv.org' not in str(paper.url):
+                if (
+                    hasattr(paper, "url")
+                    and paper.url
+                    and "arxiv.org" not in str(paper.url)
+                ):
                     # 只有当URL不是arXiv链接时才添加
                     download_links.append(f'<a href="{paper.url}">原文链接</a>')
-                download_section = ' | '.join(download_links) if download_links else "无直接下载链接"
-                
+                download_section = (
+                    " | ".join(download_links) if download_links else "无直接下载链接"
+                )
+
                 # 构建来源信息
                 source_info = []
                 if paper.venue_type:
                     source_info.append(f"类型：{paper.venue_type}")
                 if paper.venue_name:
                     source_info.append(f"来源：{paper.venue_name}")
-                    
+
                 # 添加期刊指标信息
-                if hasattr(paper, 'if_factor') and paper.if_factor:
-                    source_info.append(f"<span class='journal-metric'>IF: {paper.if_factor}</span>")
-                if hasattr(paper, 'jcr_division') and paper.jcr_division:
-                    source_info.append(f"<span class='journal-metric'>JCR分区: {paper.jcr_division}</span>")
-                if hasattr(paper, 'cas_division') and paper.cas_division:
-                    source_info.append(f"<span class='journal-metric'>中科院分区: {paper.cas_division}</span>")
-                    
-                if hasattr(paper, 'venue_info') and paper.venue_info:
-                    if paper.venue_info.get('journal_ref'):
-                        source_info.append(f"期刊参考：{paper.venue_info['journal_ref']}")
-                    if paper.venue_info.get('publisher'):
+                if hasattr(paper, "if_factor") and paper.if_factor:
+                    source_info.append(
+                        f"<span class='journal-metric'>IF: {paper.if_factor}</span>"
+                    )
+                if hasattr(paper, "jcr_division") and paper.jcr_division:
+                    source_info.append(
+                        f"<span class='journal-metric'>JCR分区: {paper.jcr_division}</span>"
+                    )
+                if hasattr(paper, "cas_division") and paper.cas_division:
+                    source_info.append(
+                        f"<span class='journal-metric'>中科院分区: {paper.cas_division}</span>"
+                    )
+
+                if hasattr(paper, "venue_info") and paper.venue_info:
+                    if paper.venue_info.get("journal_ref"):
+                        source_info.append(
+                            f"期刊参考：{paper.venue_info['journal_ref']}"
+                        )
+                    if paper.venue_info.get("publisher"):
                         source_info.append(f"出版商：{paper.venue_info['publisher']}")
-                source_section = ' | '.join(source_info) if source_info else ""
+                source_section = " | ".join(source_info) if source_info else ""
 
                 # 构建标准引用格式
                 standard_citation = f"[{idx}] "
@@ -215,16 +245,20 @@ class HtmlFormatter:
                     standard_citation += f", {paper.year}"
                 # 添加DOI
                 if paper.doi:
-                    if 'arxiv.org' in paper.doi:
+                    if "arxiv.org" in paper.doi:
                         # 如果是arXiv链接，直接使用arXiv URL
-                        arxiv_url = paper.doi if paper.doi.startswith('http') else f'http://{paper.doi}'
+                        arxiv_url = (
+                            paper.doi
+                            if paper.doi.startswith("http")
+                            else f"http://{paper.doi}"
+                        )
                         standard_citation += f". {arxiv_url}"
                     else:
                         # 非arXiv的DOI使用标准格式
                         standard_citation += f". DOI: {paper.doi}"
                 standard_citation += "."
-                
-                references_content += f'''
+
+                references_content += f"""
                 <div class="historyBox">
                     <div class="entry">
                         <p class="paper-title"><b>[{idx}]</b> <i>{paper.title}</i></p>
@@ -241,8 +275,8 @@ class HtmlFormatter:
                         </div>
                     </div>
                 </div>
-                '''
-            references_content += '</div>'
+                """
+            references_content += "</div>"
 
         # 添加新的CSS样式
         css_additions = """
@@ -346,7 +380,7 @@ class HtmlFormatter:
                 }
             }
         """
-        
+
         # 修改 js_code 部分，添加 markdown 解析功能
         js_code = """
         <script>

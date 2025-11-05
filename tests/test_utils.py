@@ -1,13 +1,10 @@
-from toolbox import get_conf
-from toolbox import set_conf
-from toolbox import set_multi_conf
-from toolbox import get_plugin_handle
-from toolbox import get_plugin_default_kwargs
-from toolbox import get_chat_handle
-from toolbox import get_chat_default_kwargs
-from functools import wraps
-import sys
 import os
+import sys
+from functools import wraps
+
+from toolbox import (get_chat_default_kwargs, get_chat_handle, get_conf,
+                     get_plugin_default_kwargs, get_plugin_handle, set_conf,
+                     set_multi_conf)
 
 
 def chat_to_markdown_str(chat):

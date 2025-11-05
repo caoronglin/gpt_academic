@@ -1,8 +1,13 @@
-from typing import List, Dict, Any, Optional, Tuple
-from .base_handler import BaseHandler
-from crazy_functions.review_fns.query_analyzer import SearchCriteria
 import asyncio
-from crazy_functions.crazy_utils import request_gpt_model_multi_threads_with_very_awesome_ui_and_high_efficiency as request_gpt
+from typing import Any, Dict, List, Optional, Tuple
+
+from crazy_functions.crazy_utils import \
+    request_gpt_model_multi_threads_with_very_awesome_ui_and_high_efficiency as \
+    request_gpt
+from crazy_functions.review_fns.query_analyzer import SearchCriteria
+
+from .base_handler import BaseHandler
+
 
 class 单篇论文分析功能(BaseHandler):
     """论文分析处理器"""
@@ -47,7 +52,7 @@ class 单篇论文分析功能(BaseHandler):
             paper_id = f"DOI: {criteria.paper_id}\n"
 
         # 格式化作者列表
-        authors_str = ', '.join(authors) if isinstance(authors, list) else authors
+        authors_str = ", ".join(authors) if isinstance(authors, list) else authors
 
         final_prompt = f"""Current time: {current_time}
 
@@ -132,8 +137,7 @@ Language requirement:
                 if not paper:
                     # 如果Semantic Scholar没有找到，尝试PubMed
                     papers = await self.pubmed.search(
-                        f"{criteria.paper_id}[doi]",
-                        limit=1
+                        f"{criteria.paper_id}[doi]", limit=1
                     )
                     if papers:
                         return papers[0]
@@ -142,25 +146,22 @@ Language requirement:
             elif criteria.paper_source == "title":
                 # 使用_search_all_sources搜索
                 search_params = {
-                    'max_papers': 1,
-                    'min_year': 1900,  # 不限制年份
-                    'search_multiplier': 1
+                    "max_papers": 1,
+                    "min_year": 1900,  # 不限制年份
+                    "search_multiplier": 1,
                 }
 
                 # 设置搜索参数
                 criteria.arxiv_params = {
                     "search_type": "basic",
                     "query": f'ti:"{criteria.paper_title}"',
-                    "limit": 1
+                    "limit": 1,
                 }
-                criteria.semantic_params = {
-                    "query": criteria.paper_title,
-                    "limit": 1
-                }
+                criteria.semantic_params = {"query": criteria.paper_title, "limit": 1}
                 criteria.pubmed_params = {
                     "search_type": "basic",
                     "query": f'"{criteria.paper_title}"[Title]',
-                    "limit": 1
+                    "limit": 1,
                 }
 
                 papers = await self._search_all_sources(criteria, search_params)
@@ -169,25 +170,22 @@ Language requirement:
             # 如果都没有找到，尝试使用 main_topic 作为标题搜索
             if not criteria.paper_title and not criteria.paper_id:
                 search_params = {
-                    'max_papers': 1,
-                    'min_year': 1900,
-                    'search_multiplier': 1
+                    "max_papers": 1,
+                    "min_year": 1900,
+                    "search_multiplier": 1,
                 }
 
                 # 设置搜索参数
                 criteria.arxiv_params = {
                     "search_type": "basic",
                     "query": f'ti:"{criteria.main_topic}"',
-                    "limit": 1
+                    "limit": 1,
                 }
-                criteria.semantic_params = {
-                    "query": criteria.main_topic,
-                    "limit": 1
-                }
+                criteria.semantic_params = {"query": criteria.main_topic, "limit": 1}
                 criteria.pubmed_params = {
                     "search_type": "basic",
                     "query": f'"{criteria.main_topic}"[Title]',
-                    "limit": 1
+                    "limit": 1,
                 }
 
                 papers = await self._search_all_sources(criteria, search_params)
@@ -199,7 +197,9 @@ Language requirement:
             print(f"获取论文详情时出错: {str(e)}")
             return None
 
-    async def _get_citation_context(self, paper: Dict, plugin_kwargs: Dict) -> Tuple[List, List]:
+    async def _get_citation_context(
+        self, paper: Dict, plugin_kwargs: Dict
+    ) -> Tuple[List, List]:
         """获取引用上下文"""
         search_params = self._get_search_params(plugin_kwargs)
 
@@ -207,27 +207,27 @@ Language requirement:
         title_query = f'ti:"{getattr(paper, "title", "")}"'
         arxiv_params = {
             "query": title_query,
-            "limit": search_params['max_papers'],
+            "limit": search_params["max_papers"],
             "search_type": "basic",
             "sort_by": "relevance",
-            "sort_order": "descending"
+            "sort_order": "descending",
         }
         semantic_params = {
             "query": getattr(paper, "title", ""),
-            "limit": search_params['max_papers']
+            "limit": search_params["max_papers"],
         }
 
         citations, references = await asyncio.gather(
             self._search_semantic(
                 semantic_params,
-                limit_multiplier=search_params['search_multiplier'],
-                min_year=search_params['min_year']
+                limit_multiplier=search_params["search_multiplier"],
+                min_year=search_params["min_year"],
             ),
             self._search_arxiv(
                 arxiv_params,
-                limit_multiplier=search_params['search_multiplier'],
-                min_year=search_params['min_year']
-            )
+                limit_multiplier=search_params["search_multiplier"],
+                min_year=search_params["min_year"],
+            ),
         )
 
         return citations, references
@@ -240,7 +240,7 @@ Language requirement:
         chatbot: List[List[str]],
         history: List[List[str]],
         system_prompt: str,
-        llm_kwargs: Dict[str, Any]
+        llm_kwargs: Dict[str, Any],
     ) -> List[List[str]]:
         """生成论文分析"""
 
@@ -289,21 +289,18 @@ Format your response in markdown with clear sections."""
 
         # 并行生成概述和技术分析
         for response_chunk in request_gpt(
-            inputs_array=[
-                analysis_prompt,
-                self._get_technical_prompt(paper)
-            ],
+            inputs_array=[analysis_prompt, self._get_technical_prompt(paper)],
             inputs_show_user_array=[
                 "Generating paper analysis...",
-                "Analyzing technical details..."
+                "Analyzing technical details...",
             ],
             llm_kwargs=llm_kwargs,
             chatbot=chatbot,
             history_array=[history, []],
             sys_prompt_array=[
                 system_prompt,
-                "You are an expert at analyzing technical details in research papers."
-            ]
+                "You are an expert at analyzing technical details in research papers.",
+            ],
         ):
             pass  # 等待生成完成
 
@@ -321,7 +318,9 @@ Format your response in markdown with clear sections."""
 """
             chatbot.append(["Here is the paper analysis:", full_analysis])
         else:
-            chatbot.append(["Here is the paper analysis:", "Failed to generate analysis."])
+            chatbot.append(
+                ["Here is the paper analysis:", "Failed to generate analysis."]
+            )
 
         return chatbot
 
@@ -340,5 +339,3 @@ Focus on:
 6. Technical limitations and potential improvements
 
 Format your response in markdown, focusing purely on technical aspects."""
-
-

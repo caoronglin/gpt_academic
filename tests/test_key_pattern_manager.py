@@ -1,7 +1,9 @@
 import unittest
 
+
 def validate_path():
-    import os, sys
+    import os
+    import sys
 
     os.path.dirname(__file__)
     root_dir_assume = os.path.abspath(os.path.dirname(__file__) + "/..")
@@ -12,6 +14,7 @@ def validate_path():
 validate_path()  # validate path so you can run from base directory
 
 from shared_utils.key_pattern_manager import is_openai_api_key
+
 
 class TestKeyPatternManager(unittest.TestCase):
     def test_is_openai_api_key_with_valid_key(self):
@@ -49,7 +52,6 @@ class TestKeyPatternManager(unittest.TestCase):
         key = "sk-proj-xx-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_xxxxxxxxxxxx_xxxxxxxxxxxxxxxxxx-xxx啊xxxxxxx"
         self.assertFalse(is_openai_api_key(key))
 
-
     def test_is_openai_api_key_with_invalid_key(self):
         key = "invalid_key"
         self.assertFalse(is_openai_api_key(key))
@@ -59,5 +61,6 @@ class TestKeyPatternManager(unittest.TestCase):
         key = "custom-pattern-key"
         self.assertFalse(is_openai_api_key(key))
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

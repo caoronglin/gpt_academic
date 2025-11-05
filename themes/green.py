@@ -1,7 +1,9 @@
 import os
+
 import gradio as gr
-from toolbox import get_conf
 from loguru import logger
+
+from toolbox import get_conf
 
 CODE_HIGHLIGHT, ADD_WAIFU, LAYOUT = get_conf("CODE_HIGHLIGHT", "ADD_WAIFU", "LAYOUT")
 theme_dir = os.path.dirname(__file__)
@@ -86,6 +88,7 @@ def adjust_theme():
         )
 
         from themes.common import get_common_html_javascript_code
+
         js = get_common_html_javascript_code()
 
         with open(os.path.join(theme_dir, "green.js"), "r", encoding="utf8") as f:

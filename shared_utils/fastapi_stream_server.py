@@ -15,29 +15,29 @@ FastAPI WebSocket 流式服务器模块
 - MasterMindWebSocketServer: WebSocket服务器主类
 """
 
-import uuid
-import time
-import json
-import platform
-import pickle
 import asyncio
+import json
+import os
+import pickle
+import platform
+import shutil
 import threading
+import time
 import traceback
+import uuid
+from datetime import datetime
+from enum import Enum, auto
+from queue import Queue
+from typing import Any, List, Optional, Union
+
+import starlette
+from fastapi import FastAPI, File, Form, UploadFile, WebSocket
+from fastapi.responses import JSONResponse
 from fastapi.websockets import WebSocketState
 from loguru import logger
-from queue import Queue
-from fastapi import FastAPI, WebSocket, File, UploadFile, Form
-from fastapi.responses import JSONResponse
-from datetime import datetime
-from typing import List, Optional, Any, Union
 from pydantic import BaseModel, Field
-import shutil
-import os
-from enum import auto, Enum
-from typing import List
-from toolbox import ChatBotWithCookies
-import starlette
 
+from toolbox import ChatBotWithCookies
 
 
 class UserInterfaceMsg(BaseModel):
@@ -47,6 +47,7 @@ class UserInterfaceMsg(BaseModel):
     这个类使用Pydantic BaseModel定义了所有可能的消息字段，
     包括插件功能、输入内容、LLM参数、聊天记录等。
     """
+
     function: str = Field(default="chat", description="使用哪个插件")
     main_input: str = Field(default="", description="主要输入内容，通常是用户的问题")
     llm_kwargs: dict = Field(default_factory=dict, description="围绕LLM的各种参数")
@@ -58,16 +59,29 @@ class UserInterfaceMsg(BaseModel):
     #         "temperature": 1.0,
     #         "user_name": "default_user",  # Default user name
     #     }
-    plugin_kwargs: dict = Field(default_factory=dict, description="围绕该function的各种参数")
-    chatbot: list[list[Union[str|None]]] = Field(default=[], description="聊天记录（给人类看的）。格式为 [ [user_msg, bot_msg], [user_msg_2, bot_msg_2],...]，双层列表，第一层是每一轮对话，第二层是用户和机器人的消息。")
-    chatbot_cookies: dict = Field(default_factory=dict, description="其他新前端涉及的参数")
-    history: list[str] = Field(default=[], description="聊天记录（给模型看的）。单层列表")
+    plugin_kwargs: dict = Field(
+        default_factory=dict, description="围绕该function的各种参数"
+    )
+    chatbot: list[list[Union[str | None]]] = Field(
+        default=[],
+        description="聊天记录（给人类看的）。格式为 [ [user_msg, bot_msg], [user_msg_2, bot_msg_2],...]，双层列表，第一层是每一轮对话，第二层是用户和机器人的消息。",
+    )
+    chatbot_cookies: dict = Field(
+        default_factory=dict, description="其他新前端涉及的参数"
+    )
+    history: list[str] = Field(
+        default=[], description="聊天记录（给模型看的）。单层列表"
+    )
     system_prompt: str = Field(default="", description="系统提示词")
     user_request: dict = Field(default="", description="用户相关的参数，如用户名")
-    special_kwargs: dict = Field(default_factory=dict, description="其他新前端涉及的参数")
+    special_kwargs: dict = Field(
+        default_factory=dict, description="其他新前端涉及的参数"
+    )
     special_state: dict = Field(default={}, description="特殊状态传递，例如对话结束。")
 
+
 TERMINATE_MSG = UserInterfaceMsg(function="TERMINATE", special_state={"stop": True})
+
 
 def setup_initial_com(initial_msg: UserInterfaceMsg):
     """
@@ -84,27 +98,35 @@ def setup_initial_com(initial_msg: UserInterfaceMsg):
     """
     from toolbox import get_plugin_default_kwargs
 
-
     com = get_plugin_default_kwargs()
     com["main_input"] = initial_msg.main_input
     # 设置LLM相关参数
-    if initial_msg.llm_kwargs.get('api_key', None):     com["llm_kwargs"]['api_key'] = initial_msg.llm_kwargs.get('api_key')
-    if initial_msg.llm_kwargs.get('llm_model', None):   com["llm_kwargs"]['llm_model'] = initial_msg.llm_kwargs.get('llm_model')
-    if initial_msg.llm_kwargs.get('top_p', None):       com["llm_kwargs"]['top_p'] = initial_msg.llm_kwargs.get('top_p')
-    if initial_msg.llm_kwargs.get('max_length', None):  com["llm_kwargs"]['max_length'] = initial_msg.llm_kwargs.get('max_length')
-    if initial_msg.llm_kwargs.get('temperature', None): com["llm_kwargs"]['temperature'] = initial_msg.llm_kwargs.get('temperature')
-    if initial_msg.llm_kwargs.get('user_name', None):   com["llm_kwargs"]['user_name'] = initial_msg.llm_kwargs.get('user_name')
-    if initial_msg.llm_kwargs.get('embed_model', None): com["llm_kwargs"]['embed_model'] = initial_msg.llm_kwargs.get('embed_model')
+    if initial_msg.llm_kwargs.get("api_key", None):
+        com["llm_kwargs"]["api_key"] = initial_msg.llm_kwargs.get("api_key")
+    if initial_msg.llm_kwargs.get("llm_model", None):
+        com["llm_kwargs"]["llm_model"] = initial_msg.llm_kwargs.get("llm_model")
+    if initial_msg.llm_kwargs.get("top_p", None):
+        com["llm_kwargs"]["top_p"] = initial_msg.llm_kwargs.get("top_p")
+    if initial_msg.llm_kwargs.get("max_length", None):
+        com["llm_kwargs"]["max_length"] = initial_msg.llm_kwargs.get("max_length")
+    if initial_msg.llm_kwargs.get("temperature", None):
+        com["llm_kwargs"]["temperature"] = initial_msg.llm_kwargs.get("temperature")
+    if initial_msg.llm_kwargs.get("user_name", None):
+        com["llm_kwargs"]["user_name"] = initial_msg.llm_kwargs.get("user_name")
+    if initial_msg.llm_kwargs.get("embed_model", None):
+        com["llm_kwargs"]["embed_model"] = initial_msg.llm_kwargs.get("embed_model")
 
-    initial_msg.chatbot_cookies.update({
-        'api_key':      com["llm_kwargs"]['api_key'],
-        'top_p':        com["llm_kwargs"]['top_p'],
-        'llm_model':    com["llm_kwargs"]['llm_model'],
-        'embed_model':  com["llm_kwargs"]['embed_model'],
-        'temperature':  com["llm_kwargs"]['temperature'],
-        'user_name':    com["llm_kwargs"]['user_name'],
-        'customize_fn_overwrite': {},
-    })
+    initial_msg.chatbot_cookies.update(
+        {
+            "api_key": com["llm_kwargs"]["api_key"],
+            "top_p": com["llm_kwargs"]["top_p"],
+            "llm_model": com["llm_kwargs"]["llm_model"],
+            "embed_model": com["llm_kwargs"]["embed_model"],
+            "temperature": com["llm_kwargs"]["temperature"],
+            "user_name": com["llm_kwargs"]["user_name"],
+            "customize_fn_overwrite": {},
+        }
+    )
     chatbot_with_cookies = ChatBotWithCookies(initial_msg.chatbot_cookies)
     chatbot_with_cookies.write_list(initial_msg.chatbot)
     # 设置其他参数
@@ -122,20 +144,32 @@ class DummyRequest(object):
         self.username = username
 
 
-def task_executor(initial_msg:UserInterfaceMsg, queue_blocking_from_client:asyncio.Queue, queue_back_to_client:asyncio.Queue):
+def task_executor(
+    initial_msg: UserInterfaceMsg,
+    queue_blocking_from_client: asyncio.Queue,
+    queue_back_to_client: asyncio.Queue,
+):
     """
-        initial_msg: 初始的用户消息 ( <---- begin_contact_websocket_server:initial_message )
-        queue_blocking_from_client: 从客户端接收阻塞消息的队列
-        queue_back_to_client: 发送消息回客户端的队列
+    initial_msg: 初始的用户消息 ( <---- begin_contact_websocket_server:initial_message )
+    queue_blocking_from_client: 从客户端接收阻塞消息的队列
+    queue_back_to_client: 发送消息回客户端的队列
     """
-    from toolbox import get_plugin_handle
-    from toolbox import get_plugin_default_kwargs
-    from toolbox import on_file_uploaded
+    from toolbox import (get_plugin_default_kwargs, get_plugin_handle,
+                         on_file_uploaded)
 
-    def update_ui_websocket(chatbot: List[List[str]], history: List[str], chatbot_cookies: dict, special_state: dict):
-        send_obj = UserInterfaceMsg(chatbot=chatbot, history=history, chatbot_cookies=chatbot_cookies, special_state=special_state)
+    def update_ui_websocket(
+        chatbot: List[List[str]],
+        history: List[str],
+        chatbot_cookies: dict,
+        special_state: dict,
+    ):
+        send_obj = UserInterfaceMsg(
+            chatbot=chatbot,
+            history=history,
+            chatbot_cookies=chatbot_cookies,
+            special_state=special_state,
+        )
         queue_back_to_client.put_nowait(send_obj)
-
 
     com = setup_initial_com(initial_msg)
 
@@ -147,7 +181,6 @@ def task_executor(initial_msg:UserInterfaceMsg, queue_blocking_from_client:async
     user_request = com["user_request"]
     llm_kwargs = com["llm_kwargs"]
 
-
     # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
     # ''''''''''''''''''''''''''''''''   调用插件   '''''''''''''''''''''''''''''''''
     # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
@@ -157,56 +190,103 @@ def task_executor(initial_msg:UserInterfaceMsg, queue_blocking_from_client:async
         my_working_plugin = (plugin)(**com)
         for cookies, chatbot, hist_json, msg in my_working_plugin:
             history = json.loads(hist_json)
-            special_state = {'msg': msg}
-            update_ui_websocket(chatbot=chatbot, history=history, chatbot_cookies=cookies, special_state=special_state) # ----> receive_callback_fn
+            special_state = {"msg": msg}
+            update_ui_websocket(
+                chatbot=chatbot,
+                history=history,
+                chatbot_cookies=cookies,
+                special_state=special_state,
+            )  # ----> receive_callback_fn
 
     if initial_msg.function == "basic":
         from request_llms.bridge_all import predict
+
         additional_fn = initial_msg.special_kwargs.get("core_function")
-        for cookies, chatbot, hist_json, msg in \
-            predict(main_input, llm_kwargs, plugin_kwargs, chatbot_with_cookies, history=history, system_prompt=system_prompt, stream = True, additional_fn=additional_fn):
+        for cookies, chatbot, hist_json, msg in predict(
+            main_input,
+            llm_kwargs,
+            plugin_kwargs,
+            chatbot_with_cookies,
+            history=history,
+            system_prompt=system_prompt,
+            stream=True,
+            additional_fn=additional_fn,
+        ):
             history = json.loads(hist_json)
-            special_state = {'msg': msg}
-            update_ui_websocket(chatbot=chatbot, history=history, chatbot_cookies=cookies, special_state=special_state) # ----> receive_callback_fn
+            special_state = {"msg": msg}
+            update_ui_websocket(
+                chatbot=chatbot,
+                history=history,
+                chatbot_cookies=cookies,
+                special_state=special_state,
+            )  # ----> receive_callback_fn
 
     # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
     # ''''''''''''''''''''''''''''''''   上传文件   '''''''''''''''''''''''''''''''''
     # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
     # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
     if initial_msg.function == "upload":
+
         def wait_upload_done():
-            print('Waiting for file upload to complete...')
+            print("Waiting for file upload to complete...")
             file_upload_done_msg = queue_blocking_from_client.get()
-            print('file upload complete...')
+            print("file upload complete...")
             if file_upload_done_msg.function != "upload_done":
-                raise ValueError("Expected 'upload_done' function, got: {}".format(file_upload_done_msg.function))
-            if 'files' not in file_upload_done_msg.special_kwargs:
-                raise ValueError("Expected 'files' in special_kwargs, got: {}".format(file_upload_done_msg.special_kwargs))
-            return file_upload_done_msg.special_kwargs['files']
+                raise ValueError(
+                    "Expected 'upload_done' function, got: {}".format(
+                        file_upload_done_msg.function
+                    )
+                )
+            if "files" not in file_upload_done_msg.special_kwargs:
+                raise ValueError(
+                    "Expected 'files' in special_kwargs, got: {}".format(
+                        file_upload_done_msg.special_kwargs
+                    )
+                )
+            return file_upload_done_msg.special_kwargs["files"]
 
         request = DummyRequest()
         request.username = "default_user"
         chatbot = initial_msg.chatbot
         history = initial_msg.history
         chatbot_cookies = initial_msg.chatbot_cookies
-        special_state = {'msg': '等待上传'}
+        special_state = {"msg": "等待上传"}
         chatbot += [[initial_msg.main_input, None]]
-        update_ui_websocket(chatbot=chatbot, history=history, chatbot_cookies=chatbot_cookies, special_state=special_state) # ----> receive_callback_fn
+        update_ui_websocket(
+            chatbot=chatbot,
+            history=history,
+            chatbot_cookies=chatbot_cookies,
+            special_state=special_state,
+        )  # ----> receive_callback_fn
 
         # 等待上传完成
         files = wait_upload_done()
 
         # 读取文件并预览
-        chatbot += [['正在处理', None]]
-        update_ui_websocket(chatbot=chatbot, history=history, chatbot_cookies=chatbot_cookies, special_state=special_state) # ----> receive_callback_fn
+        chatbot += [["正在处理", None]]
+        update_ui_websocket(
+            chatbot=chatbot,
+            history=history,
+            chatbot_cookies=chatbot_cookies,
+            special_state=special_state,
+        )  # ----> receive_callback_fn
         chatbot, _, _, chatbot_cookies = on_file_uploaded(
-            request=request, files=files, chatbot=chatbot,
-            txt="", txt2="", checkboxes="", cookies=chatbot_cookies
+            request=request,
+            files=files,
+            chatbot=chatbot,
+            txt="",
+            txt2="",
+            checkboxes="",
+            cookies=chatbot_cookies,
         )
-        special_state = {'msg': '完成上传'}
+        special_state = {"msg": "完成上传"}
         # 更新前端
-        update_ui_websocket(chatbot=chatbot, history=history, chatbot_cookies=chatbot_cookies, special_state=special_state) # ----> receive_callback_fn
-
+        update_ui_websocket(
+            chatbot=chatbot,
+            history=history,
+            chatbot_cookies=chatbot_cookies,
+            special_state=special_state,
+        )  # ----> receive_callback_fn
 
 
 class FutureEvent(threading.Event):
@@ -216,6 +296,7 @@ class FutureEvent(threading.Event):
     这个类扩展了threading.Event，添加了返回值存储功能，
     使得可以在事件完成时同时传递结果数据。
     """
+
     def __init__(self) -> None:
         super().__init__()
         self.return_value = None
@@ -261,7 +342,7 @@ class AtomicQueue:
         return self.queue.get()
 
 
-class PythonMethod_AsyncConnectionMaintainer_AgentcraftInterface():
+class PythonMethod_AsyncConnectionMaintainer_AgentcraftInterface:
     """
     异步连接维护器接口类
 
@@ -285,9 +366,16 @@ class PythonMethod_AsyncConnectionMaintainer_AgentcraftInterface():
         queue_realtime_from_client = asyncio.Queue()
         queue_blocking_from_client = AtomicQueue()
         terminate_event = asyncio.Event()
-        return queue_back_to_client, queue_realtime_from_client, queue_blocking_from_client, terminate_event
+        return (
+            queue_back_to_client,
+            queue_realtime_from_client,
+            queue_blocking_from_client,
+            terminate_event,
+        )
 
-    async def maintain_connection_forever(self, initial_msg: UserInterfaceMsg, websocket: WebSocket, client_id: str):
+    async def maintain_connection_forever(
+        self, initial_msg: UserInterfaceMsg, websocket: WebSocket, client_id: str
+    ):
         """
         永久维护WebSocket连接
 
@@ -300,7 +388,9 @@ class PythonMethod_AsyncConnectionMaintainer_AgentcraftInterface():
             client_id: 客户端标识符
         """
 
-        async def wait_message_to_send(queue_back_to_client: asyncio.Queue, terminate_event: asyncio.Event):
+        async def wait_message_to_send(
+            queue_back_to_client: asyncio.Queue, terminate_event: asyncio.Event
+        ):
             """
             等待并发送消息到客户端
 
@@ -322,27 +412,35 @@ class PythonMethod_AsyncConnectionMaintainer_AgentcraftInterface():
                                 msg = TERMINATE_MSG
                                 break
                             else:
-                                msg: UserInterfaceMsg = await asyncio.wait_for(queue_back_to_client.get(), timeout=0.25)
+                                msg: UserInterfaceMsg = await asyncio.wait_for(
+                                    queue_back_to_client.get(), timeout=0.25
+                                )
                                 break
                         except asyncio.TimeoutError:
                             continue  # 继续检查条件
                     if msg.function == TERMINATE_MSG.function:
-                        logger.info("Received terminate message, skip this message and stopping wait_message_to_send.")
+                        logger.info(
+                            "Received terminate message, skip this message and stopping wait_message_to_send."
+                        )
                         break
                     ################
-
 
                     msg_cnt += 1
                     if websocket.application_state != WebSocketState.CONNECTED:
                         break
-                    msg.special_kwargs['uuid'] = uuid.uuid4().hex
+                    msg.special_kwargs["uuid"] = uuid.uuid4().hex
                     print(msg)
                     await websocket.send_bytes(msg.model_dump_json())
             except Exception as e:
                 logger.exception(f"Error in wait_message_to_send: {e}")
                 raise e
 
-        async def receive_forever(queue_realtime_from_client: asyncio.Queue, queue_blocking_from_client: asyncio.Queue, queue_back_to_client: asyncio.Queue, terminate_event: asyncio.Event):
+        async def receive_forever(
+            queue_realtime_from_client: asyncio.Queue,
+            queue_blocking_from_client: asyncio.Queue,
+            queue_back_to_client: asyncio.Queue,
+            terminate_event: asyncio.Event,
+        ):
             """
             永久接收客户端消息
 
@@ -354,7 +452,7 @@ class PythonMethod_AsyncConnectionMaintainer_AgentcraftInterface():
                 queue_back_to_client: 发送回客户端的消息队列
             """
             # 🕜 keep listening traffic <- front end
-            msg_cnt:int = 0
+            msg_cnt: int = 0
             try:
                 while True:
                     ################
@@ -365,25 +463,35 @@ class PythonMethod_AsyncConnectionMaintainer_AgentcraftInterface():
                                 msg = TERMINATE_MSG
                                 break
                             else:
-                                message = await asyncio.wait_for(websocket.receive_text(), timeout=0.25)
-                                msg: UserInterfaceMsg = UserInterfaceMsg.model_validate_json(message)
+                                message = await asyncio.wait_for(
+                                    websocket.receive_text(), timeout=0.25
+                                )
+                                msg: UserInterfaceMsg = (
+                                    UserInterfaceMsg.model_validate_json(message)
+                                )
                                 break
                         except asyncio.TimeoutError:
                             continue  # 继续检查条件
                     if msg.function == TERMINATE_MSG.function:
-                        logger.info("Received terminate message, stopping receive_forever")
+                        logger.info(
+                            "Received terminate message, stopping receive_forever"
+                        )
                         break
                     ################
                     msg_cnt += 1
                     logger.info(f"Received message {msg_cnt}: {msg}")
                     queue_blocking_from_client.put_nowait(msg)
 
-
             except Exception as e:
                 logger.exception(f"Error in receive_forever: {e}")
                 raise e
 
-        queue_back_to_client, queue_realtime_from_client, queue_blocking_from_client, terminate_event = self.make_queue()
+        (
+            queue_back_to_client,
+            queue_realtime_from_client,
+            queue_blocking_from_client,
+            terminate_event,
+        ) = self.make_queue()
 
         def terminate_callback():
             terminate_event.set()
@@ -408,11 +516,25 @@ class PythonMethod_AsyncConnectionMaintainer_AgentcraftInterface():
                 ensure_last_message_sent(queue_back_to_client)
                 terminate_callback()
                 return res
+
             return wrapper
 
-        t_x = asyncio.create_task(wait_message_to_send(queue_back_to_client, terminate_event))
-        t_r = asyncio.create_task(receive_forever(queue_realtime_from_client, queue_blocking_from_client, queue_back_to_client, terminate_event))
-        task_thread = threading.Thread(target=task_wrapper(task_executor), args=(initial_msg, queue_blocking_from_client, queue_back_to_client), daemon=True)
+        t_x = asyncio.create_task(
+            wait_message_to_send(queue_back_to_client, terminate_event)
+        )
+        t_r = asyncio.create_task(
+            receive_forever(
+                queue_realtime_from_client,
+                queue_blocking_from_client,
+                queue_back_to_client,
+                terminate_event,
+            )
+        )
+        task_thread = threading.Thread(
+            target=task_wrapper(task_executor),
+            args=(initial_msg, queue_blocking_from_client, queue_back_to_client),
+            daemon=True,
+        )
         task_thread.start()
 
         await t_x
@@ -420,8 +542,9 @@ class PythonMethod_AsyncConnectionMaintainer_AgentcraftInterface():
         await websocket.close()
 
 
-
-class MasterMindWebSocketServer(PythonMethod_AsyncConnectionMaintainer_AgentcraftInterface):
+class MasterMindWebSocketServer(
+    PythonMethod_AsyncConnectionMaintainer_AgentcraftInterface
+):
     """
     WebSocket服务器主类
 
@@ -440,7 +563,7 @@ class MasterMindWebSocketServer(PythonMethod_AsyncConnectionMaintainer_Agentcraf
         self.websocket_connections = {}
         self.agentcraft_interface_websocket_connections = {}
         self._event_hub = {}
-        self.host= host
+        self.host = host
         self.port = port
         pass
 
@@ -457,7 +580,7 @@ class MasterMindWebSocketServer(PythonMethod_AsyncConnectionMaintainer_Agentcraf
         self._event_hub[event_name] = FutureEvent()
         return self._event_hub[event_name]
 
-    def terminate_event(self, event_name: str, msg:UserInterfaceMsg):
+    def terminate_event(self, event_name: str, msg: UserInterfaceMsg):
         """
         终止指定的事件并设置返回消息
 
@@ -465,7 +588,7 @@ class MasterMindWebSocketServer(PythonMethod_AsyncConnectionMaintainer_Agentcraf
             event_name: 要终止的事件名称
             msg: 要返回的用户界面消息
         """
-        self._event_hub[event_name].terminate(return_value = msg)
+        self._event_hub[event_name].terminate(return_value=msg)
         return
 
     async def long_task_01_wait_incoming_connection(self):
@@ -489,16 +612,21 @@ class MasterMindWebSocketServer(PythonMethod_AsyncConnectionMaintainer_Agentcraf
 
             class UserInput(BaseModel):
                 main_input: str
+
             @app.post("/predict_user_input")
             async def predict_user_input(main_input: UserInput):
                 def predict_future_input(main_input):
-                    from request_llms.bridge_all import predict_no_ui_long_connection
-                    from toolbox import get_plugin_default_kwargs
                     from textwrap import dedent
+
+                    from request_llms.bridge_all import \
+                        predict_no_ui_long_connection
+                    from toolbox import get_plugin_default_kwargs
+
                     com = get_plugin_default_kwargs()
-                    llm_kwargs = com['llm_kwargs']
-                    llm_kwargs['llm_model'] = 'one-api-glm-4-flash'
-                    completion_system_prompt = dedent("""Predict the next input that the user might type.
+                    llm_kwargs = com["llm_kwargs"]
+                    llm_kwargs["llm_model"] = "one-api-glm-4-flash"
+                    completion_system_prompt = dedent(
+                        """Predict the next input that the user might type.
                     1. Do not repeat the <current_input>. The <future_input> should be a continuation of <current_input>.
                     2. Use same language as the input.
                     3. Do not predict too far ahead.
@@ -516,23 +644,42 @@ class MasterMindWebSocketServer(PythonMethod_AsyncConnectionMaintainer_Agentcraf
 
                     Format:
                     <future_input>... the predicted input ...</future_input>
-                    """)
+                    """
+                    )
                     main_input = "<current_input>" + main_input + "</current_input>"
                     result = predict_no_ui_long_connection(
-                        inputs=main_input, llm_kwargs=llm_kwargs, sys_prompt=completion_system_prompt, history=[], console_silence=True
+                        inputs=main_input,
+                        llm_kwargs=llm_kwargs,
+                        sys_prompt=completion_system_prompt,
+                        history=[],
+                        console_silence=True,
                     )
                     print(result)
-                    if "<future_input>" not in result or "</future_input>" not in result:
-                        raise ValueError("The response does not contain the expected future input format.")
-                    result = result.split("<future_input>")[-1].split("</future_input>")[0].strip()
+                    if (
+                        "<future_input>" not in result
+                        or "</future_input>" not in result
+                    ):
+                        raise ValueError(
+                            "The response does not contain the expected future input format."
+                        )
+                    result = (
+                        result.split("<future_input>")[-1]
+                        .split("</future_input>")[0]
+                        .strip()
+                    )
                     return result
 
-                return JSONResponse(content={'future':predict_future_input(main_input.main_input)})
+                return JSONResponse(
+                    content={"future": predict_future_input(main_input.main_input)}
+                )
 
             @app.post("/core_functional")
             async def core_functional():
-                import core_functional, importlib
-                importlib.reload(core_functional)    # 热更新prompt
+                import importlib
+
+                import core_functional
+
+                importlib.reload(core_functional)  # 热更新prompt
                 core_functionals = core_functional.get_core_functions()
                 for k in list(core_functionals.keys()):
                     v = core_functionals[k]
@@ -547,6 +694,7 @@ class MasterMindWebSocketServer(PythonMethod_AsyncConnectionMaintainer_Agentcraf
             async def upload_files(files: List[UploadFile] = File(...)):
                 """上传文件接口，支持多文件上传并显示进度"""
                 from toolbox import on_file_uploaded
+
                 results = []
                 upload_dir = "uploads"
 
@@ -568,26 +716,31 @@ class MasterMindWebSocketServer(PythonMethod_AsyncConnectionMaintainer_Agentcraf
                                 processed_size += len(chunk)
                                 if file.size:  # 如果文件大小可用
                                     progress = (processed_size / file.size) * 100
-                                    logger.info(f"Uploading {file.filename}: {progress:.2f}%")
+                                    logger.info(
+                                        f"Uploading {file.filename}: {progress:.2f}%"
+                                    )
 
-                        results.append({
-                            "filename": file.filename,
-                            "size": processed_size,
-                            "status": "success",
-                            "path": file_path
-                        })
+                        results.append(
+                            {
+                                "filename": file.filename,
+                                "size": processed_size,
+                                "status": "success",
+                                "path": file_path,
+                            }
+                        )
                     except Exception as e:
-                        results.append({
-                            "filename": file.filename,
-                            "status": "error",
-                            "error": str(e)
-                        })
+                        results.append(
+                            {
+                                "filename": file.filename,
+                                "status": "error",
+                                "error": str(e),
+                            }
+                        )
                         logger.error(f"Error uploading {file.filename}: {str(e)}")
 
-                return JSONResponse(content={
-                    "message": "Files uploaded successfully",
-                    "files": results
-                })
+                return JSONResponse(
+                    content={"message": "Files uploaded successfully", "files": results}
+                )
 
             @app.websocket("/main")
             async def main(websocket: WebSocket):
@@ -601,21 +754,35 @@ class MasterMindWebSocketServer(PythonMethod_AsyncConnectionMaintainer_Agentcraf
                 """
                 try:
                     await websocket.accept()
-                    logger.info(f"WebSocket connection established: {websocket.client.host}:{websocket.client.port}")
-                    msg: UserInterfaceMsg = UserInterfaceMsg.model_validate_json(await websocket.receive_text())
+                    logger.info(
+                        f"WebSocket connection established: {websocket.client.host}:{websocket.client.port}"
+                    )
+                    msg: UserInterfaceMsg = UserInterfaceMsg.model_validate_json(
+                        await websocket.receive_text()
+                    )
                     logger.info(msg)
                     await self.maintain_connection_forever(msg, websocket, "client_id")
                 except:
                     logger.exception("Error in WebSocket connection handler")
                     await websocket.close()
+
             import uvicorn
-            config = uvicorn.Config(app, host=self.host, port=self.port, log_level="error", ws_ping_interval=300, ws_ping_timeout=600)
+
+            config = uvicorn.Config(
+                app,
+                host=self.host,
+                port=self.port,
+                log_level="error",
+                ws_ping_interval=300,
+                ws_ping_timeout=600,
+            )
             server = uvicorn.Server(config)
             logger.info(f"uvicorn begin, serving at ws://{self.host}:{self.port}/main")
             await server.serve()
 
         await launch_websocket_server()
         logger.info("uvicorn terminated")
+
 
 if __name__ == "__main__":
     mmwss = MasterMindWebSocketServer(host="0.0.0.0", port=38000)

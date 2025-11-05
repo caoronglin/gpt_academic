@@ -1,58 +1,52 @@
-from toolbox import HotReload  # HotReload 的意思是热更新，修改函数插件后，不需要重启程序，代码直接生效
-from toolbox import trimmed_format_exc
 from loguru import logger
 
+from toolbox import (HotReload,  # HotReload 的意思是热更新，修改函数插件后，不需要重启程序，代码直接生效
+                     trimmed_format_exc)
+
+
 def get_crazy_functions():
-    from crazy_functions.Paper_Abstract_Writer import Paper_Abstract_Writer
-    from crazy_functions.Program_Comment_Gen import 批量Program_Comment_Gen
-    from crazy_functions.SourceCode_Analyse import 解析项目本身
-    from crazy_functions.SourceCode_Analyse import 解析一个Python项目
-    from crazy_functions.SourceCode_Analyse import 解析一个Matlab项目
-    from crazy_functions.SourceCode_Analyse import 解析一个C项目的头文件
-    from crazy_functions.SourceCode_Analyse import 解析一个C项目
-    from crazy_functions.SourceCode_Analyse import 解析一个Golang项目
-    from crazy_functions.SourceCode_Analyse import 解析一个Rust项目
-    from crazy_functions.SourceCode_Analyse import 解析一个Java项目
-    from crazy_functions.SourceCode_Analyse import 解析一个前端项目
-    from crazy_functions.高级功能函数模板 import 高阶功能模板函数
-    from crazy_functions.高级功能函数模板 import Demo_Wrap
-    from crazy_functions.Latex_Project_Polish import Latex英文润色
-    from crazy_functions.Multi_LLM_Query import 同时问询
-    from crazy_functions.SourceCode_Analyse import 解析一个Lua项目
-    from crazy_functions.SourceCode_Analyse import 解析一个CSharp项目
-    from crazy_functions.Word_Summary import Word_Summary
-    from crazy_functions.SourceCode_Analyse_JupyterNotebook import 解析ipynb文件
-    from crazy_functions.Conversation_To_File import 载入对话历史存档
-    from crazy_functions.Conversation_To_File import 对话历史存档
-    from crazy_functions.Conversation_To_File import Conversation_To_File_Wrap
-    from crazy_functions.Conversation_To_File import 删除所有本地对话历史记录
+    from crazy_functions.Conversation_To_File import (
+        Conversation_To_File_Wrap, 删除所有本地对话历史记录, 对话历史存档, 载入对话历史存档)
+    from crazy_functions.Document_Conversation import 批量文件询问
+    from crazy_functions.Document_Conversation_Wrap import \
+        Document_Conversation_Wrap
+    from crazy_functions.Google_Scholar_Assistant_Legacy import \
+        Google_Scholar_Assistant_Legacy
     from crazy_functions.Helpers import 清除缓存
-    from crazy_functions.Markdown_Translate import Markdown英译中
-    from crazy_functions.PDF_Summary import PDF_Summary
-    from crazy_functions.PDF_Translate import 批量翻译PDF文档
-    from crazy_functions.Google_Scholar_Assistant_Legacy import Google_Scholar_Assistant_Legacy
-    from crazy_functions.PDF_QA import PDF_QA标准文件输入
-    from crazy_functions.Latex_Project_Polish import Latex中文润色
-    from crazy_functions.Latex_Project_Polish import Latex英文纠错
-    from crazy_functions.Markdown_Translate import Markdown中译英
-    from crazy_functions.Void_Terminal import Void_Terminal
-    from crazy_functions.Mermaid_Figure_Gen import Mermaid_Gen
-    from crazy_functions.PDF_Translate_Wrap import PDF_Tran
-    from crazy_functions.Latex_Function import Latex英文纠错加PDF对比
-    from crazy_functions.Latex_Function import Latex翻译中文并重新编译PDF
-    from crazy_functions.Latex_Function import PDF翻译中文并重新编译PDF
-    from crazy_functions.Latex_Function_Wrap import Arxiv_Localize
-    from crazy_functions.Latex_Function_Wrap import PDF_Localize
+    from crazy_functions.Image_Generate import (图片修改_DALLE2, 图片生成_DALLE2,
+                                                图片生成_DALLE3)
+    from crazy_functions.Image_Generate_Wrap import ImageGen_Wrap
     from crazy_functions.Internet_GPT import 连接网络回答问题
     from crazy_functions.Internet_GPT_Wrap import NetworkGPT_Wrap
-    from crazy_functions.Image_Generate import 图片生成_DALLE2, 图片生成_DALLE3, 图片修改_DALLE2
-    from crazy_functions.Image_Generate_Wrap import ImageGen_Wrap
+    from crazy_functions.Latex_Function import (PDF翻译中文并重新编译PDF,
+                                                Latex翻译中文并重新编译PDF,
+                                                Latex英文纠错加PDF对比)
+    from crazy_functions.Latex_Function_Wrap import (Arxiv_Localize,
+                                                     PDF_Localize)
+    from crazy_functions.Latex_Project_Polish import (Latex中文润色, Latex英文润色,
+                                                      Latex英文纠错)
+    from crazy_functions.Markdown_Translate import Markdown中译英, Markdown英译中
+    from crazy_functions.Mermaid_Figure_Gen import Mermaid_Gen
+    from crazy_functions.Multi_LLM_Query import 同时问询
+    from crazy_functions.Paper_Abstract_Writer import Paper_Abstract_Writer
+    from crazy_functions.PDF_QA import PDF_QA标准文件输入
+    from crazy_functions.PDF_Summary import PDF_Summary
+    from crazy_functions.PDF_Translate import 批量翻译PDF文档
+    from crazy_functions.PDF_Translate_Wrap import PDF_Tran
+    from crazy_functions.Program_Comment_Gen import 批量Program_Comment_Gen
+    from crazy_functions.SourceCode_Analyse import (解析一个C项目, 解析一个C项目的头文件,
+                                                    解析一个CSharp项目, 解析一个Golang项目,
+                                                    解析一个Java项目, 解析一个Lua项目,
+                                                    解析一个Matlab项目, 解析一个Python项目,
+                                                    解析一个Rust项目, 解析一个前端项目,
+                                                    解析项目本身)
+    from crazy_functions.SourceCode_Analyse_JupyterNotebook import 解析ipynb文件
     from crazy_functions.SourceCode_Comment import 注释Python项目
     from crazy_functions.SourceCode_Comment_Wrap import SourceCodeComment_Wrap
     from crazy_functions.VideoResource_GPT import 多媒体任务
-    from crazy_functions.Document_Conversation import 批量文件询问
-    from crazy_functions.Document_Conversation_Wrap import Document_Conversation_Wrap
-
+    from crazy_functions.Void_Terminal import Void_Terminal
+    from crazy_functions.Word_Summary import Word_Summary
+    from crazy_functions.高级功能函数模板 import Demo_Wrap, 高阶功能模板函数
 
     function_plugins = {
         "多媒体智能体": {
@@ -108,17 +102,19 @@ def get_crazy_functions():
             "Group": "对话",
             "Color": "stop",
             "AsButton": False,
-            "Info" : "基于当前对话或文件生成多种Mermaid图表,图表类型由模型判断",
+            "Info": "基于当前对话或文件生成多种Mermaid图表,图表类型由模型判断",
             "Function": None,
-            "Class": Mermaid_Gen
+            "Class": Mermaid_Gen,
         },
         "Arxiv论文翻译": {
             "Group": "学术",
             "Color": "stop",
             "AsButton": True,
             "Info": "ArXiv论文精细翻译 | 输入参数arxiv论文的ID，比如1812.10695",
-            "Function": HotReload(Latex翻译中文并重新编译PDF),  # 当注册Class后，Function旧接口仅会在“虚空终端”中起作用
-            "Class": Arxiv_Localize,    # 新一代插件需要注册Class
+            "Function": HotReload(
+                Latex翻译中文并重新编译PDF
+            ),  # 当注册Class后，Function旧接口仅会在“虚空终端”中起作用
+            "Class": Arxiv_Localize,  # 新一代插件需要注册Class
         },
         "批量总结Word文档": {
             "Group": "学术",
@@ -232,8 +228,10 @@ def get_crazy_functions():
             "Color": "stop",
             "AsButton": True,
             "Info": "保存当前的对话 | 不需要输入参数",
-            "Function": HotReload(对话历史存档),    # 当注册Class后，Function旧接口仅会在“Void_Terminal”中起作用
-            "Class": Conversation_To_File_Wrap     # 新一代插件需要注册Class
+            "Function": HotReload(
+                对话历史存档
+            ),  # 当注册Class后，Function旧接口仅会在“Void_Terminal”中起作用
+            "Class": Conversation_To_File_Wrap,  # 新一代插件需要注册Class
         },
         "[多线程Demo]解析此项目本身（源码自译解）": {
             "Group": "对话|编程",
@@ -248,7 +246,7 @@ def get_crazy_functions():
             "AsButton": True,  # 加入下拉菜单中
             # "Info": "连接网络回答问题（需要访问谷歌）| 输入参数是一个问题",
             "Function": HotReload(连接网络回答问题),
-            "Class": NetworkGPT_Wrap     # 新一代插件需要注册Class
+            "Class": NetworkGPT_Wrap,  # 新一代插件需要注册Class
         },
         "历史上的今天": {
             "Group": "对话",
@@ -256,14 +254,16 @@ def get_crazy_functions():
             "AsButton": False,
             "Info": "查看历史上的今天事件 (这是一个面向开发者的插件Demo) | 不需要输入参数",
             "Function": None,
-            "Class": Demo_Wrap, # 新一代插件需要注册Class
+            "Class": Demo_Wrap,  # 新一代插件需要注册Class
         },
         "PDF论文翻译": {
             "Group": "学术",
             "Color": "stop",
             "AsButton": True,
             "Info": "精准翻译PDF论文为中文 | 输入参数为路径",
-            "Function": HotReload(批量翻译PDF文档), # 当注册Class后，Function旧接口仅会在“Void_Terminal”中起作用
+            "Function": HotReload(
+                批量翻译PDF文档
+            ),  # 当注册Class后，Function旧接口仅会在“Void_Terminal”中起作用
             "Class": PDF_Tran,  # 新一代插件需要注册Class
         },
         "询问多个GPT模型": {
@@ -300,7 +300,6 @@ def get_crazy_functions():
             "Info": "对英文Latex项目全文进行润色处理 | 输入参数为路径或上传压缩包",
             "Function": HotReload(Latex英文润色),
         },
-
         "中文Latex项目全文润色（输入路径或上传压缩包）": {
             "Group": "学术",
             "Color": "stop",
@@ -353,11 +352,13 @@ def get_crazy_functions():
             "AsButton": False,
             "AdvancedArgs": True,
             "ArgsReminder": r"如果有必要, 请在此处给出自定义翻译命令, 解决部分词汇翻译不准确的问题。 "
-                            r"例如当单词'agent'翻译不准确时, 请尝试把以下指令复制到高级参数区: "
-                            r'If the term "agent" is used in this section, it should be translated to "智能体". ',
+            r"例如当单词'agent'翻译不准确时, 请尝试把以下指令复制到高级参数区: "
+            r'If the term "agent" is used in this section, it should be translated to "智能体". ',
             "Info": "ArXiv论文精细翻译 | 输入参数arxiv论文的ID，比如1812.10695",
-            "Function": HotReload(Latex翻译中文并重新编译PDF),  # 当注册Class后，Function旧接口仅会在“Void_Terminal”中起作用
-            "Class": Arxiv_Localize,    # 新一代插件需要注册Class
+            "Function": HotReload(
+                Latex翻译中文并重新编译PDF
+            ),  # 当注册Class后，Function旧接口仅会在“Void_Terminal”中起作用
+            "Class": Arxiv_Localize,  # 新一代插件需要注册Class
         },
         "📚本地Latex论文精细翻译（上传Latex项目）[需Latex]": {
             "Group": "学术",
@@ -365,8 +366,8 @@ def get_crazy_functions():
             "AsButton": False,
             "AdvancedArgs": True,
             "ArgsReminder": r"如果有必要, 请在此处给出自定义翻译命令, 解决部分词汇翻译不准确的问题。 "
-                            r"例如当单词'agent'翻译不准确时, 请尝试把以下指令复制到高级参数区: "
-                            r'If the term "agent" is used in this section, it should be translated to "智能体". ',
+            r"例如当单词'agent'翻译不准确时, 请尝试把以下指令复制到高级参数区: "
+            r'If the term "agent" is used in this section, it should be translated to "智能体". ',
             "Info": "本地Latex论文精细翻译 | 输入参数是路径",
             "Function": HotReload(Latex翻译中文并重新编译PDF),
         },
@@ -376,11 +377,13 @@ def get_crazy_functions():
             "AsButton": False,
             "AdvancedArgs": True,
             "ArgsReminder": r"如果有必要, 请在此处给出自定义翻译命令, 解决部分词汇翻译不准确的问题。 "
-                            r"例如当单词'agent'翻译不准确时, 请尝试把以下指令复制到高级参数区: "
-                            r'If the term "agent" is used in this section, it should be translated to "智能体". ',
+            r"例如当单词'agent'翻译不准确时, 请尝试把以下指令复制到高级参数区: "
+            r'If the term "agent" is used in this section, it should be translated to "智能体". ',
             "Info": "PDF翻译中文，并重新编译PDF | 输入参数为路径",
-            "Function": HotReload(PDF翻译中文并重新编译PDF),   # 当注册Class后，Function旧接口仅会在“Void_Terminal”中起作用
-            "Class": PDF_Localize   # 新一代插件需要注册Class
+            "Function": HotReload(
+                PDF翻译中文并重新编译PDF
+            ),  # 当注册Class后，Function旧接口仅会在“Void_Terminal”中起作用
+            "Class": PDF_Localize,  # 新一代插件需要注册Class
         },
         "批量文件询问 (支持自定义总结各种文件)": {
             "Group": "学术",
@@ -400,8 +403,10 @@ def get_crazy_functions():
                 "Color": "stop",
                 "AsButton": False,
                 "Info": "使用 DALLE2/DALLE3 生成图片 | 输入参数字符串，提供图像的内容",
-                "Function": HotReload(图片生成_DALLE2),   # 当注册Class后，Function旧接口仅会在“Void_Terminal”中起作用
-                "Class": ImageGen_Wrap  # 新一代插件需要注册Class
+                "Function": HotReload(
+                    图片生成_DALLE2
+                ),  # 当注册Class后，Function旧接口仅会在“Void_Terminal”中起作用
+                "Class": ImageGen_Wrap,  # 新一代插件需要注册Class
             },
         }
     )
@@ -418,13 +423,6 @@ def get_crazy_functions():
             },
         }
     )
-
-
-
-
-
-
-
 
     try:
         from crazy_functions.Arxiv_Downloader import 下载arxiv论文并翻译摘要
@@ -443,7 +441,6 @@ def get_crazy_functions():
     except:
         logger.error(trimmed_format_exc())
         logger.error("Load function plugin failed")
-
 
     try:
         from crazy_functions.SourceCode_Analyse import 解析任意code项目
@@ -482,8 +479,6 @@ def get_crazy_functions():
     except:
         logger.error(trimmed_format_exc())
         logger.error("Load function plugin failed")
-
-
 
     try:
         from crazy_functions.Audio_Summary import Audio_Summary
@@ -597,7 +592,6 @@ def get_crazy_functions():
         logger.error(trimmed_format_exc())
         logger.error("Load function plugin failed")
 
-
     try:
         from toolbox import get_conf
 
@@ -638,7 +632,8 @@ def get_crazy_functions():
         logger.error("Load function plugin failed")
 
     try:
-        from crazy_functions.Dynamic_Function_Generate import Dynamic_Function_Generate
+        from crazy_functions.Dynamic_Function_Generate import \
+            Dynamic_Function_Generate
 
         function_plugins.update(
             {
@@ -707,10 +702,9 @@ def get_crazy_functions():
     #     logger.error(trimmed_format_exc())
     #     logger.error("Load function plugin failed")
 
-
-
     try:
         from crazy_functions.Paper_Reading import 快速论文解读
+
         function_plugins.update(
             {
                 "速读论文": {
@@ -726,7 +720,6 @@ def get_crazy_functions():
         logger.error(trimmed_format_exc())
         logger.error("Load function plugin failed")
 
-
     # try:
     #     from crazy_functions.高级功能函数模板 import 测试图表渲染
     #     function_plugins.update({
@@ -740,7 +733,6 @@ def get_crazy_functions():
     # except:
     #     logger.error(trimmed_format_exc())
     #     print('Load function plugin failed')
-
 
     """
     设置默认值:
@@ -762,24 +754,12 @@ def get_crazy_functions():
     return function_plugins
 
 
-
-
 def get_multiplex_button_functions():
-    """多路复用主提交按钮的功能映射
-    """
+    """多路复用主提交按钮的功能映射"""
     return {
-        "常规对话":
-            "",
-
-        "查互联网后回答":
-            "查互联网后回答",
-
-        "多模型对话":
-            "询问多个GPT模型", # 映射到上面的 `询问多个GPT模型` 插件
-
-        "智能召回 RAG":
-            "Rag智能召回", # 映射到上面的 `Rag智能召回` 插件
-
-        "多媒体查询":
-            "多媒体智能体", # 映射到上面的 `多媒体智能体` 插件
+        "常规对话": "",
+        "查互联网后回答": "查互联网后回答",
+        "多模型对话": "询问多个GPT模型",  # 映射到上面的 `询问多个GPT模型` 插件
+        "智能召回 RAG": "Rag智能召回",  # 映射到上面的 `Rag智能召回` 插件
+        "多媒体查询": "多媒体智能体",  # 映射到上面的 `多媒体智能体` 插件
     }

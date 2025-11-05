@@ -2,8 +2,8 @@
 对项目中的各个插件进行测试。运行方法：直接运行 python tests/test_plugins.py
 """
 
-
-import os, sys
+import os
+import sys
 
 
 def validate_path():
@@ -18,11 +18,17 @@ validate_path()  # 返回项目根路径
 if __name__ == "__main__":
     from tests.test_utils import plugin_test
 
-    plugin_test(plugin="crazy_functions.Vectorstore_QA->知识库文件注入", main_input="./README.md")
+    plugin_test(
+        plugin="crazy_functions.Vectorstore_QA->知识库文件注入",
+        main_input="./README.md",
+    )
 
     plugin_test(
         plugin="crazy_functions.Vectorstore_QA->读取知识库作答",
         main_input="What is the installation method？",
     )
 
-    plugin_test(plugin="crazy_functions.Vectorstore_QA->读取知识库作答", main_input="远程云服务器部署？")
+    plugin_test(
+        plugin="crazy_functions.Vectorstore_QA->读取知识库作答",
+        main_input="远程云服务器部署？",
+    )

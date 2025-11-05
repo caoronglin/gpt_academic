@@ -2,7 +2,8 @@ model_name = "ChatGLM3"
 cmd_to_install = "`pip install -r request_llms/requirements_chatglm.txt`"
 
 
-from toolbox import get_conf, ProxyNetworkActivate
+from toolbox import ProxyNetworkActivate, get_conf
+
 from .local_llm_class import LocalLLMHandle, get_local_llm_predict_fns
 
 
@@ -18,12 +19,15 @@ class GetGLM3Handle(LocalLLMHandle):
 
     def load_model_and_tokenizer(self):
         # 🏃‍♂️🏃‍♂️🏃‍♂️ 子进程执行
-        from transformers import AutoModel, AutoTokenizer, BitsAndBytesConfig
-        import os, glob
+        import glob
         import os
         import platform
 
-        LOCAL_MODEL_PATH, LOCAL_MODEL_QUANT, device = get_conf("CHATGLM_LOCAL_MODEL_PATH", "LOCAL_MODEL_QUANT", "LOCAL_MODEL_DEVICE")
+        from transformers import AutoModel, AutoTokenizer, BitsAndBytesConfig
+
+        LOCAL_MODEL_PATH, LOCAL_MODEL_QUANT, device = get_conf(
+            "CHATGLM_LOCAL_MODEL_PATH", "LOCAL_MODEL_QUANT", "LOCAL_MODEL_DEVICE"
+        )
         model_path = LOCAL_MODEL_PATH
         with ProxyNetworkActivate("Download_LLM"):
             chatglm_tokenizer = AutoTokenizer.from_pretrained(

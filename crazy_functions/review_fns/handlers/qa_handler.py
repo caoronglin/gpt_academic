@@ -1,8 +1,13 @@
-from typing import List, Dict, Any
-from .base_handler import BaseHandler
-from crazy_functions.review_fns.query_analyzer import SearchCriteria
 from textwrap import dedent
-from crazy_functions.crazy_utils import request_gpt_model_multi_threads_with_very_awesome_ui_and_high_efficiency as request_gpt
+from typing import Any, Dict, List
+
+from crazy_functions.crazy_utils import \
+    request_gpt_model_multi_threads_with_very_awesome_ui_and_high_efficiency as \
+    request_gpt
+from crazy_functions.review_fns.query_analyzer import SearchCriteria
+
+from .base_handler import BaseHandler
+
 
 class 学术问答功能(BaseHandler):
     """学术问答处理器"""
@@ -31,7 +36,8 @@ class 学术问答功能(BaseHandler):
 
         # 构建最终的prompt
         current_time = self._get_current_time()
-        final_prompt = dedent(f"""Current time: {current_time}
+        final_prompt = dedent(
+            f"""Current time: {current_time}
 
             Based on the following paper abstracts, please answer this academic question: {criteria.original_query}
 
@@ -80,7 +86,9 @@ class 学术问答功能(BaseHandler):
 
         return final_prompt
 
-    async def _search_relevant_papers(self, criteria: SearchCriteria, search_params: Dict) -> List:
+    async def _search_relevant_papers(
+        self, criteria: SearchCriteria, search_params: Dict
+    ) -> List:
         """搜索相关论文"""
         # 使用_search_all_sources替代原来的并行搜索
         all_papers = await self._search_all_sources(criteria, search_params)
@@ -90,9 +98,7 @@ class 学术问答功能(BaseHandler):
 
         # 使用BGE重排序
         self.ranked_papers = self.paper_ranker.rank_papers(
-            query=criteria.main_topic,
-            papers=all_papers,
-            search_criteria=criteria
+            query=criteria.main_topic, papers=all_papers, search_criteria=criteria
         )
 
         return self.ranked_papers or []
@@ -104,12 +110,13 @@ class 学术问答功能(BaseHandler):
         chatbot: List[List[str]],
         history: List[List[str]],
         system_prompt: str,
-        llm_kwargs: Dict[str, Any]
+        llm_kwargs: Dict[str, Any],
     ) -> List[List[str]]:
         """生成答案"""
 
         # 构建提示
-        qa_prompt = dedent(f"""Please answer the following academic question based on recent research papers.
+        qa_prompt = dedent(
+            f"""Please answer the following academic question based on recent research papers.
 
             Question: {criteria.main_topic}
 
@@ -132,7 +139,7 @@ class 学术问答功能(BaseHandler):
             llm_kwargs=llm_kwargs,
             chatbot=chatbot,
             history_array=[history],
-            sys_prompt_array=[system_prompt]
+            sys_prompt_array=[system_prompt],
         ):
             pass  # 等待生成完成
 
@@ -144,4 +151,3 @@ class 学术问答功能(BaseHandler):
             chatbot.append(["Here is the answer:", "Failed to generate answer."])
 
         return chatbot
-

@@ -1,15 +1,17 @@
-import markdown
-import re
-import os
-import math
-import html
 import base64
 import gzip
-from loguru import logger
-from textwrap import dedent
+import html
+import math
+import os
+import re
 from functools import lru_cache
-from pymdownx.superfences import fence_code_format
+from textwrap import dedent
+
+import markdown
 from latex2mathml.converter import convert as tex2mathml
+from loguru import logger
+from pymdownx.superfences import fence_code_format
+
 from shared_utils.config_loader import get_conf as get_conf
 from shared_utils.text_mask import apply_gpt_academic_string_mask
 
@@ -55,10 +57,11 @@ mathpatterns = {
     r"(?<!\\|\$)(\$)([^\$]+)(\$)": {"allow_multi_lines": False},  #  $...$
     r"(?<!\\)(\$\$)([^\$]+)(\$\$)": {"allow_multi_lines": True},  # $$...$$
     r"(?<!\\)(\\\[)(.+?)(\\\])": {"allow_multi_lines": False},  # \[...\]
-    r'(?<!\\)(\\\()(.+?)(\\\))': {'allow_multi_lines': False},                       # \(...\)
+    r"(?<!\\)(\\\()(.+?)(\\\))": {"allow_multi_lines": False},  # \(...\)
     # r'(?<!\\)(\\begin{([a-z]+?\*?)})(.+?)(\\end{\2})': {'allow_multi_lines': True},  # \begin...\end
     # r'(?<!\\)(\$`)([^`]+)(`\$)': {'allow_multi_lines': False},                       # $`...`$
 }
+
 
 def tex2mathml_catch_exception(content, *args, **kwargs):
     try:
@@ -223,49 +226,53 @@ def fix_dollar_sticking_bug(txt):
     double_stack_height = 0
     while True:
         while True:
-            index = txt.find('$')
+            index = txt.find("$")
 
             if index == -1:
                 txt_result += txt
                 return txt_result
 
             if single_stack_height > 0:
-                if txt[:(index+1)].find('\n') > 0 or txt[:(index+1)].find('<td>') > 0 or txt[:(index+1)].find('</td>') > 0:
-                    logger.error('公式之中出现了异常 (Unexpect element in equation)')
+                if (
+                    txt[: (index + 1)].find("\n") > 0
+                    or txt[: (index + 1)].find("<td>") > 0
+                    or txt[: (index + 1)].find("</td>") > 0
+                ):
+                    logger.error("公式之中出现了异常 (Unexpect element in equation)")
                     single_stack_height = 0
-                    txt_result += ' $'
+                    txt_result += " $"
                     continue
 
             if double_stack_height > 0:
-                if txt[:(index+1)].find('\n\n') > 0:
-                    logger.error('公式之中出现了异常 (Unexpect element in equation)')
+                if txt[: (index + 1)].find("\n\n") > 0:
+                    logger.error("公式之中出现了异常 (Unexpect element in equation)")
                     double_stack_height = 0
-                    txt_result += '$$'
+                    txt_result += "$$"
                     continue
 
-            is_double = (txt[index+1] == '$')
+            is_double = txt[index + 1] == "$"
             if is_double:
                 if single_stack_height != 0:
                     # add a padding
-                    txt = txt[:(index+1)] + " " + txt[(index+1):]
+                    txt = txt[: (index + 1)] + " " + txt[(index + 1) :]
                     continue
                 if double_stack_height == 0:
                     double_stack_height = 1
                 else:
                     double_stack_height = 0
-                txt_result += txt[:(index+2)]
-                txt = txt[(index+2):]
+                txt_result += txt[: (index + 2)]
+                txt = txt[(index + 2) :]
             else:
                 if double_stack_height != 0:
                     # logger.info(txt[:(index)])
-                    logger.info('发现异常嵌套公式')
+                    logger.info("发现异常嵌套公式")
                 if single_stack_height == 0:
                     single_stack_height = 1
                 else:
                     single_stack_height = 0
                     # logger.info(txt[:(index)])
-                txt_result += txt[:(index+1)]
-                txt = txt[(index+1):]
+                txt_result += txt[: (index + 1)]
+                txt = txt[(index + 1) :]
             break
 
 
@@ -274,6 +281,7 @@ def markdown_convertion_for_file(txt):
     将Markdown格式的文本转换为HTML格式。如果包含数学公式，则先将公式转换为HTML格式。
     """
     from themes.theme import advanced_css
+
     pre = f"""
     <!DOCTYPE html><head><meta charset="utf-8"><title>GPT-Academic输出文档</title><style>{advanced_css}</style></head>
     <body>
@@ -308,12 +316,17 @@ def markdown_convertion_for_file(txt):
         extension_configs={**markdown_extension_configs, **code_highlight_configs},
     )
 
-
     def repl_fn(match):
         content = match.group(2)
         return f'<script type="math/tex">{content}</script>'
 
-    pattern = "|".join([pattern for pattern, property in mathpatterns.items() if not property["allow_multi_lines"]])
+    pattern = "|".join(
+        [
+            pattern
+            for pattern, property in mathpatterns.items()
+            if not property["allow_multi_lines"]
+        ]
+    )
     pattern = re.compile(pattern, flags=re.ASCII)
     convert_stage_3 = pattern.sub(repl_fn, convert_stage_2)
 
@@ -326,13 +339,16 @@ def markdown_convertion_for_file(txt):
     # cat them together
     return pre + convert_stage_5 + suf
 
+
 def compress_string(s):
-    compress_string = gzip.compress(s.encode('utf-8'))
+    compress_string = gzip.compress(s.encode("utf-8"))
     return base64.b64encode(compress_string).decode()
+
 
 def decompress_string(s):
     decoded_string = base64.b64decode(s)
-    return gzip.decompress(decoded_string).decode('utf-8')
+    return gzip.decompress(decoded_string).decode("utf-8")
+
 
 @lru_cache(maxsize=128)  # 使用 lru缓存 加快转换速度
 def markdown_convertion(txt):
@@ -403,18 +419,18 @@ def markdown_convertion(txt):
 def code_block_title_replace_format(match):
     lang = match.group(1)
     filename = match.group(2)
-    return f"```{lang} {{title=\"{filename}\"}}\n"
+    return f'```{lang} {{title="{filename}"}}\n'
 
 
 def get_last_backticks_indent(text):
     # 从后向前查找最后一个 ```
     lines = text.splitlines()
     for line in reversed(lines):
-        if '```' in line:
+        if "```" in line:
             # 计算前面的空格数量
             indent = len(line) - len(line.lstrip())
             return indent
-    return 0 # 如果没找到返回0
+    return 0  # 如果没找到返回0
 
 
 @lru_cache(maxsize=16)  # 使用lru缓存
@@ -448,7 +464,7 @@ def close_up_code_segment_during_stream(gpt_reply):
             num_padding = get_last_backticks_indent(gpt_reply)
         except:
             num_padding = 0
-        return gpt_reply + "\n" + " "*num_padding + "```"  # 输出代码片段中！
+        return gpt_reply + "\n" + " " * num_padding + "```"  # 输出代码片段中！
     else:
         return gpt_reply
 
@@ -459,9 +475,12 @@ def special_render_issues_for_mermaid(text):
     @lru_cache(maxsize=1)
     def get_special_case():
         from core_functional import get_core_functions
+
         special_case = get_core_functions()["总结绘制脑图"]["Suffix"]
         return special_case
-    if text.endswith(get_special_case()): text = text.replace("```mermaid", "```")
+
+    if text.endswith(get_special_case()):
+        text = text.replace("```mermaid", "```")
     return text
 
 
@@ -474,7 +493,9 @@ def contain_html_tag(text):
 
 
 def contain_image(text):
-    pattern = r'<br/><br/><div align="center"><img src="file=(.*?)" base64="(.*?)"></div>'
+    pattern = (
+        r'<br/><br/><div align="center"><img src="file=(.*?)" base64="(.*?)"></div>'
+    )
     return re.search(pattern, text) is not None
 
 
@@ -509,7 +530,7 @@ def simple_markdown_convertion(text):
     if text.startswith(pre) and text.endswith(suf):
         return text  # 已经被转化过，不需要再次转化
 
-    text = compat_non_markdown_input(text)    # 兼容非markdown输入
+    text = compat_non_markdown_input(text)  # 兼容非markdown输入
     text = markdown.markdown(
         text,
         extensions=["pymdownx.superfences", "tables", "pymdownx.highlight"],

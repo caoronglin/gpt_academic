@@ -1,20 +1,26 @@
+import glob
 import os
 import time
-import glob
-from pathlib import Path
-from datetime import datetime
 from dataclasses import dataclass
-from typing import Dict, List, Generator, Tuple
-from crazy_functions.crazy_utils import request_gpt_model_in_new_thread_with_ui_alive
-from toolbox import update_ui, promote_file_to_downloadzone, write_history_to_file, CatchException, report_exception
-from shared_utils.fastapi_server import validate_path_safety
-from crazy_functions.paper_fns.paper_download import extract_paper_id, extract_paper_ids, get_arxiv_paper, format_arxiv_id
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, Generator, List, Tuple
 
+from crazy_functions.crazy_utils import \
+    request_gpt_model_in_new_thread_with_ui_alive
+from crazy_functions.paper_fns.paper_download import (extract_paper_id,
+                                                      extract_paper_ids,
+                                                      format_arxiv_id,
+                                                      get_arxiv_paper)
+from shared_utils.fastapi_server import validate_path_safety
+from toolbox import (CatchException, promote_file_to_downloadzone,
+                     report_exception, update_ui, write_history_to_file)
 
 
 @dataclass
 class PaperQuestion:
     """论文分析问题类"""
+
     id: str  # 问题ID
     question: str  # 问题内容
     importance: int  # 重要性 (1-5，5最高)
@@ -24,7 +30,14 @@ class PaperQuestion:
 class PaperAnalyzer:
     """论文快速分析器"""
 
-    def __init__(self, llm_kwargs: Dict, plugin_kwargs: Dict, chatbot: List, history: List, system_prompt: str):
+    def __init__(
+        self,
+        llm_kwargs: Dict,
+        plugin_kwargs: Dict,
+        chatbot: List,
+        history: List,
+        system_prompt: str,
+    ):
         """初始化分析器"""
         self.llm_kwargs = llm_kwargs
         self.plugin_kwargs = plugin_kwargs
@@ -40,25 +53,25 @@ class PaperAnalyzer:
                 id="research_and_methods",
                 question="这篇论文的主要研究问题、目标和方法是什么？请分析：1)论文的核心研究问题和研究动机；2)论文提出的关键方法、模型或理论框架；3)这些方法如何解决研究问题。",
                 importance=5,
-                description="研究问题与方法"
+                description="研究问题与方法",
             ),
             PaperQuestion(
                 id="findings_and_innovation",
                 question="论文的主要发现、结论及创新点是什么？请分析：1)论文的核心结果与主要发现；2)作者得出的关键结论；3)研究的创新点与对领域的贡献；4)与已有工作的区别。",
                 importance=4,
-                description="研究发现与创新"
+                description="研究发现与创新",
             ),
             PaperQuestion(
                 id="methodology_and_data",
                 question="论文使用了什么研究方法和数据？请详细分析：1)研究设计与实验设置；2)数据收集方法与数据集特点；3)分析技术与评估方法；4)方法学上的合理性。",
                 importance=3,
-                description="研究方法与数据"
+                description="研究方法与数据",
             ),
             PaperQuestion(
                 id="limitations_and_impact",
                 question="论文的局限性、未来方向及潜在影响是什么？请分析：1)研究的不足与限制因素；2)作者提出的未来研究方向；3)该研究对学术界和行业可能产生的影响；4)研究结果的适用范围与推广价值。",
                 importance=2,
-                description="局限性与影响"
+                description="局限性与影响",
             ),
         ]
 
@@ -66,7 +79,9 @@ class PaperAnalyzer:
         self.questions.sort(key=lambda q: q.importance, reverse=True)
 
     def _load_paper(self, paper_path: str) -> Generator:
-        from crazy_functions.doc_fns.text_content_loader import TextContentLoader
+        from crazy_functions.doc_fns.text_content_loader import \
+            TextContentLoader
+
         """加载论文内容"""
         yield from update_ui(chatbot=self.chatbot, history=self.history)
 
@@ -98,7 +113,7 @@ class PaperAnalyzer:
                 llm_kwargs=self.llm_kwargs,
                 chatbot=self.chatbot,
                 history=[],  # 空历史，确保每个问题独立分析
-                sys_prompt="你是一个专业的科研论文分析助手，需要仔细阅读论文内容并回答问题。请保持客观、准确，并基于论文内容提供深入分析。"
+                sys_prompt="你是一个专业的科研论文分析助手，需要仔细阅读论文内容并回答问题。请保持客观、准确，并基于论文内容提供深入分析。",
             )
 
             if response:
@@ -120,7 +135,9 @@ class PaperAnalyzer:
 
         for q in self.questions:
             if q.id in self.results:
-                summary_prompt += f"\n\n关于{q.description}的分析:\n{self.results[q.id]}"
+                summary_prompt += (
+                    f"\n\n关于{q.description}的分析:\n{self.results[q.id]}"
+                )
 
         try:
             # 使用单线程版本的请求函数，可以在前端实时显示生成结果
@@ -130,7 +147,7 @@ class PaperAnalyzer:
                 llm_kwargs=self.llm_kwargs,
                 chatbot=self.chatbot,
                 history=[],
-                sys_prompt="你是一个科研论文解读专家，请将多个方面的分析整合为一份完整、连贯、有条理的报告。报告应当重点突出，层次分明，并且保持学术性和客观性。"
+                sys_prompt="你是一个科研论文解读专家，请将多个方面的分析整合为一份完整、连贯、有条理的报告。报告应当重点突出，层次分明，并且保持学术性和客观性。",
             )
 
             if response:
@@ -154,13 +171,14 @@ class PaperAnalyzer:
                     md_content += f"\n\n## {q.description}\n\n{self.results[q.id]}"
 
             result_file = write_history_to_file(
-                history=[md_content],
-                file_basename=f"论文解读_{timestamp}.md"
+                history=[md_content], file_basename=f"论文解读_{timestamp}.md"
             )
 
             if result_file and os.path.exists(result_file):
                 promote_file_to_downloadzone(result_file, chatbot=self.chatbot)
-                self.chatbot.append(["保存成功", f"解读报告已保存至: {os.path.basename(result_file)}"])
+                self.chatbot.append(
+                    ["保存成功", f"解读报告已保存至: {os.path.basename(result_file)}"]
+                )
                 yield from update_ui(chatbot=self.chatbot, history=self.history)
             else:
                 self.chatbot.append(["警告", "保存报告成功但找不到文件"])
@@ -212,7 +230,7 @@ def _find_paper_file(path: str) -> str:
             for file in os.listdir(path):
                 file_path = os.path.join(path, file)
                 if os.path.isfile(file_path):
-                    file_ext = file.split('.')[-1].lower() if '.' in file else ""
+                    file_ext = file.split(".")[-1].lower() if "." in file else ""
                     if file_ext in extensions:
                         return file_path
         except Exception:
@@ -233,25 +251,32 @@ def download_paper_by_id(paper_info, chatbot, history) -> str:
         str: 下载的论文路径或None
     """
     from crazy_functions.review_fns.data_sources.scihub_source import SciHub
+
     id_type, paper_id = paper_info
 
     # 创建保存目录 - 使用时间戳创建唯一文件夹
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    user_name = chatbot.get_user() if hasattr(chatbot, 'get_user') else "default"
+    user_name = chatbot.get_user() if hasattr(chatbot, "get_user") else "default"
     from toolbox import get_log_folder, get_user
-    base_save_dir = get_log_folder(get_user(chatbot), plugin_name='paper_download')
+
+    base_save_dir = get_log_folder(get_user(chatbot), plugin_name="paper_download")
     save_dir = os.path.join(base_save_dir, f"papers_{timestamp}")
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
     save_path = Path(save_dir)
 
-    chatbot.append([f"下载论文", f"正在下载{'arXiv' if id_type == 'arxiv' else 'DOI'} {paper_id} 的论文..."])
+    chatbot.append(
+        [
+            f"下载论文",
+            f"正在下载{'arXiv' if id_type == 'arxiv' else 'DOI'} {paper_id} 的论文...",
+        ]
+    )
     update_ui(chatbot=chatbot, history=history)
 
     pdf_path = None
 
     try:
-        if id_type == 'arxiv':
+        if id_type == "arxiv":
             # 使用改进的arxiv查询方法
             formatted_id = format_arxiv_id(paper_id)
             paper_result = get_arxiv_paper(formatted_id)
@@ -268,16 +293,15 @@ def download_paper_by_id(paper_info, chatbot, history) -> str:
 
         else:  # doi
             # 下载DOI
-            sci_hub = SciHub(
-                doi=paper_id,
-                path=save_path
-            )
+            sci_hub = SciHub(doi=paper_id, path=save_path)
             pdf_path = sci_hub.fetch()
 
         # 检查下载结果
         if pdf_path and os.path.exists(pdf_path):
             promote_file_to_downloadzone(pdf_path, chatbot=chatbot)
-            chatbot.append([f"下载成功", f"已成功下载论文: {os.path.basename(pdf_path)}"])
+            chatbot.append(
+                [f"下载成功", f"已成功下载论文: {os.path.basename(pdf_path)}"]
+            )
             update_ui(chatbot=chatbot, history=history)
             return pdf_path
         else:
@@ -292,11 +316,23 @@ def download_paper_by_id(paper_info, chatbot, history) -> str:
 
 
 @CatchException
-def 快速论文解读(txt: str, llm_kwargs: Dict, plugin_kwargs: Dict, chatbot: List,
-             history: List, system_prompt: str, user_request: str):
+def 快速论文解读(
+    txt: str,
+    llm_kwargs: Dict,
+    plugin_kwargs: Dict,
+    chatbot: List,
+    history: List,
+    system_prompt: str,
+    user_request: str,
+):
     """主函数 - 论文快速解读"""
     # 初始化分析器
-    chatbot.append(["函数插件功能及使用方式", "论文快速解读：通过分析论文的关键要素，帮助您迅速理解论文内容，适用于各学科领域的科研论文。 <br><br>📋 使用方式：<br>1、直接上传PDF文件或者输入DOI号（仅针对SCI hub存在的论文）或arXiv ID（如2501.03916）<br>2、点击插件开始分析"])
+    chatbot.append(
+        [
+            "函数插件功能及使用方式",
+            "论文快速解读：通过分析论文的关键要素，帮助您迅速理解论文内容，适用于各学科领域的科研论文。 <br><br>📋 使用方式：<br>1、直接上传PDF文件或者输入DOI号（仅针对SCI hub存在的论文）或arXiv ID（如2501.03916）<br>2、点击插件开始分析",
+        ]
+    )
     yield from update_ui(chatbot=chatbot, history=history)
 
     paper_file = None
@@ -306,20 +342,32 @@ def 快速论文解读(txt: str, llm_kwargs: Dict, plugin_kwargs: Dict, chatbot:
 
     if paper_info:
         # 如果是论文ID，下载论文
-        chatbot.append(["检测到论文ID", f"检测到{'arXiv' if paper_info[0] == 'arxiv' else 'DOI'} ID: {paper_info[1]}，准备下载论文..."])
+        chatbot.append(
+            [
+                "检测到论文ID",
+                f"检测到{'arXiv' if paper_info[0] == 'arxiv' else 'DOI'} ID: {paper_info[1]}，准备下载论文...",
+            ]
+        )
         yield from update_ui(chatbot=chatbot, history=history)
 
         # 下载论文 - 完全重新实现
         paper_file = download_paper_by_id(paper_info, chatbot, history)
 
         if not paper_file:
-            report_exception(chatbot, history, a=f"下载论文失败", b=f"无法下载{'arXiv' if paper_info[0] == 'arxiv' else 'DOI'}论文: {paper_info[1]}")
+            report_exception(
+                chatbot,
+                history,
+                a=f"下载论文失败",
+                b=f"无法下载{'arXiv' if paper_info[0] == 'arxiv' else 'DOI'}论文: {paper_info[1]}",
+            )
             yield from update_ui(chatbot=chatbot, history=history)
             return
     else:
         # 检查输入路径
         if not os.path.exists(txt):
-            report_exception(chatbot, history, a=f"解析论文: {txt}", b=f"找不到文件或无权访问: {txt}")
+            report_exception(
+                chatbot, history, a=f"解析论文: {txt}", b=f"找不到文件或无权访问: {txt}"
+            )
             yield from update_ui(chatbot=chatbot, history=history)
             return
 
@@ -331,14 +379,21 @@ def 快速论文解读(txt: str, llm_kwargs: Dict, plugin_kwargs: Dict, chatbot:
         paper_file = _find_paper_file(txt)
 
         if not paper_file:
-            report_exception(chatbot, history, a=f"解析论文", b=f"在路径 {txt} 中未找到支持的论文文件")
+            report_exception(
+                chatbot,
+                history,
+                a=f"解析论文",
+                b=f"在路径 {txt} 中未找到支持的论文文件",
+            )
             yield from update_ui(chatbot=chatbot, history=history)
             return
 
     yield from update_ui(chatbot=chatbot, history=history)
 
     # 增加调试信息，检查paper_file的类型和值
-    chatbot.append(["文件类型检查", f"paper_file类型: {type(paper_file)}, 值: {paper_file}"])
+    chatbot.append(
+        ["文件类型检查", f"paper_file类型: {type(paper_file)}, 值: {paper_file}"]
+    )
     yield from update_ui(chatbot=chatbot, history=history)
     chatbot.pop()  # 移除调试信息
 
@@ -348,7 +403,12 @@ def 快速论文解读(txt: str, llm_kwargs: Dict, plugin_kwargs: Dict, chatbot:
         try:
             paper_file = str(paper_file)
         except:
-            report_exception(chatbot, history, a=f"类型错误", b=f"论文路径不是有效的字符串: {type(paper_file)}")
+            report_exception(
+                chatbot,
+                history,
+                a=f"类型错误",
+                b=f"论文路径不是有效的字符串: {type(paper_file)}",
+            )
             yield from update_ui(chatbot=chatbot, history=history)
             return
 

@@ -1,18 +1,11 @@
-
-
-
-
-
-
-
 # ------------------------------------------------------------------------------------------------------------------------
 # 🔌💻 Source Code From https://huggingface.co/K024/ChatGLM-6b-onnx-u8s8/blob/main/model.py
 # ------------------------------------------------------------------------------------------------------------------------
 import re
+
 import numpy as np
 # import torch
 from onnxruntime import InferenceSession, SessionOptions
-
 
 # Currently `MatMulInteger` and `DynamicQuantizeLinear` are only supported on CPU,
 # although they are documented as supported on CUDA.
@@ -65,15 +58,19 @@ def process_response(response: str):
     return response
 
 
-class ChatGLMModel():
+class ChatGLMModel:
 
-    def __init__(self, onnx_model_path=onnx_model_path, tokenizer_path=tokenizer_path, profile=False) -> None:
+    def __init__(
+        self,
+        onnx_model_path=onnx_model_path,
+        tokenizer_path=tokenizer_path,
+        profile=False,
+    ) -> None:
         self.tokenizer = ChatGLMTokenizer(tokenizer_path)
         options = SessionOptions()
         options.enable_profiling = profile
         self.session = InferenceSession(onnx_model_path, options, providers=providers)
         self.eop_token_id = self.tokenizer["<eop>"]
-
 
     def prepare_input(self, prompt: str):
         input_ids, prefix_mask = self.tokenizer.encode(prompt)
@@ -82,7 +79,6 @@ class ChatGLMModel():
         prefix_mask = np.array([prefix_mask], dtype=np.longlong)
 
         return input_ids, prefix_mask, default_past_key_values
-
 
     def sample_next_token(self, logits: np.ndarray, top_k=50, top_p=0.7, temperature=1):
         # softmax with temperature
@@ -102,8 +98,9 @@ class ChatGLMModel():
         next_token = np.random.choice(top_k_idx, size=1, p=top_k_probs)
         return next_token[0].item()
 
-
-    def generate_iterate(self, prompt: str, max_generated_tokens=100, top_k=50, top_p=0.7, temperature=1):
+    def generate_iterate(
+        self, prompt: str, max_generated_tokens=100, top_k=50, top_p=0.7, temperature=1
+    ):
         input_ids, prefix_mask, past_key_values = self.prepare_input(prompt)
         output_tokens = []
 
@@ -116,33 +113,28 @@ class ChatGLMModel():
             inputs.update(past_key_values)
 
             logits, *past_key_values = self.session.run(output_names, inputs)
-            past_key_values = { k: v for k, v in zip(past_names, past_key_values) }
+            past_key_values = {k: v for k, v in zip(past_names, past_key_values)}
 
-            next_token = self.sample_next_token(logits[0, -1], top_k=top_k, top_p=top_p, temperature=temperature)
+            next_token = self.sample_next_token(
+                logits[0, -1], top_k=top_k, top_p=top_p, temperature=temperature
+            )
 
             output_tokens += [next_token]
 
-            if next_token == self.eop_token_id or len(output_tokens) > max_generated_tokens:
+            if (
+                next_token == self.eop_token_id
+                or len(output_tokens) > max_generated_tokens
+            ):
                 break
 
             input_ids = np.array([[next_token]], dtype=np.longlong)
-            prefix_mask = np.concatenate([prefix_mask, np.array([[0]], dtype=np.longlong)], axis=1)
+            prefix_mask = np.concatenate(
+                [prefix_mask, np.array([[0]], dtype=np.longlong)], axis=1
+            )
 
             yield process_response(self.tokenizer.decode(output_tokens))
 
         return process_response(self.tokenizer.decode(output_tokens))
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 # ------------------------------------------------------------------------------------------------------------------------
@@ -150,6 +142,7 @@ class ChatGLMModel():
 # ------------------------------------------------------------------------------------------------------------------------
 
 import re
+
 from sentencepiece import SentencePieceProcessor
 
 
@@ -165,7 +158,16 @@ class ChatGLMTokenizer:
     def __init__(self, vocab_file):
         assert vocab_file is not None
         self.vocab_file = vocab_file
-        self.special_tokens = ["[MASK]", "[gMASK]", "[sMASK]", "<unused_0>", "<sop>", "<eop>", "<ENC>", "<dBLOCK>"]
+        self.special_tokens = [
+            "[MASK]",
+            "[gMASK]",
+            "[sMASK]",
+            "<unused_0>",
+            "<sop>",
+            "<eop>",
+            "<ENC>",
+            "<dBLOCK>",
+        ]
         self.text_tokenizer = SentencePieceProcessor(str(vocab_file))
 
     def __len__(self):
@@ -173,7 +175,6 @@ class ChatGLMTokenizer:
 
     def __getitem__(self, key: str):
         return self.text_tokenizer[key]
-
 
     def preprocess(self, text: str, linebreak=True, whitespaces=True):
         if linebreak:
@@ -183,11 +184,14 @@ class ChatGLMTokenizer:
             text = re.sub(r" {2,80}", replace_spaces_with_blank, text)
         return text
 
-
     def encode(
-        self, text: str, text_pair: str = None,
-        linebreak=True, whitespaces=True,
-        add_dummy_prefix=True, special_tokens=True,
+        self,
+        text: str,
+        text_pair: str = None,
+        linebreak=True,
+        whitespaces=True,
+        add_dummy_prefix=True,
+        special_tokens=True,
     ) -> tuple[list[int], list[int]]:
         """
         text: Text to encode. Bidirectional part with a [gMASK] and an <sop> for causal LM.
@@ -218,12 +222,9 @@ class ChatGLMTokenizer:
 
         return (tokens if add_dummy_prefix else tokens[2:]), prefix_mask
 
-
     def decode(self, text_ids: list[int]) -> str:
         text = self.text_tokenizer.decode(text_ids)
         text = text.replace("<n>", "\n")
         text = text.replace("<|tab|>", "\t")
         text = re.sub(r"<\|blank_(\d\d?)\|>", replace_blank_with_spaces, text)
         return text
-
-
