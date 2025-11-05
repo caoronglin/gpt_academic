@@ -3,17 +3,17 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Any, Dict, List
 
-from crazy_functions.pdf_fns.breakdown_pdf_txt import \
-    cut_from_end_to_satisfy_token_limit
+from crazy_functions.pdf_fns.breakdown_pdf_txt import (
+    cut_from_end_to_satisfy_token_limit,
+)
 from crazy_functions.review_fns.data_sources.adsabs_source import AdsabsSource
 from crazy_functions.review_fns.data_sources.arxiv_source import ArxivSource
-from crazy_functions.review_fns.data_sources.crossref_source import \
-    CrossrefSource
+from crazy_functions.review_fns.data_sources.crossref_source import CrossrefSource
 from crazy_functions.review_fns.data_sources.pubmed_source import PubMedSource
-from crazy_functions.review_fns.data_sources.semantic_source import \
-    SemanticScholarSource
-from crazy_functions.review_fns.paper_processor.paper_llm_ranker import \
-    PaperLLMRanker
+from crazy_functions.review_fns.data_sources.semantic_source import (
+    SemanticScholarSource,
+)
+from crazy_functions.review_fns.paper_processor.paper_llm_ranker import PaperLLMRanker
 from crazy_functions.review_fns.query_analyzer import SearchCriteria
 from request_llms.bridge_all import model_info
 from toolbox import get_conf

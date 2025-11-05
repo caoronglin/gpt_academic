@@ -1,10 +1,20 @@
 import os
 
 from crazy_functions.pdf_fns.parse_pdf import parse_pdf, translate_pdf
-from toolbox import (CatchException, check_packages, disable_auto_promotion,
-                     extract_archive, gen_time_str, get_conf, get_log_folder,
-                     promote_file_to_downloadzone, report_exception, update_ui,
-                     update_ui_latest_msg, write_history_to_file)
+from toolbox import (
+    CatchException,
+    check_packages,
+    disable_auto_promotion,
+    extract_archive,
+    gen_time_str,
+    get_conf,
+    get_log_folder,
+    promote_file_to_downloadzone,
+    report_exception,
+    update_ui,
+    update_ui_latest_msg,
+    write_history_to_file,
+)
 
 
 def 解析PDF_基于GROBID(

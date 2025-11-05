@@ -12,15 +12,24 @@ from pydantic import BaseModel, Field
 
 from check_proxy import check_proxy
 from crazy_functions.crazy_utils import (
-    input_clipping, request_gpt_model_in_new_thread_with_ui_alive)
+    input_clipping,
+    request_gpt_model_in_new_thread_with_ui_alive,
+)
 from crazy_functions.json_fns.pydantic_io import GptJsonIO, JsonStringError
-from crazy_functions.prompts.internet import (SearchAcademicOptimizerPrompt,
-                                              SearchOptimizerPrompt)
+from crazy_functions.prompts.internet import (
+    SearchAcademicOptimizerPrompt,
+    SearchOptimizerPrompt,
+)
 from loguru import logger
 from request_llms.bridge_all import model_info, predict_no_ui_long_connection
-from toolbox import (CatchException, generate_file_link, get_conf,
-                     promote_file_to_downloadzone, update_ui,
-                     update_ui_latest_msg)
+from toolbox import (
+    CatchException,
+    generate_file_link,
+    get_conf,
+    promote_file_to_downloadzone,
+    update_ui,
+    update_ui_latest_msg,
+)
 
 
 class Query(BaseModel):
@@ -152,8 +161,7 @@ def 多媒体任务(
             history=[],
             delay=1,
         )
-        from crazy_functions.Internet_GPT import \
-            internet_search_with_analysis_prompt
+        from crazy_functions.Internet_GPT import internet_search_with_analysis_prompt
 
         result = yield from internet_search_with_analysis_prompt(
             prompt=internet_search_keyword,

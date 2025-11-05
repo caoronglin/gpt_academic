@@ -1,7 +1,12 @@
 from crazy_functions.crazy_utils import input_clipping
 from shared_utils.fastapi_server import validate_path_safety
-from toolbox import (CatchException, promote_file_to_downloadzone,
-                     report_exception, update_ui, write_history_to_file)
+from toolbox import (
+    CatchException,
+    promote_file_to_downloadzone,
+    report_exception,
+    update_ui,
+    write_history_to_file,
+)
 
 
 def 解析源代码新(
@@ -18,7 +23,8 @@ def 解析源代码新(
 
     from crazy_functions.crazy_utils import (
         request_gpt_model_in_new_thread_with_ui_alive,
-        request_gpt_model_multi_threads_with_very_awesome_ui_and_high_efficiency)
+        request_gpt_model_multi_threads_with_very_awesome_ui_and_high_efficiency,
+    )
 
     summary_batch_isolation = True
     inputs_array = []
@@ -158,8 +164,7 @@ def 解析源代码新(
 
 
 def make_diagram(this_iteration_files, result, this_iteration_history_feed):
-    from crazy_functions.diagram_fns.file_tree import \
-        build_file_tree_mermaid_diagram
+    from crazy_functions.diagram_fns.file_tree import build_file_tree_mermaid_diagram
 
     return build_file_tree_mermaid_diagram(
         this_iteration_history_feed[0::2],

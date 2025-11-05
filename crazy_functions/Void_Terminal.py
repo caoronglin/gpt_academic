@@ -50,15 +50,24 @@ from typing import List
 from pydantic import BaseModel, Field
 
 from crazy_functions.crazy_utils import (
-    input_clipping, request_gpt_model_in_new_thread_with_ui_alive)
+    input_clipping,
+    request_gpt_model_in_new_thread_with_ui_alive,
+)
 from crazy_functions.json_fns.pydantic_io import GptJsonIO, JsonStringError
 from crazy_functions.vt_fns.vt_call_plugin import execute_plugin
 from crazy_functions.vt_fns.vt_modify_config import (
-    modify_configuration_hot, modify_configuration_reboot)
+    modify_configuration_hot,
+    modify_configuration_reboot,
+)
 from crazy_functions.vt_fns.vt_state import VoidTerminalState
 from request_llms.bridge_all import predict_no_ui_long_connection
-from toolbox import (CatchException, disable_auto_promotion,
-                     is_the_upload_folder, update_ui, update_ui_latest_msg)
+from toolbox import (
+    CatchException,
+    disable_auto_promotion,
+    is_the_upload_folder,
+    update_ui,
+    update_ui_latest_msg,
+)
 
 
 class UserIntention(BaseModel):

@@ -9,15 +9,27 @@
 import time
 
 from crazy_functions.agent_fns.auto_agent import AutoGenMath
-from crazy_functions.agent_fns.persistent import \
-    GradioMultiuserManagerForPersistentClasses
+from crazy_functions.agent_fns.persistent import (
+    GradioMultiuserManagerForPersistentClasses,
+)
 from crazy_functions.crazy_utils import (
-    get_plugin_arg, input_clipping,
-    request_gpt_model_in_new_thread_with_ui_alive, try_install_deps)
+    get_plugin_arg,
+    input_clipping,
+    request_gpt_model_in_new_thread_with_ui_alive,
+    try_install_deps,
+)
 from loguru import logger
-from toolbox import (CatchException, ProxyNetworkActivate, Singleton,
-                     gen_time_str, get_conf, select_api_key,
-                     trimmed_format_exc, update_ui, update_ui_latest_msg)
+from toolbox import (
+    CatchException,
+    ProxyNetworkActivate,
+    Singleton,
+    gen_time_str,
+    get_conf,
+    select_api_key,
+    trimmed_format_exc,
+    update_ui,
+    update_ui_latest_msg,
+)
 
 
 def remove_model_prefix(llm):

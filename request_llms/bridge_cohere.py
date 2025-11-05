@@ -18,12 +18,22 @@ import gradio as gr
 import requests
 
 from loguru import logger
+
 # config_private.py放自己的秘密如API和代理网址
 # 读取时首先看是否存在私密的config_private配置文件（不受git管控），如果有，则覆盖原config文件
-from toolbox import (ChatBotWithCookies, clip_history, get_conf,
-                     is_any_api_key, is_the_upload_folder, log_chat,
-                     read_one_api_model_name, select_api_key,
-                     trimmed_format_exc, update_ui, what_keys)
+from toolbox import (
+    ChatBotWithCookies,
+    clip_history,
+    get_conf,
+    is_any_api_key,
+    is_the_upload_folder,
+    log_chat,
+    read_one_api_model_name,
+    select_api_key,
+    trimmed_format_exc,
+    update_ui,
+    what_keys,
+)
 
 proxies, TIMEOUT_SECONDS, MAX_RETRY, API_ORG, AZURE_CFG_ARRAY = get_conf(
     "proxies", "TIMEOUT_SECONDS", "MAX_RETRY", "API_ORG", "AZURE_CFG_ARRAY"

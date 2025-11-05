@@ -3,10 +3,18 @@ import os
 from typing import List
 
 from crazy_functions.crazy_utils import (
-    input_clipping, request_gpt_model_in_new_thread_with_ui_alive)
+    input_clipping,
+    request_gpt_model_in_new_thread_with_ui_alive,
+)
 from shared_utils.fastapi_server import validate_path_safety
-from toolbox import (CatchException, get_conf, get_log_folder,
-                     report_exception, update_ui, update_ui_latest_msg)
+from toolbox import (
+    CatchException,
+    get_conf,
+    get_log_folder,
+    report_exception,
+    update_ui,
+    update_ui_latest_msg,
+)
 
 RAG_WORKER_REGISTER = {}
 MAX_HISTORY_ROUND = 5
@@ -30,8 +38,7 @@ def handle_document_upload(
     """
     from llama_index.core import Document
 
-    from crazy_functions.rag_fns.rag_file_support import (extract_text,
-                                                          supports_format)
+    from crazy_functions.rag_fns.rag_file_support import extract_text, supports_format
 
     user_name = chatbot.get_user()
     checkpoint_dir = get_log_folder(user_name, plugin_name="experimental_rag")
@@ -79,13 +86,13 @@ def Rag问答(
     VECTOR_STORE_TYPE = "Milvus"
     if VECTOR_STORE_TYPE == "Milvus":
         try:
-            from crazy_functions.rag_fns.milvus_worker import \
-                MilvusRagWorker as LlamaIndexRagWorker
+            from crazy_functions.rag_fns.milvus_worker import (
+                MilvusRagWorker as LlamaIndexRagWorker,
+            )
         except:
             VECTOR_STORE_TYPE = "Simple"
     if VECTOR_STORE_TYPE == "Simple":
-        from crazy_functions.rag_fns.llama_index_worker import \
-            LlamaIndexRagWorker
+        from crazy_functions.rag_fns.llama_index_worker import LlamaIndexRagWorker
 
     # 1. we retrieve rag worker from global context
     user_name = chatbot.get_user()

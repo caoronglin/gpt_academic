@@ -1,7 +1,6 @@
 import datetime
 
-from crazy_functions.crazy_utils import \
-    request_gpt_model_in_new_thread_with_ui_alive
+from crazy_functions.crazy_utils import request_gpt_model_in_new_thread_with_ui_alive
 from toolbox import CatchException, update_ui
 
 ####################################################################################################################
@@ -88,7 +87,9 @@ def 高阶功能模板函数(
 ####################################################################################################################
 
 from crazy_functions.plugin_template.plugin_class_template import (
-    ArgProperty, GptAcademicPluginTemplate)
+    ArgProperty,
+    GptAcademicPluginTemplate,
+)
 
 
 class Demo_Wrap(GptAcademicPluginTemplate):

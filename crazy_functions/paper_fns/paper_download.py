@@ -4,8 +4,13 @@ import zipfile
 from datetime import datetime
 from pathlib import Path
 
-from toolbox import (CatchException, get_log_folder, get_user,
-                     promote_file_to_downloadzone, update_ui)
+from toolbox import (
+    CatchException,
+    get_log_folder,
+    get_user,
+    promote_file_to_downloadzone,
+    update_ui,
+)
 
 
 def extract_paper_id(txt):
@@ -141,8 +146,7 @@ def 论文下载(
     txt: 用户输入，可以是DOI、arxiv ID或相关链接，支持多行输入进行批量下载
     """
     from crazy_functions.doc_fns.text_content_loader import TextContentLoader
-    from crazy_functions.review_fns.data_sources.arxiv_source import \
-        ArxivSource
+    from crazy_functions.review_fns.data_sources.arxiv_source import ArxivSource
     from crazy_functions.review_fns.data_sources.scihub_source import SciHub
 
     # 解析输入

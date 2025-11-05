@@ -4,10 +4,10 @@ import time
 from dataclasses import dataclass
 from typing import Dict, Generator, List, Tuple
 
-from crazy_functions.crazy_utils import \
-    request_gpt_model_multi_threads_with_very_awesome_ui_and_high_efficiency
-from crazy_functions.pdf_fns.breakdown_txt import \
-    breakdown_text_to_satisfy_token_limit
+from crazy_functions.crazy_utils import (
+    request_gpt_model_multi_threads_with_very_awesome_ui_and_high_efficiency,
+)
+from crazy_functions.pdf_fns.breakdown_txt import breakdown_text_to_satisfy_token_limit
 from crazy_functions.rag_fns.rag_file_support import extract_text
 from request_llms.bridge_all import model_info
 from shared_utils.fastapi_server import validate_path_safety
@@ -506,7 +506,10 @@ class BatchDocumentSummarizer:
         import os
 
         from crazy_functions.doc_fns.batch_file_query_doc import (
-            HtmlFormatter, MarkdownFormatter, WordFormatter)
+            HtmlFormatter,
+            MarkdownFormatter,
+            WordFormatter,
+        )
         from toolbox import promote_file_to_downloadzone, write_history_to_file
 
         timestamp = time.strftime("%Y%m%d_%H%M%S")

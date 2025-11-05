@@ -1,8 +1,12 @@
-from crazy_functions.crazy_utils import \
-    request_gpt_model_in_new_thread_with_ui_alive
+from crazy_functions.crazy_utils import request_gpt_model_in_new_thread_with_ui_alive
 from loguru import logger
-from toolbox import (CatchException, promote_file_to_downloadzone,
-                     report_exception, update_ui, write_history_to_file)
+from toolbox import (
+    CatchException,
+    promote_file_to_downloadzone,
+    report_exception,
+    update_ui,
+    write_history_to_file,
+)
 
 
 def Program_Comment_Gen(

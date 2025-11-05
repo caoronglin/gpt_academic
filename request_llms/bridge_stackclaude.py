@@ -7,8 +7,7 @@ from multiprocessing import Pipe, Process
 from loguru import logger as logging
 from toolbox import get_conf, trimmed_format_exc, update_ui
 
-from .bridge_newbingfree import (preprocess_newbing_out,
-                                 preprocess_newbing_out_simple)
+from .bridge_newbingfree import preprocess_newbing_out, preprocess_newbing_out_simple
 
 load_message = "正在加载Claude组件，请稍候..."
 

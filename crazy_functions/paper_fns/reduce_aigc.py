@@ -6,24 +6,35 @@ import time
 from dataclasses import dataclass
 from typing import Dict, Generator, List, Tuple
 
-from crazy_functions.crazy_utils import \
-    request_gpt_model_multi_threads_with_very_awesome_ui_and_high_efficiency
+from crazy_functions.crazy_utils import (
+    request_gpt_model_multi_threads_with_very_awesome_ui_and_high_efficiency,
+)
+
 # 新增：导入结构化论文提取器
 from crazy_functions.doc_fns.read_fns.unstructured_all.paper_structure_extractor import (
-    ExtractorConfig, PaperStructureExtractor, StructuredPaper)
+    ExtractorConfig,
+    PaperStructureExtractor,
+    StructuredPaper,
+)
+
 # 导入格式化器
-from crazy_functions.paper_fns.file2file_doc import (HtmlFormatter,
-                                                     MarkdownFormatter,
-                                                     TxtFormatter,
-                                                     WordFormatter)
-from crazy_functions.pdf_fns.breakdown_txt import \
-    breakdown_text_to_satisfy_token_limit
-from crazy_functions.rag_fns.rag_file_support import (convert_to_markdown,
-                                                      extract_text)
+from crazy_functions.paper_fns.file2file_doc import (
+    HtmlFormatter,
+    MarkdownFormatter,
+    TxtFormatter,
+    WordFormatter,
+)
+from crazy_functions.pdf_fns.breakdown_txt import breakdown_text_to_satisfy_token_limit
+from crazy_functions.rag_fns.rag_file_support import convert_to_markdown, extract_text
 from request_llms.bridge_all import model_info
 from shared_utils.fastapi_server import validate_path_safety
-from toolbox import (CatchException, promote_file_to_downloadzone,
-                     report_exception, update_ui, write_history_to_file)
+from toolbox import (
+    CatchException,
+    promote_file_to_downloadzone,
+    report_exception,
+    update_ui,
+    write_history_to_file,
+)
 
 
 @dataclass

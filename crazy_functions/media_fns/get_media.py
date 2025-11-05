@@ -1,10 +1,13 @@
 import random
 
-from shared_utils.docker_as_service_api import (DockerServiceApiComModel,
-                                                stream_daas)
-from toolbox import (generate_file_link, get_conf,
-                     promote_file_to_downloadzone, update_ui,
-                     update_ui_latest_msg)
+from shared_utils.docker_as_service_api import DockerServiceApiComModel, stream_daas
+from toolbox import (
+    generate_file_link,
+    get_conf,
+    promote_file_to_downloadzone,
+    update_ui,
+    update_ui_latest_msg,
+)
 
 
 def download_video(video_id, only_audio, user_name, chatbot, history):
