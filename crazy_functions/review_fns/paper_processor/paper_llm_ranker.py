@@ -2,7 +2,8 @@ import random
 from typing import Dict, List
 
 from crazy_functions.review_fns.data_sources.base_source import PaperMetadata
-from crazy_functions.review_fns.data_sources.journal_metrics import JournalMetrics
+from crazy_functions.review_fns.data_sources.journal_metrics import \
+    JournalMetrics
 from crazy_functions.review_fns.query_analyzer import SearchCriteria
 from request_llms.embed_models.bge_llm import BGELLMRanker
 

@@ -1,11 +1,7 @@
-from crazy_functions.crazy_utils import request_gpt_model_in_new_thread_with_ui_alive
-from toolbox import (
-    CatchException,
-    promote_file_to_downloadzone,
-    report_exception,
-    update_ui,
-    write_history_to_file,
-)
+from crazy_functions.crazy_utils import \
+    request_gpt_model_in_new_thread_with_ui_alive
+from toolbox import (CatchException, promote_file_to_downloadzone,
+                     report_exception, update_ui, write_history_to_file)
 
 fast_debug = False
 
@@ -47,9 +43,8 @@ def 解析docx(
                 raise RuntimeError("请先将.doc文档转换为.docx文档。")
 
         # private_upload里面的文件名在解压zip后容易出现乱码（rar和7z格式正常），故可以只分析文章内容，不输入文件名
-        from crazy_functions.pdf_fns.breakdown_txt import (
-            breakdown_text_to_satisfy_token_limit,
-        )
+        from crazy_functions.pdf_fns.breakdown_txt import \
+            breakdown_text_to_satisfy_token_limit
         from request_llms.bridge_all import model_info
 
         max_token = model_info[llm_kwargs["llm_model"]]["max_token"]

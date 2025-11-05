@@ -5,8 +5,10 @@
 import os
 import shutil
 
-from crazy_functions.crazy_utils import request_gpt_model_in_new_thread_with_ui_alive
-from toolbox import CatchException, default_user_name, get_conf, get_user, update_ui
+from crazy_functions.crazy_utils import \
+    request_gpt_model_in_new_thread_with_ui_alive
+from toolbox import (CatchException, default_user_name, get_conf, get_user,
+                     update_ui)
 
 
 @CatchException

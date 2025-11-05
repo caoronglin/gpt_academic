@@ -1,10 +1,5 @@
-from toolbox import (
-    CatchException,
-    promote_file_to_downloadzone,
-    report_exception,
-    update_ui,
-    write_history_to_file,
-)
+from toolbox import (CatchException, promote_file_to_downloadzone,
+                     report_exception, update_ui, write_history_to_file)
 
 fast_debug = True
 
@@ -37,9 +32,8 @@ class PaperFileGroup:
                 self.sp_file_index.append(index)
                 self.sp_file_tag.append(self.file_paths[index])
             else:
-                from crazy_functions.pdf_fns.breakdown_txt import (
-                    breakdown_text_to_satisfy_token_limit,
-                )
+                from crazy_functions.pdf_fns.breakdown_txt import \
+                    breakdown_text_to_satisfy_token_limit
 
                 segments = breakdown_text_to_satisfy_token_limit(
                     file_content, max_token_limit
@@ -82,9 +76,8 @@ def ipynb解释(
     history,
     system_prompt,
 ):
-    from crazy_functions.crazy_utils import (
-        request_gpt_model_multi_threads_with_very_awesome_ui_and_high_efficiency,
-    )
+    from crazy_functions.crazy_utils import \
+        request_gpt_model_multi_threads_with_very_awesome_ui_and_high_efficiency
 
     if ("advanced_arg" in plugin_kwargs) and (plugin_kwargs["advanced_arg"] == ""):
         plugin_kwargs.pop("advanced_arg")

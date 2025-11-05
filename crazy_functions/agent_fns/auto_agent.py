@@ -1,16 +1,8 @@
 from crazy_functions.agent_fns.general import AutoGenGeneral
 from crazy_functions.agent_fns.pipe import PipeCom, PluginMultiprocessManager
-from toolbox import (
-    CatchException,
-    ProxyNetworkActivate,
-    Singleton,
-    gen_time_str,
-    get_log_folder,
-    report_exception,
-    trimmed_format_exc,
-    update_ui,
-    update_ui_latest_msg,
-)
+from toolbox import (CatchException, ProxyNetworkActivate, Singleton,
+                     gen_time_str, get_log_folder, report_exception,
+                     trimmed_format_exc, update_ui, update_ui_latest_msg)
 
 
 class AutoGenMath(AutoGenGeneral):

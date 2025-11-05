@@ -1,10 +1,8 @@
 import os
 import re
 
-from crazy_functions.crazy_utils import (
-    get_files_from_everything,
-    read_and_clean_pdf_text,
-)
+from crazy_functions.crazy_utils import (get_files_from_everything,
+                                         read_and_clean_pdf_text)
 
 
 def extract_text_from_files(txt, chatbot, history):

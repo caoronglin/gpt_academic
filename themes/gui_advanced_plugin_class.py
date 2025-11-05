@@ -2,15 +2,8 @@ import json
 
 import gradio as gr
 
-from toolbox import (
-    ArgsGeneralWrapper,
-    DummyWith,
-    find_free_port,
-    format_io,
-    get_conf,
-    on_file_uploaded,
-    on_report_generated,
-)
+from toolbox import (ArgsGeneralWrapper, DummyWith, find_free_port, format_io,
+                     get_conf, on_file_uploaded, on_report_generated)
 
 
 def define_gui_advanced_plugin_class(plugins):
