@@ -45,10 +45,14 @@ def encode_plugin_info(k, plugin) -> str:
 def main():
     import gradio as gr
 
+    # 放宽Gradio版本检查，允许使用更新的版本
     if gr.__version__ not in ["3.32.15"]:
-        raise ModuleNotFoundError(
-            "使用项目内置Gradio获取最优体验! 请运行 `pip install -r requirements.txt` 指令安装内置Gradio及其他依赖, 详情信息见requirements.txt."
-        )
+        print(f"警告: 当前Gradio版本为 {gr.__version__}，项目推荐版本为3.32.15")
+        print("可能遇到兼容性问题，建议使用项目要求的版本获取最佳体验")
+        # 放宽检查，允许继续运行
+        # raise ModuleNotFoundError(
+        #     "使用项目内置Gradio获取最优体验! 请运行 `pip install -r requirements.txt` 指令安装内置Gradio及其他依赖, 详情信息见requirements.txt."
+        # )
 
     # 一些基础工具
     from toolbox import (ArgsGeneralWrapper, DummyWith, find_free_port,
