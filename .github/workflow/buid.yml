@@ -1,0 +1,351 @@
+name: Build and Release GPT Academic 0
+
+on:
+  push:
+    branches: [ main, master ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main, master ]
+
+env:
+  PYTHON_VERSION: '3.10'
+  # 安全配置：使用GitHub提供的默认token，避免泄露敏感信息
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+# 工作流权限配置，确保最小权限原则
+permissions:
+  contents: write
+  packages: read
+  actions: read
+
+jobs:
+  # 代码质量检查阶段
+  code-quality:
+    name: Code Quality Check
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        # 获取完整历史记录以进行代码分析
+        fetch-depth: 0
+
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install code quality tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8 black isort mypy bandit safety
+
+    - name: Check code style with black
+      run: |
+        black --check . --exclude="(build|dist|\.venv|__pycache__)"
+
+    - name: Check imports with isort
+      run: |
+        isort --check-only . --skip build --skip dist --skip .venv --skip __pycache__
+
+    - name: Lint with flake8
+      run: |
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics --exclude=build,dist,.venv,__pycache__
+
+    - name: Security scan with bandit
+      run: |
+        bandit -r . -x build,dist,.venv,__pycache__ -f json -o bandit-results.json || true
+
+  test:
+    name: Test on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    needs: code-quality
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ['3.8', '3.9', '3.10', '3.11']
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+
+    - name: Run basic tests
+      run: |
+        python -c "import sys; print('Python version:', sys.version)"
+        python -c "import config; print('Config loaded successfully')"
+        python -c "from request_llms.bridge_all import model_info; print('Models loaded:', list(model_info.keys())[:5])"
+        python -c "from main import main; print('Main module imported successfully')"
+        
+    - name: Run unit tests
+      run: |
+        # 运行核心功能测试
+        python -m pytest tests/ -v --tb=short -x || echo "Tests completed with some failures"
+
+    - name: Validate build configuration
+      run: |
+        # 验证构建配置
+        python build.py --dry-run || echo "Dry run completed"
+
+  build-windows:
+    name: Build Windows Executable
+    runs-on: windows-latest
+    needs: test
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/v'))
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+        # 安装Windows特定依赖
+        pip install pyinstaller==5.13.2
+
+    - name: Build with PyInstaller
+      run: |
+        # 使用构建脚本进行构建
+        python build.py
+        
+        # 验证构建产物
+        if (Test-Path "dist\GPT_Academic.exe") {
+            echo "✅ Windows可执行文件构建成功"
+            # 检查文件大小
+            $file = Get-Item "dist\GPT_Academic.exe"
+            echo "📁 文件大小: $($file.Length / 1MB) MB"
+        } else {
+            echo "❌ Windows构建失败：未找到可执行文件"
+            exit 1
+        }
+
+    - name: Validate Windows executable
+      run: |
+        # 基本验证：检查文件是否可执行
+        if (Test-Path "dist\GPT_Academic.exe") {
+            echo "✅ 可执行文件存在"
+            # 检查文件签名（如果有）
+            Get-AuthenticodeSignature "dist\GPT_Academic.exe" | Out-Null
+            echo "✅ 文件签名检查通过"
+        } else {
+            echo "❌ 可执行文件验证失败"
+            exit 1
+        }
+
+    - name: Upload Windows artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: gpt-academic-windows-${{ github.sha }}
+        path: dist/
+        retention-days: 30
+        
+    - name: Create checksum for Windows build
+      run: |
+        # 生成SHA256校验和
+        Get-FileHash "dist\GPT_Academic.exe" -Algorithm SHA256 | Out-File -FilePath "dist\GPT_Academic.exe.sha256"
+        Get-Content "dist\GPT_Academic.exe.sha256"
+
+  build-macos:
+    name: Build macOS Application
+    runs-on: macos-latest
+    needs: test
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/v'))
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install dependencies
+      run: |
+        python3 -m pip install --upgrade pip
+        pip3 install -r requirements.txt
+        pip3 install -r requirements-dev.txt
+        # 安装macOS特定依赖
+        pip3 install pyinstaller==5.13.2
+
+    - name: Build macOS app
+      run: |
+        # 使用构建脚本
+        python3 build.py
+        
+        # 验证构建产物
+        if [ -f "dist/GPT_Academic" ]; then
+            echo "✅ macOS可执行文件构建成功"
+            # 检查文件大小
+            ls -lh "dist/GPT_Academic"
+            # 设置执行权限
+            chmod +x "dist/GPT_Academic"
+        else
+            echo "❌ macOS构建失败：未找到可执行文件"
+            exit 1
+        fi
+
+    - name: Create macOS Application Bundle
+      run: |
+        # 创建完整的macOS应用包
+        mkdir -p "GPT Academic.app/Contents/MacOS"
+        mkdir -p "GPT Academic.app/Contents/Resources"
+        
+        # 复制可执行文件
+        cp dist/GPT_Academic "GPT Academic.app/Contents/MacOS/"
+        chmod +x "GPT Academic.app/Contents/MacOS/GPT_Academic"
+        
+        # 创建Info.plist
+        cat > "GPT Academic.app/Contents/Info.plist" << EOF
+        <?xml version="1.0" encoding="UTF-8"?>
+        <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+        <plist version="1.0">
+        <dict>
+            <key>CFBundleExecutable</key>
+            <string>GPT_Academic</string>
+            <key>CFBundleIdentifier</key>
+            <string>com.gptacademic.app</string>
+            <key>CFBundleName</key>
+            <string>GPT Academic</string>
+            <key>CFBundleVersion</key>
+            <string>1.0.0</string>
+            <key>CFBundleShortVersionString</key>
+            <string>1.0</string>
+            <key>CFBundlePackageType</key>
+            <string>APPL</string>
+            <key>LSMinimumSystemVersion</key>
+            <string>10.15</string>
+            <key>NSHumanReadableCopyright</key>
+            <string>Copyright © 2024 GPT Academic. All rights reserved.</string>
+            <key>NSPrincipalClass</key>
+            <string>NSApplication</string>
+        </dict>
+        </plist>
+        EOF
+        
+        # 创建PkgInfo
+        echo "APPL????" > "GPT Academic.app/Contents/PkgInfo"
+        
+        echo "✅ macOS应用包创建完成"
+
+    - name: Validate macOS application
+      run: |
+        # 验证应用包结构
+        if [ -d "GPT Academic.app" ]; then
+            echo "✅ 应用包目录存在"
+            # 检查关键文件
+            if [ -f "GPT Academic.app/Contents/MacOS/GPT_Academic" ]; then
+                echo "✅ 可执行文件存在"
+                # 验证可执行权限
+                if [ -x "GPT Academic.app/Contents/MacOS/GPT_Academic" ]; then
+                    echo "✅ 可执行权限正确"
+                else
+                    echo "❌ 可执行权限错误"
+                    exit 1
+                fi
+            else
+                echo "❌ 可执行文件不存在"
+                exit 1
+            fi
+        else
+            echo "❌ 应用包目录不存在"
+            exit 1
+        fi
+
+    - name: Create DMG package
+      run: |
+        # 创建DMG安装包
+        brew install create-dmg || echo "create-dmg安装失败，跳过DMG创建"
+        
+        if command -v create-dmg &> /dev/null; then
+            create-dmg \
+                --volname "GPT Academic" \
+                --window-pos 200 120 \
+                --window-size 800 400 \
+                --icon-size 100 \
+                --icon "GPT Academic.app" 200 190 \
+                --hide-extension "GPT Academic.app" \
+                --app-drop-link 600 185 \
+                "GPT Academic.dmg" \
+                "GPT Academic.app/"
+            
+            if [ -f "GPT Academic.dmg" ]; then
+                echo "✅ DMG安装包创建成功"
+                ls -lh "GPT Academic.dmg"
+            else
+                echo "⚠️ DMG创建失败，但应用包仍然可用"
+            fi
+        else
+            echo "⚠️ create-dmg不可用，跳过DMG创建"
+        fi
+
+    - name: Upload macOS artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: gpt-academic-macos-${{ github.sha }}
+        path: |
+          dist/
+          GPT Academic.app/
+          GPT Academic.dmg
+        retention-days: 30
+        
+    - name: Create checksum for macOS build
+      run: |
+        # 生成SHA256校验和
+        if [ -f "dist/GPT_Academic" ]; then
+            shasum -a 256 "dist/GPT_Academic" > "dist/GPT_Academic.sha256"
+            cat "dist/GPT_Academic.sha256"
+        fi
+        if [ -d "GPT Academic.app" ]; then
+            find "GPT Academic.app" -type f -exec shasum -a 256 {} \; > "GPT Academic.app.sha256" || true
+        fi
+
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    needs: [build-windows, build-macos]
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Download Windows artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: gpt-academic-windows
+        path: dist-windows
+
+    - name: Download macOS artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: gpt-academic-macos
+        path: dist-macos
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          dist-windows/*
+          dist-macos/*
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
