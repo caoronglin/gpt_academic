@@ -17,8 +17,14 @@ import traceback
 import requests
 from loguru import logger
 
-from toolbox import (encode_image, every_image_file_in_path, get_conf,
-                     log_chat, trimmed_format_exc, update_ui)
+from toolbox import (
+    encode_image,
+    every_image_file_in_path,
+    get_conf,
+    log_chat,
+    trimmed_format_exc,
+    update_ui,
+)
 
 picture_system_prompt = "\n当回复图像时,必须说明正在回复哪张图像。所有图像仅在最后一个问题中提供,即使它们在历史记录中被提及。请使用'这是第X张图像:'的格式来指明您正在描述的是哪张图像。"
 Claude_3_Models = [
@@ -30,8 +36,7 @@ Claude_3_Models = [
 
 # config_private.py放自己的秘密如API和代理网址
 # 读取时首先看是否存在私密的config_private配置文件（不受git管控），如果有，则覆盖原config文件
-from toolbox import (ProxyNetworkActivate, get_conf, trimmed_format_exc,
-                     update_ui)
+from toolbox import ProxyNetworkActivate, get_conf, trimmed_format_exc, update_ui
 
 proxies, TIMEOUT_SECONDS, MAX_RETRY, ANTHROPIC_API_KEY = get_conf(
     "proxies", "TIMEOUT_SECONDS", "MAX_RETRY", "ANTHROPIC_API_KEY"

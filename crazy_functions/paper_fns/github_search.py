@@ -8,29 +8,34 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Tuple
 
-from crazy_functions.crazy_utils import \
-    request_gpt_model_in_new_thread_with_ui_alive
-from crazy_functions.paper_fns.auto_git.handlers.code_handler import \
-    CodeSearchHandler
-from crazy_functions.paper_fns.auto_git.handlers.repo_handler import \
-    RepositoryHandler
-from crazy_functions.paper_fns.auto_git.handlers.topic_handler import \
-    TopicHandler
-from crazy_functions.paper_fns.auto_git.handlers.user_handler import \
-    UserSearchHandler
-from crazy_functions.paper_fns.auto_git.query_analyzer import (QueryAnalyzer,
-                                                               SearchCriteria)
-from crazy_functions.paper_fns.auto_git.sources.github_source import \
-    GitHubSource
+from crazy_functions.crazy_utils import request_gpt_model_in_new_thread_with_ui_alive
+from crazy_functions.paper_fns.auto_git.handlers.code_handler import CodeSearchHandler
+from crazy_functions.paper_fns.auto_git.handlers.repo_handler import RepositoryHandler
+from crazy_functions.paper_fns.auto_git.handlers.topic_handler import TopicHandler
+from crazy_functions.paper_fns.auto_git.handlers.user_handler import UserSearchHandler
+from crazy_functions.paper_fns.auto_git.query_analyzer import (
+    QueryAnalyzer,
+    SearchCriteria,
+)
+from crazy_functions.paper_fns.auto_git.sources.github_source import GitHubSource
+
 # 导入格式化器
-from crazy_functions.paper_fns.file2file_doc import (HtmlFormatter,
-                                                     MarkdownFormatter,
-                                                     TxtFormatter,
-                                                     WordFormatter)
+from crazy_functions.paper_fns.file2file_doc import (
+    HtmlFormatter,
+    MarkdownFormatter,
+    TxtFormatter,
+    WordFormatter,
+)
 from crazy_functions.paper_fns.file2file_doc.word2pdf import WordToPdfConverter
-from toolbox import (CatchException, get_log_folder, get_user,
-                     promote_file_to_downloadzone, report_exception, update_ui,
-                     write_history_to_file)
+from toolbox import (
+    CatchException,
+    get_log_folder,
+    get_user,
+    promote_file_to_downloadzone,
+    report_exception,
+    update_ui,
+    write_history_to_file,
+)
 
 
 @CatchException

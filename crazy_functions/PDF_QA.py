@@ -1,7 +1,9 @@
 from loguru import logger
 
 from crazy_functions.crazy_utils import (
-    read_and_clean_pdf_text, request_gpt_model_in_new_thread_with_ui_alive)
+    read_and_clean_pdf_text,
+    request_gpt_model_in_new_thread_with_ui_alive,
+)
 from toolbox import CatchException, report_exception, update_ui
 
 
@@ -23,8 +25,9 @@ def 解析PDF(file_name, llm_kwargs, plugin_kwargs, chatbot, history, system_pro
 
     TOKEN_LIMIT_PER_FRAGMENT = 2500
 
-    from crazy_functions.pdf_fns.breakdown_txt import \
-        breakdown_text_to_satisfy_token_limit
+    from crazy_functions.pdf_fns.breakdown_txt import (
+        breakdown_text_to_satisfy_token_limit,
+    )
 
     paper_fragments = breakdown_text_to_satisfy_token_limit(
         txt=file_content,

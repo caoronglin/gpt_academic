@@ -4,8 +4,7 @@ import threading
 from loguru import logger
 
 from shared_utils.char_visual_effect import scrolling_visual_effect
-from toolbox import (Singleton, get_conf, get_max_token, trimmed_format_exc,
-                     update_ui)
+from toolbox import Singleton, get_conf, get_max_token, trimmed_format_exc, update_ui
 
 
 def input_clipping(inputs, history, max_token_limit, return_clip_flags=False):

@@ -86,9 +86,11 @@ class GetInternlmHandle(LocalLLMHandle):
         import torch
         import torch.nn as nn
         from loguru import logger as logging
-        from transformers.generation.utils import (GenerationConfig,
-                                                   LogitsProcessorList,
-                                                   StoppingCriteriaList)
+        from transformers.generation.utils import (
+            GenerationConfig,
+            LogitsProcessorList,
+            StoppingCriteriaList,
+        )
 
         # 🏃‍♂️🏃‍♂️🏃‍♂️ 子进程执行
         def adaptor():

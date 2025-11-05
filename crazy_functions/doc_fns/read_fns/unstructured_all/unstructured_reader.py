@@ -6,9 +6,18 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Union
 
-from unstructured.documents.elements import (Address, Footer, Header, Image,
-                                             ListItem, NarrativeText,
-                                             PageBreak, Table, Text, Title)
+from unstructured.documents.elements import (
+    Address,
+    Footer,
+    Header,
+    Image,
+    ListItem,
+    NarrativeText,
+    PageBreak,
+    Table,
+    Text,
+    Title,
+)
 from unstructured.partition.auto import partition
 
 
@@ -24,17 +33,20 @@ class TextExtractorConfig:
         paragraph_separator: 段落之间的分隔符
         text_cleanup: 文本清理选项字典
     """
+
     extract_headers_footers: bool = False
     extract_tables: bool = True
     extract_lists: bool = True
     extract_titles: bool = True
-    paragraph_separator: str = '\n\n'
-    text_cleanup: Dict[str, bool] = field(default_factory=lambda: {
-        'remove_extra_spaces': True,
-        'normalize_whitespace': True,
-        'remove_special_chars': False,
-        'lowercase': False
-    })
+    paragraph_separator: str = "\n\n"
+    text_cleanup: Dict[str, bool] = field(
+        default_factory=lambda: {
+            "remove_extra_spaces": True,
+            "normalize_whitespace": True,
+            "remove_special_chars": False,
+            "lowercase": False,
+        }
+    )
 
 
 class UnstructuredTextExtractor:
@@ -45,15 +57,26 @@ class UnstructuredTextExtractor:
 
     SUPPORTED_EXTENSIONS: Set[str] = {
         # 文档格式
-        '.pdf', '.docx', '.doc', '.txt',
+        ".pdf",
+        ".docx",
+        ".doc",
+        ".txt",
         # 演示文稿
-        '.ppt', '.pptx',
+        ".ppt",
+        ".pptx",
         # 电子表格
-        '.xlsx', '.xls', '.csv',
+        ".xlsx",
+        ".xls",
+        ".csv",
         # 图片
-        '.png', '.jpg', '.jpeg', '.tiff',
+        ".png",
+        ".jpg",
+        ".jpeg",
+        ".tiff",
         # 邮件
-        '.eml', '.msg', '.p7s',
+        ".eml",
+        ".msg",
+        ".p7s",
         # Markdown
         ".md",
         # Org Mode
@@ -67,9 +90,11 @@ class UnstructuredTextExtractor:
         # TSV
         ".tsv",
         # EPUB
-        '.epub',
+        ".epub",
         # 其他格式
-        '.html', '.xml',  '.json',
+        ".html",
+        ".xml",
+        ".json",
     }
 
     def __init__(self, config: Optional[TextExtractorConfig] = None):
@@ -85,16 +110,18 @@ class UnstructuredTextExtractor:
         """配置日志记录器"""
         logging.basicConfig(
             level=logging.INFO,
-            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         )
         self.logger = logging.getLogger(__name__)
 
         # 添加文件处理器
-        fh = logging.FileHandler('text_extractor.log')
+        fh = logging.FileHandler("text_extractor.log")
         fh.setLevel(logging.ERROR)
         self.logger.addHandler(fh)
 
-    def _validate_file(self, file_path: Union[str, Path], max_size_mb: int = 100) -> Path:
+    def _validate_file(
+        self, file_path: Union[str, Path], max_size_mb: int = 100
+    ) -> Path:
         """验证文件
 
         Args:
@@ -142,13 +169,13 @@ class UnstructuredTextExtractor:
         Returns:
             str: 清理后的文本
         """
-        if self.config.text_cleanup['remove_extra_spaces']:
-            text = ' '.join(text.split())
+        if self.config.text_cleanup["remove_extra_spaces"]:
+            text = " ".join(text.split())
 
-        if self.config.text_cleanup['normalize_whitespace']:
-            text = text.replace('\t', ' ').replace('\r', '\n')
+        if self.config.text_cleanup["normalize_whitespace"]:
+            text = text.replace("\t", " ").replace("\r", "\n")
 
-        if self.config.text_cleanup['lowercase']:
+        if self.config.text_cleanup["lowercase"]:
             text = text.lower()
 
         return text.strip()
@@ -174,7 +201,10 @@ class UnstructuredTextExtractor:
         if isinstance(element, Table) and self.config.extract_tables:
             return True
 
-        if isinstance(element, (Header, Footer)) and self.config.extract_headers_footers:
+        if (
+            isinstance(element, (Header, Footer))
+            and self.config.extract_headers_footers
+        ):
             return True
 
         return False
@@ -184,11 +214,7 @@ class UnstructuredTextExtractor:
         """获取支持的文件格式列表"""
         return sorted(UnstructuredTextExtractor.SUPPORTED_EXTENSIONS)
 
-    def extract_text(
-            self,
-            file_path: Union[str, Path],
-            strategy: str = "fast"
-    ) -> str:
+    def extract_text(self, file_path: Union[str, Path], strategy: str = "fast") -> str:
         """提取文本
 
         Args:
@@ -221,7 +247,11 @@ class UnstructuredTextExtractor:
                     cleaned_text = self._cleanup_text(text)
                     if cleaned_text:
                         if isinstance(element, (Header, Footer)):
-                            prefix = "[Header] " if isinstance(element, Header) else "[Footer] "
+                            prefix = (
+                                "[Header] "
+                                if isinstance(element, Header)
+                                else "[Footer] "
+                            )
                             text_parts.append(f"{prefix}{cleaned_text}")
                         else:
                             text_parts.append(cleaned_text)
@@ -233,7 +263,6 @@ class UnstructuredTextExtractor:
             raise
 
 
-
 def main():
     """主函数：演示用法"""
     # 配置
@@ -243,11 +272,11 @@ def main():
         extract_lists=True,
         extract_titles=True,
         text_cleanup={
-            'remove_extra_spaces': True,
-            'normalize_whitespace': True,
-            'remove_special_chars': False,
-            'lowercase': False
-        }
+            "remove_extra_spaces": True,
+            "normalize_whitespace": True,
+            "remove_special_chars": False,
+            "lowercase": False,
+        },
     )
 
     # 创建提取器
@@ -256,7 +285,7 @@ def main():
     # 使用示例
     try:
         # 替换为实际的文件路径
-        sample_file = './crazy_functions/doc_fns/read_fns/paper/2501.12599v1.pdf'
+        sample_file = "./crazy_functions/doc_fns/read_fns/paper/2501.12599v1.pdf"
         if Path(sample_file).exists() or True:
             text = extractor.extract_text(sample_file)
             print("提取的文本:")

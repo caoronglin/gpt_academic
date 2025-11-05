@@ -2,7 +2,9 @@ import copy
 import json
 
 from crazy_functions.crazy_utils import (
-    input_clipping, request_gpt_model_in_new_thread_with_ui_alive)
+    input_clipping,
+    request_gpt_model_in_new_thread_with_ui_alive,
+)
 from toolbox import CatchException, gen_time_str, update_ui
 
 

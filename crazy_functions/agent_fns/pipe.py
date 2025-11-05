@@ -4,8 +4,13 @@ import time
 from loguru import logger
 
 from crazy_functions.agent_fns.watchdog import WatchDog
-from toolbox import (gen_time_str, get_conf, get_log_folder,
-                     promote_file_to_downloadzone, update_ui)
+from toolbox import (
+    gen_time_str,
+    get_conf,
+    get_log_folder,
+    promote_file_to_downloadzone,
+    update_ui,
+)
 
 
 class PipeCom:

@@ -15,30 +15,42 @@ from typing import List
 import gradio
 from loguru import logger
 
-from shared_utils.advanced_markdown_format import (format_io,
-                                                   markdown_convertion)
-from shared_utils.config_loader import (get_conf,
-                                        read_single_conf_with_lru_cache,
-                                        set_conf, set_multi_conf)
-from shared_utils.connect_void_terminal import (get_chat_default_kwargs,
-                                                get_chat_handle,
-                                                get_plugin_default_kwargs,
-                                                get_plugin_handle)
-from shared_utils.context_clip_policy import (auto_context_clip_each_message,
-                                              auto_context_clip_search_optimal,
-                                              clip_history)
-from shared_utils.handle_upload import (extract_archive,
-                                        file_manifest_filter_type,
-                                        html_local_file, html_local_img)
-from shared_utils.key_pattern_manager import (is_any_api_key, select_api_key,
-                                              what_keys)
-from shared_utils.map_names import (map_friendly_names_to_model,
-                                    map_model_to_friendly_names,
-                                    read_one_api_model_name)
-from shared_utils.text_mask import (apply_gpt_academic_string_mask,
-                                    apply_gpt_academic_string_mask_langbased,
-                                    build_gpt_academic_masked_string,
-                                    build_gpt_academic_masked_string_langbased)
+from shared_utils.advanced_markdown_format import format_io, markdown_convertion
+from shared_utils.config_loader import (
+    get_conf,
+    read_single_conf_with_lru_cache,
+    set_conf,
+    set_multi_conf,
+)
+from shared_utils.connect_void_terminal import (
+    get_chat_default_kwargs,
+    get_chat_handle,
+    get_plugin_default_kwargs,
+    get_plugin_handle,
+)
+from shared_utils.context_clip_policy import (
+    auto_context_clip_each_message,
+    auto_context_clip_search_optimal,
+    clip_history,
+)
+from shared_utils.handle_upload import (
+    extract_archive,
+    file_manifest_filter_type,
+    html_local_file,
+    html_local_img,
+)
+from shared_utils.key_pattern_manager import is_any_api_key, select_api_key, what_keys
+from shared_utils.map_names import (
+    map_friendly_names_to_model,
+    map_model_to_friendly_names,
+    read_one_api_model_name,
+)
+from shared_utils.text_mask import (
+    apply_gpt_academic_string_mask,
+    apply_gpt_academic_string_mask_langbased,
+    build_gpt_academic_masked_string,
+    build_gpt_academic_masked_string_langbased,
+)
 
 pj = os.path.join
 default_user_name = "default_user"

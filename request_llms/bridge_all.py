@@ -16,8 +16,12 @@ from functools import lru_cache
 import tiktoken
 from loguru import logger
 
-from toolbox import (apply_gpt_academic_string_mask, get_conf,
-                     read_one_api_model_name, trimmed_format_exc)
+from toolbox import (
+    apply_gpt_academic_string_mask,
+    get_conf,
+    read_one_api_model_name,
+    trimmed_format_exc,
+)
 
 from .bridge_chatglm import predict as chatglm_ui
 from .bridge_chatglm import predict_no_ui_long_connection as chatglm_noui
@@ -28,13 +32,11 @@ from .bridge_chatglm4 import predict_no_ui_long_connection as chatglm4_noui
 from .bridge_chatgpt import predict as chatgpt_ui
 from .bridge_chatgpt import predict_no_ui_long_connection as chatgpt_noui
 from .bridge_chatgpt_vision import predict as chatgpt_vision_ui
-from .bridge_chatgpt_vision import \
-    predict_no_ui_long_connection as chatgpt_vision_noui
+from .bridge_chatgpt_vision import predict_no_ui_long_connection as chatgpt_vision_noui
 from .bridge_cohere import predict as cohere_ui
 from .bridge_cohere import predict_no_ui_long_connection as cohere_noui
 from .bridge_deepseek_nwafu import predict as deepseek_nwafu_ui
-from .bridge_deepseek_nwafu import \
-    predict_no_ui_long_connection as deepseek_nwafu_noui
+from .bridge_deepseek_nwafu import predict_no_ui_long_connection as deepseek_nwafu_noui
 from .bridge_google_gemini import predict as genai_ui
 from .bridge_google_gemini import predict_no_ui_long_connection as genai_noui
 from .bridge_qianfan import predict as qianfan_ui
@@ -587,8 +589,7 @@ model_info = {
 }
 # -=-=-=-=-=-=- 月之暗面 -=-=-=-=-=-=-
 from request_llms.bridge_moonshot import predict as moonshot_ui
-from request_llms.bridge_moonshot import \
-    predict_no_ui_long_connection as moonshot_no_ui
+from request_llms.bridge_moonshot import predict_no_ui_long_connection as moonshot_no_ui
 
 model_info.update(
     {
@@ -740,8 +741,7 @@ if any(item in claude_models for item in AVAIL_LLM_MODELS):
     )
 if "jittorllms_rwkv" in AVAIL_LLM_MODELS:
     from .bridge_jittorllms_rwkv import predict as rwkv_ui
-    from .bridge_jittorllms_rwkv import \
-        predict_no_ui_long_connection as rwkv_noui
+    from .bridge_jittorllms_rwkv import predict_no_ui_long_connection as rwkv_noui
 
     model_info.update(
         {
@@ -757,8 +757,7 @@ if "jittorllms_rwkv" in AVAIL_LLM_MODELS:
     )
 if "jittorllms_llama" in AVAIL_LLM_MODELS:
     from .bridge_jittorllms_llama import predict as llama_ui
-    from .bridge_jittorllms_llama import \
-        predict_no_ui_long_connection as llama_noui
+    from .bridge_jittorllms_llama import predict_no_ui_long_connection as llama_noui
 
     model_info.update(
         {
@@ -774,8 +773,9 @@ if "jittorllms_llama" in AVAIL_LLM_MODELS:
     )
 if "jittorllms_pangualpha" in AVAIL_LLM_MODELS:
     from .bridge_jittorllms_pangualpha import predict as pangualpha_ui
-    from .bridge_jittorllms_pangualpha import \
-        predict_no_ui_long_connection as pangualpha_noui
+    from .bridge_jittorllms_pangualpha import (
+        predict_no_ui_long_connection as pangualpha_noui,
+    )
 
     model_info.update(
         {
@@ -807,8 +807,7 @@ if "moss" in AVAIL_LLM_MODELS:
     )
 if "stack-claude" in AVAIL_LLM_MODELS:
     from .bridge_stackclaude import predict as claude_ui
-    from .bridge_stackclaude import \
-        predict_no_ui_long_connection as claude_noui
+    from .bridge_stackclaude import predict_no_ui_long_connection as claude_noui
 
     model_info.update(
         {
@@ -825,8 +824,9 @@ if "stack-claude" in AVAIL_LLM_MODELS:
 if "newbing" in AVAIL_LLM_MODELS:  # same with newbing-free
     try:
         from .bridge_newbingfree import predict as newbingfree_ui
-        from .bridge_newbingfree import \
-            predict_no_ui_long_connection as newbingfree_noui
+        from .bridge_newbingfree import (
+            predict_no_ui_long_connection as newbingfree_noui,
+        )
 
         model_info.update(
             {
@@ -845,8 +845,7 @@ if "newbing" in AVAIL_LLM_MODELS:  # same with newbing-free
 if "chatglmft" in AVAIL_LLM_MODELS:  # same with newbing-free
     try:
         from .bridge_chatglmft import predict as chatglmft_ui
-        from .bridge_chatglmft import \
-            predict_no_ui_long_connection as chatglmft_noui
+        from .bridge_chatglmft import predict_no_ui_long_connection as chatglmft_noui
 
         model_info.update(
             {
@@ -866,8 +865,7 @@ if "chatglmft" in AVAIL_LLM_MODELS:  # same with newbing-free
 if "internlm" in AVAIL_LLM_MODELS:
     try:
         from .bridge_internlm import predict as internlm_ui
-        from .bridge_internlm import \
-            predict_no_ui_long_connection as internlm_noui
+        from .bridge_internlm import predict_no_ui_long_connection as internlm_noui
 
         model_info.update(
             {
@@ -886,8 +884,9 @@ if "internlm" in AVAIL_LLM_MODELS:
 if "chatglm_onnx" in AVAIL_LLM_MODELS:
     try:
         from .bridge_chatglmonnx import predict as chatglm_onnx_ui
-        from .bridge_chatglmonnx import \
-            predict_no_ui_long_connection as chatglm_onnx_noui
+        from .bridge_chatglmonnx import (
+            predict_no_ui_long_connection as chatglm_onnx_noui,
+        )
 
         model_info.update(
             {
@@ -907,8 +906,7 @@ if "chatglm_onnx" in AVAIL_LLM_MODELS:
 if "qwen-local" in AVAIL_LLM_MODELS:
     try:
         from .bridge_qwen_local import predict as qwen_local_ui
-        from .bridge_qwen_local import \
-            predict_no_ui_long_connection as qwen_local_noui
+        from .bridge_qwen_local import predict_no_ui_long_connection as qwen_local_noui
 
         model_info.update(
             {
@@ -1286,8 +1284,9 @@ if "zhipuai" in AVAIL_LLM_MODELS:  # zhipuai 是glm-4的别名，向后兼容配
 if "deepseekcoder" in AVAIL_LLM_MODELS:  # deepseekcoder
     try:
         from .bridge_deepseekcoder import predict as deepseekcoder_ui
-        from .bridge_deepseekcoder import \
-            predict_no_ui_long_connection as deepseekcoder_noui
+        from .bridge_deepseekcoder import (
+            predict_no_ui_long_connection as deepseekcoder_noui,
+        )
 
         model_info.update(
             {
@@ -1588,8 +1587,9 @@ if len(AZURE_CFG_ARRAY) > 0:
 # 为了更灵活地接入Openrouter路由，设计了此接口
 for model in [m for m in AVAIL_LLM_MODELS if m.startswith("openrouter-")]:
     from request_llms.bridge_openrouter import predict as openrouter_ui
-    from request_llms.bridge_openrouter import \
-        predict_no_ui_long_connection as openrouter_noui
+    from request_llms.bridge_openrouter import (
+        predict_no_ui_long_connection as openrouter_noui,
+    )
 
     model_info.update(
         {
@@ -1749,9 +1749,12 @@ def predict_no_ui_long_connection(
 import importlib
 
 import core_functional
-from shared_utils.doc_loader_dynamic import (contain_uploaded_files,
-                                             load_uploaded_files,
-                                             load_web_content, start_with_url)
+from shared_utils.doc_loader_dynamic import (
+    contain_uploaded_files,
+    load_uploaded_files,
+    load_web_content,
+    start_with_url,
+)
 
 
 def execute_model_override(llm_kwargs, additional_fn, method):

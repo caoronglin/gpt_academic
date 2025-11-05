@@ -7,14 +7,23 @@ from loguru import logger
 from crazy_functions.agent_fns.python_comment_agent import PythonCodeComment
 from crazy_functions.agent_fns.watchdog import WatchDog
 from crazy_functions.crazy_utils import (
-    input_clipping, request_gpt_model_in_new_thread_with_ui_alive,
-    request_gpt_model_multi_threads_with_very_awesome_ui_and_high_efficiency)
+    input_clipping,
+    request_gpt_model_in_new_thread_with_ui_alive,
+    request_gpt_model_multi_threads_with_very_awesome_ui_and_high_efficiency,
+)
 from crazy_functions.diagram_fns.file_tree import FileNode
 from shared_utils.advanced_markdown_format import markdown_convertion_for_file
 from shared_utils.fastapi_server import validate_path_safety
-from toolbox import (CatchException, generate_file_link, get_conf,
-                     promote_file_to_downloadzone, report_exception, update_ui,
-                     update_ui_latest_msg, zip_result)
+from toolbox import (
+    CatchException,
+    generate_file_link,
+    get_conf,
+    promote_file_to_downloadzone,
+    report_exception,
+    update_ui,
+    update_ui_latest_msg,
+    zip_result,
+)
 
 
 def 注释源代码(

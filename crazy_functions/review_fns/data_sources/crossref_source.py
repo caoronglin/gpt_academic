@@ -4,8 +4,10 @@ from typing import Dict, List, Optional
 
 import aiohttp
 
-from crazy_functions.review_fns.data_sources.base_source import (DataSource,
-                                                                 PaperMetadata)
+from crazy_functions.review_fns.data_sources.base_source import (
+    DataSource,
+    PaperMetadata,
+)
 
 
 class CrossrefSource(DataSource):

@@ -216,8 +216,7 @@ def validate_path():
 
 validate_path()  # validate path so you can run from base directory
 # from shared_utils.advanced_markdown_format import markdown_convertion_for_file
-from shared_utils.advanced_markdown_format import \
-    close_up_code_segment_during_stream
+from shared_utils.advanced_markdown_format import close_up_code_segment_during_stream
 from toolbox import markdown_convertion
 
 # with open("gpt_log/default_user/shared/2024-04-22-01-27-43.zip.extract/translated_markdown.md", "r", encoding="utf-8") as f:

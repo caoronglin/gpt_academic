@@ -5,8 +5,7 @@ from textwrap import dedent
 
 from loguru import logger
 
-from crazy_functions.crazy_utils import \
-    request_gpt_model_in_new_thread_with_ui_alive
+from crazy_functions.crazy_utils import request_gpt_model_in_new_thread_with_ui_alive
 from request_llms.bridge_all import predict_no_ui_long_connection
 from toolbox import CatchException, update_ui
 
@@ -465,8 +464,7 @@ class PythonCodeComment:
 
     def verify_successful(self, original, revised):
         """Determine whether the revised code contains every line that already exists"""
-        from crazy_functions.ast_fns.comment_remove import \
-            remove_python_comments
+        from crazy_functions.ast_fns.comment_remove import remove_python_comments
 
         original = remove_python_comments(original)
         original_lines = original.split("\n")

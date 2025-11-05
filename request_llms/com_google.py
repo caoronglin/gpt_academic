@@ -9,8 +9,13 @@ from typing import Dict, List, Tuple
 
 import requests
 
-from toolbox import (encode_image, get_conf, get_pictures_list,
-                     to_markdown_tabs, update_ui)
+from toolbox import (
+    encode_image,
+    get_conf,
+    get_pictures_list,
+    to_markdown_tabs,
+    update_ui,
+)
 
 proxies, TIMEOUT_SECONDS = get_conf("proxies", "TIMEOUT_SECONDS")
 

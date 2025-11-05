@@ -1,9 +1,17 @@
 from loguru import logger
 
 from crazy_functions.crazy_utils import (
-    get_files_from_everything, request_gpt_model_in_new_thread_with_ui_alive)
-from toolbox import (CatchException, ProxyNetworkActivate, get_log_folder,
-                     get_user, update_ui, update_ui_latest_msg)
+    get_files_from_everything,
+    request_gpt_model_in_new_thread_with_ui_alive,
+)
+from toolbox import (
+    CatchException,
+    ProxyNetworkActivate,
+    get_log_folder,
+    get_user,
+    update_ui,
+    update_ui_latest_msg,
+)
 
 install_msg = """
 
@@ -49,8 +57,9 @@ def 知识库文件注入(
     try:
         # from zh_langchain import construct_vector_store
         # from langchain.embeddings.huggingface import HuggingFaceEmbeddings
-        from crazy_functions.vector_fns.vector_database import \
-            knowledge_archive_interface
+        from crazy_functions.vector_fns.vector_database import (
+            knowledge_archive_interface,
+        )
     except Exception as e:
         chatbot.append(
             ["依赖不足", f"{str(e)}\n\n导入依赖失败。请用以下命令安装" + install_msg]
@@ -140,8 +149,9 @@ def 读取知识库作答(
     try:
         # from zh_langchain import construct_vector_store
         # from langchain.embeddings.huggingface import HuggingFaceEmbeddings
-        from crazy_functions.vector_fns.vector_database import \
-            knowledge_archive_interface
+        from crazy_functions.vector_fns.vector_database import (
+            knowledge_archive_interface,
+        )
     except Exception as e:
         chatbot.append(
             ["依赖不足", f"{str(e)}\n\n导入依赖失败。请用以下命令安装" + install_msg]

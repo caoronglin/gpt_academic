@@ -154,8 +154,7 @@ def task_executor(
     queue_blocking_from_client: 从客户端接收阻塞消息的队列
     queue_back_to_client: 发送消息回客户端的队列
     """
-    from toolbox import (get_plugin_default_kwargs, get_plugin_handle,
-                         on_file_uploaded)
+    from toolbox import get_plugin_default_kwargs, get_plugin_handle, on_file_uploaded
 
     def update_ui_websocket(
         chatbot: List[List[str]],
@@ -618,8 +617,7 @@ class MasterMindWebSocketServer(
                 def predict_future_input(main_input):
                     from textwrap import dedent
 
-                    from request_llms.bridge_all import \
-                        predict_no_ui_long_connection
+                    from request_llms.bridge_all import predict_no_ui_long_connection
                     from toolbox import get_plugin_default_kwargs
 
                     com = get_plugin_default_kwargs()

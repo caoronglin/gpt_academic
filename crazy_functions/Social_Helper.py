@@ -7,11 +7,18 @@ from loguru import logger
 from pydantic import BaseModel, Field
 
 from crazy_functions.crazy_utils import (
-    input_clipping, request_gpt_model_in_new_thread_with_ui_alive)
+    input_clipping,
+    request_gpt_model_in_new_thread_with_ui_alive,
+)
 from crazy_functions.json_fns.select_tool import select_tool, structure_output
 from request_llms.bridge_all import predict_no_ui_long_connection
-from toolbox import (CatchException, get_conf, get_log_folder, update_ui,
-                     update_ui_latest_msg)
+from toolbox import (
+    CatchException,
+    get_conf,
+    get_log_folder,
+    update_ui,
+    update_ui_latest_msg,
+)
 
 SOCIAL_NETWORK_WORKER_REGISTER = {}
 

@@ -20,14 +20,27 @@ import os
 import time
 
 from crazy_functions.crazy_utils import (
-    get_plugin_arg, input_clipping,
-    request_gpt_model_in_new_thread_with_ui_alive, try_install_deps)
+    get_plugin_arg,
+    input_clipping,
+    request_gpt_model_in_new_thread_with_ui_alive,
+    try_install_deps,
+)
 from crazy_functions.gen_fns.gen_fns_shared import (
-    get_class_name, is_function_successfully_generated, subprocess_worker,
-    try_make_module)
-from toolbox import (CatchException, gen_time_str, get_log_folder,
-                     is_the_upload_folder, promote_file_to_downloadzone,
-                     trimmed_format_exc, update_ui, update_ui_latest_msg)
+    get_class_name,
+    is_function_successfully_generated,
+    subprocess_worker,
+    try_make_module,
+)
+from toolbox import (
+    CatchException,
+    gen_time_str,
+    get_log_folder,
+    is_the_upload_folder,
+    promote_file_to_downloadzone,
+    trimmed_format_exc,
+    update_ui,
+    update_ui_latest_msg,
+)
 
 template = """
 ```python

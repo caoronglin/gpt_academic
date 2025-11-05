@@ -12,10 +12,13 @@ from typing import Dict, Generator, List, Optional, Set, Tuple
 
 from loguru import logger
 
-from crazy_functions.doc_fns.content_folder import (ContentFoldingManager,
-                                                    FileMetadata, FoldingError,
-                                                    FoldingOptions,
-                                                    FoldingStyle)
+from crazy_functions.doc_fns.content_folder import (
+    ContentFoldingManager,
+    FileMetadata,
+    FoldingError,
+    FoldingOptions,
+    FoldingStyle,
+)
 from crazy_functions.rag_fns.rag_file_support import extract_text
 from shared_utils.fastapi_server import validate_path_safety
 from toolbox import update_ui

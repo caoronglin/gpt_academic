@@ -1,9 +1,16 @@
 import os
 import time
 
-from toolbox import (ChatBotWithCookies, check_packages, get_conf,
-                     have_any_recent_upload_image_files, log_chat,
-                     report_exception, update_ui, update_ui_latest_msg)
+from toolbox import (
+    ChatBotWithCookies,
+    check_packages,
+    get_conf,
+    have_any_recent_upload_image_files,
+    log_chat,
+    report_exception,
+    update_ui,
+    update_ui_latest_msg,
+)
 
 model_name = "智谱AI大模型"
 zhipuai_default_model = "glm-4"

@@ -1,7 +1,12 @@
 import time
 
-from toolbox import (check_packages, get_conf, report_exception, update_ui,
-                     update_ui_latest_msg)
+from toolbox import (
+    check_packages,
+    get_conf,
+    report_exception,
+    update_ui,
+    update_ui_latest_msg,
+)
 
 model_name = "云雀大模型"
 

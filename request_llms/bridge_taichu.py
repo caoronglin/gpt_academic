@@ -1,9 +1,16 @@
 import os
 import time
 
-from toolbox import (ChatBotWithCookies, check_packages, get_conf,
-                     have_any_recent_upload_image_files, log_chat,
-                     report_exception, update_ui, update_ui_latest_msg)
+from toolbox import (
+    ChatBotWithCookies,
+    check_packages,
+    get_conf,
+    have_any_recent_upload_image_files,
+    log_chat,
+    report_exception,
+    update_ui,
+    update_ui_latest_msg,
+)
 
 # model_name = 'Taichu-2.0'
 # taichu_default_model = 'taichu_llm'

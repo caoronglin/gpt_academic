@@ -3,8 +3,13 @@ import os
 from typing import List
 
 import llama_index
-from llama_index.core import (Document, PromptTemplate, SimpleDirectoryReader,
-                              StorageContext, VectorStoreIndex)
+from llama_index.core import (
+    Document,
+    PromptTemplate,
+    SimpleDirectoryReader,
+    StorageContext,
+    VectorStoreIndex,
+)
 from llama_index.core.ingestion import run_transformations
 from llama_index.core.response_synthesizers import TreeSummarize
 from llama_index.core.schema import TextNode
@@ -59,8 +64,7 @@ class MilvusSaveLoad:
             checkpoint_dir = self.checkpoint_dir
         if self.does_checkpoint_exist(checkpoint_dir=checkpoint_dir):
             logger.info("loading checkpoint from disk")
-            from llama_index.core import (StorageContext,
-                                          load_index_from_storage)
+            from llama_index.core import StorageContext, load_index_from_storage
 
             storage_context = StorageContext.from_defaults(persist_dir=checkpoint_dir)
             try:

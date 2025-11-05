@@ -74,8 +74,7 @@ def define_gui_floating_menu(
                     basic_fn_clean = gr.Button("恢复默认", variant="primary")
                     basic_fn_clean.style(size="sm")
 
-                    from shared_utils.cookie_manager import \
-                        assign_btn__fn_builder
+                    from shared_utils.cookie_manager import assign_btn__fn_builder
 
                     assign_btn = assign_btn__fn_builder(
                         customize_btns, predefined_btns, cookies, web_cookie_cache
