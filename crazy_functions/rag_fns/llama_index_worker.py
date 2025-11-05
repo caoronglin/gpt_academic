@@ -53,7 +53,8 @@ class SaveLoad:
             checkpoint_dir = self.checkpoint_dir
         if self.does_checkpoint_exist(checkpoint_dir=checkpoint_dir):
             logger.info("loading checkpoint from disk")
-            from llama_index.core import StorageContext, load_index_from_storage
+            from llama_index.core import (StorageContext,
+                                          load_index_from_storage)
 
             storage_context = StorageContext.from_defaults(persist_dir=checkpoint_dir)
             self.vs_index = load_index_from_storage(

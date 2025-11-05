@@ -1,4 +1,5 @@
-from crazy_functions.crazy_utils import request_gpt_model_in_new_thread_with_ui_alive
+from crazy_functions.crazy_utils import \
+    request_gpt_model_in_new_thread_with_ui_alive
 from toolbox import CatchException, update_ui
 
 

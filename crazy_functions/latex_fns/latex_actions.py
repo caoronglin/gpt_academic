@@ -6,30 +6,15 @@ import numpy as np
 
 from crazy_functions.latex_fns.latex_pickle_io import objdump, objload
 from crazy_functions.latex_fns.latex_toolbox import (
-    PRESERVE,
-    TRANSFORM,
-    compile_latex_with_timeout,
-    convert_to_linklist,
-    find_main_tex_file,
-    find_title_and_abs,
-    fix_content,
-    merge_tex_files,
-    post_process,
-    reverse_forbidden_text,
-    reverse_forbidden_text_careful_brace,
-    set_forbidden_text,
-    set_forbidden_text_begin_end,
-    set_forbidden_text_careful_brace,
-)
+    PRESERVE, TRANSFORM, compile_latex_with_timeout, convert_to_linklist,
+    find_main_tex_file, find_title_and_abs, fix_content, merge_tex_files,
+    post_process, reverse_forbidden_text, reverse_forbidden_text_careful_brace,
+    set_forbidden_text, set_forbidden_text_begin_end,
+    set_forbidden_text_careful_brace)
 from loguru import logger
-from toolbox import (
-    gen_time_str,
-    get_conf,
-    get_log_folder,
-    promote_file_to_downloadzone,
-    update_ui,
-    update_ui_latest_msg,
-)
+from toolbox import (gen_time_str, get_conf, get_log_folder,
+                     promote_file_to_downloadzone, update_ui,
+                     update_ui_latest_msg)
 
 pj = os.path.join
 
@@ -367,9 +352,8 @@ class LatexPaperFileGroup:
                 self.sp_file_index.append(index)
                 self.sp_file_tag.append(self.file_paths[index])
             else:
-                from crazy_functions.pdf_fns.breakdown_txt import (
-                    breakdown_text_to_satisfy_token_limit,
-                )
+                from crazy_functions.pdf_fns.breakdown_txt import \
+                    breakdown_text_to_satisfy_token_limit
 
                 segments = breakdown_text_to_satisfy_token_limit(
                     file_content, max_token_limit
@@ -409,9 +393,8 @@ def Latex精细分解与转化(
     import re
     import time
 
-    from ..crazy_utils import (
-        request_gpt_model_multi_threads_with_very_awesome_ui_and_high_efficiency,
-    )
+    from ..crazy_utils import \
+        request_gpt_model_multi_threads_with_very_awesome_ui_and_high_efficiency
     from .latex_actions import LatexPaperFileGroup, LatexPaperSplit
 
     #  <-------- 寻找主tex文件 ---------->

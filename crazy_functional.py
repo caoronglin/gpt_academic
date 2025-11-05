@@ -1,42 +1,29 @@
 from loguru import logger
-from toolbox import (
-    HotReload,
-)  # HotReload 的意思是热更新，修改函数插件后，不需要重启程序，代码直接生效
-from toolbox import trimmed_format_exc
+from toolbox import (HotReload,  # HotReload 的意思是热更新，修改函数插件后，不需要重启程序，代码直接生效
+                     trimmed_format_exc)
 
 
 def get_crazy_functions():
     from crazy_functions.Conversation_To_File import (
-        Conversation_To_File_Wrap,
-        删除所有本地对话历史记录,
-        对话历史存档,
-        载入对话历史存档,
-    )
+        Conversation_To_File_Wrap, 删除所有本地对话历史记录, 对话历史存档, 载入对话历史存档)
     from crazy_functions.Document_Conversation import 批量文件询问
-    from crazy_functions.Document_Conversation_Wrap import Document_Conversation_Wrap
-    from crazy_functions.Google_Scholar_Assistant_Legacy import (
-        Google_Scholar_Assistant_Legacy,
-    )
+    from crazy_functions.Document_Conversation_Wrap import \
+        Document_Conversation_Wrap
+    from crazy_functions.Google_Scholar_Assistant_Legacy import \
+        Google_Scholar_Assistant_Legacy
     from crazy_functions.Helpers import 清除缓存
-    from crazy_functions.Image_Generate import (
-        图片修改_DALLE2,
-        图片生成_DALLE2,
-        图片生成_DALLE3,
-    )
+    from crazy_functions.Image_Generate import (图片修改_DALLE2, 图片生成_DALLE2,
+                                                图片生成_DALLE3)
     from crazy_functions.Image_Generate_Wrap import ImageGen_Wrap
     from crazy_functions.Internet_GPT import 连接网络回答问题
     from crazy_functions.Internet_GPT_Wrap import NetworkGPT_Wrap
-    from crazy_functions.Latex_Function import (
-        PDF翻译中文并重新编译PDF,
-        Latex翻译中文并重新编译PDF,
-        Latex英文纠错加PDF对比,
-    )
-    from crazy_functions.Latex_Function_Wrap import Arxiv_Localize, PDF_Localize
-    from crazy_functions.Latex_Project_Polish import (
-        Latex中文润色,
-        Latex英文润色,
-        Latex英文纠错,
-    )
+    from crazy_functions.Latex_Function import (PDF翻译中文并重新编译PDF,
+                                                Latex翻译中文并重新编译PDF,
+                                                Latex英文纠错加PDF对比)
+    from crazy_functions.Latex_Function_Wrap import (Arxiv_Localize,
+                                                     PDF_Localize)
+    from crazy_functions.Latex_Project_Polish import (Latex中文润色, Latex英文润色,
+                                                      Latex英文纠错)
     from crazy_functions.Markdown_Translate import Markdown中译英, Markdown英译中
     from crazy_functions.Mermaid_Figure_Gen import Mermaid_Gen
     from crazy_functions.Multi_LLM_Query import 同时问询
@@ -46,19 +33,12 @@ def get_crazy_functions():
     from crazy_functions.PDF_Translate import 批量翻译PDF文档
     from crazy_functions.PDF_Translate_Wrap import PDF_Tran
     from crazy_functions.Program_Comment_Gen import 批量Program_Comment_Gen
-    from crazy_functions.SourceCode_Analyse import (
-        解析一个C项目,
-        解析一个C项目的头文件,
-        解析一个CSharp项目,
-        解析一个Golang项目,
-        解析一个Java项目,
-        解析一个Lua项目,
-        解析一个Matlab项目,
-        解析一个Python项目,
-        解析一个Rust项目,
-        解析一个前端项目,
-        解析项目本身,
-    )
+    from crazy_functions.SourceCode_Analyse import (解析一个C项目, 解析一个C项目的头文件,
+                                                    解析一个CSharp项目, 解析一个Golang项目,
+                                                    解析一个Java项目, 解析一个Lua项目,
+                                                    解析一个Matlab项目, 解析一个Python项目,
+                                                    解析一个Rust项目, 解析一个前端项目,
+                                                    解析项目本身)
     from crazy_functions.SourceCode_Analyse_JupyterNotebook import 解析ipynb文件
     from crazy_functions.SourceCode_Comment import 注释Python项目
     from crazy_functions.SourceCode_Comment_Wrap import SourceCodeComment_Wrap
@@ -651,7 +631,8 @@ def get_crazy_functions():
         logger.error("Load function plugin failed")
 
     try:
-        from crazy_functions.Dynamic_Function_Generate import Dynamic_Function_Generate
+        from crazy_functions.Dynamic_Function_Generate import \
+            Dynamic_Function_Generate
 
         function_plugins.update(
             {

@@ -1,8 +1,7 @@
-from crazy_functions.crazy_utils import request_gpt_model_in_new_thread_with_ui_alive
+from crazy_functions.crazy_utils import \
+    request_gpt_model_in_new_thread_with_ui_alive
 from crazy_functions.plugin_template.plugin_class_template import (
-    ArgProperty,
-    GptAcademicPluginTemplate,
-)
+    ArgProperty, GptAcademicPluginTemplate)
 from toolbox import CatchException, report_exception, update_ui
 
 # 以下是每类图表的PROMPT
@@ -189,9 +188,8 @@ def 解析历史输入(history, llm_kwargs, file_manifest, chatbot, plugin_kwarg
     txt = (
         str(history).encode("utf-8", "ignore").decode()
     )  # avoid reading non-utf8 chars
-    from crazy_functions.pdf_fns.breakdown_txt import (
-        breakdown_text_to_satisfy_token_limit,
-    )
+    from crazy_functions.pdf_fns.breakdown_txt import \
+        breakdown_text_to_satisfy_token_limit
 
     txt = breakdown_text_to_satisfy_token_limit(
         txt=txt, limit=TOKEN_LIMIT_PER_FRAGMENT, llm_model=llm_kwargs["llm_model"]

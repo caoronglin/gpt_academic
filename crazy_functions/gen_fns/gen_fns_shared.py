@@ -2,16 +2,9 @@ import importlib
 import multiprocessing
 import time
 
-from toolbox import (
-    CatchException,
-    gen_time_str,
-    get_log_folder,
-    is_the_upload_folder,
-    promote_file_to_downloadzone,
-    trimmed_format_exc,
-    update_ui,
-    update_ui_latest_msg,
-)
+from toolbox import (CatchException, gen_time_str, get_log_folder,
+                     is_the_upload_folder, promote_file_to_downloadzone,
+                     trimmed_format_exc, update_ui, update_ui_latest_msg)
 
 
 def get_class_name(class_string):

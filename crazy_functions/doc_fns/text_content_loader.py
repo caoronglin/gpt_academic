@@ -10,13 +10,10 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Dict, Generator, List, Optional, Set, Tuple
 
-from crazy_functions.doc_fns.content_folder import (
-    ContentFoldingManager,
-    FileMetadata,
-    FoldingError,
-    FoldingOptions,
-    FoldingStyle,
-)
+from crazy_functions.doc_fns.content_folder import (ContentFoldingManager,
+                                                    FileMetadata, FoldingError,
+                                                    FoldingOptions,
+                                                    FoldingStyle)
 from crazy_functions.rag_fns.rag_file_support import extract_text
 from loguru import logger
 from shared_utils.fastapi_server import validate_path_safety

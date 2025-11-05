@@ -2,9 +2,7 @@ import random
 
 from crazy_functions.Document_Conversation import 批量文件询问
 from crazy_functions.plugin_template.plugin_class_template import (
-    ArgProperty,
-    GptAcademicPluginTemplate,
-)
+    ArgProperty, GptAcademicPluginTemplate)
 from toolbox import get_conf
 
 

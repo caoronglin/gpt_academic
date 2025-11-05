@@ -5,14 +5,8 @@ from llama_index.embeddings.openai import OpenAIEmbedding
 from openai import OpenAI
 
 from shared_utils.key_pattern_manager import select_api_key_for_embed_models
-from toolbox import (
-    CatchException,
-    ProxyNetworkActivate,
-    get_conf,
-    get_log_folder,
-    select_api_key,
-    update_ui,
-)
+from toolbox import (CatchException, ProxyNetworkActivate, get_conf,
+                     get_log_folder, select_api_key, update_ui)
 
 
 def mean_agg(embeddings):

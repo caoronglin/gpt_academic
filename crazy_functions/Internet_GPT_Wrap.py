@@ -2,9 +2,7 @@ import random
 
 from crazy_functions.Internet_GPT import 连接网络回答问题
 from crazy_functions.plugin_template.plugin_class_template import (
-    ArgProperty,
-    GptAcademicPluginTemplate,
-)
+    ArgProperty, GptAcademicPluginTemplate)
 from toolbox import get_conf
 
 

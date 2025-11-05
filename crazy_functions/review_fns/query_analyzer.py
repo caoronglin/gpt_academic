@@ -53,46 +53,30 @@ class QueryAnalyzer:
 
     def analyze_query(self, query: str, chatbot: List, llm_kwargs: Dict):
         """分析查询意图"""
-        from crazy_functions.crazy_utils import (
-            request_gpt_model_multi_threads_with_very_awesome_ui_and_high_efficiency as request_gpt,
-        )
+        from crazy_functions.crazy_utils import \
+            request_gpt_model_multi_threads_with_very_awesome_ui_and_high_efficiency as \
+            request_gpt
         from crazy_functions.review_fns.prompts.arxiv_prompts import (
-            ARXIV_CATEGORIES_PROMPT,
-            ARXIV_CATEGORIES_SYSTEM_PROMPT,
-            ARXIV_LATEST_PROMPT,
-            ARXIV_LATEST_SYSTEM_PROMPT,
-            ARXIV_QUERY_PROMPT,
-            ARXIV_QUERY_SYSTEM_PROMPT,
-            ARXIV_SORT_PROMPT,
-            ARXIV_SORT_SYSTEM_PROMPT,
-        )
+            ARXIV_CATEGORIES_PROMPT, ARXIV_CATEGORIES_SYSTEM_PROMPT,
+            ARXIV_LATEST_PROMPT, ARXIV_LATEST_SYSTEM_PROMPT,
+            ARXIV_QUERY_PROMPT, ARXIV_QUERY_SYSTEM_PROMPT, ARXIV_SORT_PROMPT,
+            ARXIV_SORT_SYSTEM_PROMPT)
         from crazy_functions.review_fns.prompts.semantic_prompts import (
-            SEMANTIC_FIELDS_PROMPT,
-            SEMANTIC_FIELDS_SYSTEM_PROMPT,
-            SEMANTIC_QUERY_PROMPT,
-            SEMANTIC_QUERY_SYSTEM_PROMPT,
-        )
+            SEMANTIC_FIELDS_PROMPT, SEMANTIC_FIELDS_SYSTEM_PROMPT,
+            SEMANTIC_QUERY_PROMPT, SEMANTIC_QUERY_SYSTEM_PROMPT)
 
-        from .prompts.adsabs_prompts import (
-            ADSABS_QUERY_PROMPT,
-            ADSABS_QUERY_SYSTEM_PROMPT,
-        )
-        from .prompts.crossref_prompts import (
-            CROSSREF_QUERY_PROMPT,
-            CROSSREF_QUERY_SYSTEM_PROMPT,
-        )
-        from .prompts.paper_prompts import (
-            PAPER_IDENTIFY_PROMPT,
-            PAPER_IDENTIFY_SYSTEM_PROMPT,
-        )
-        from .prompts.pubmed_prompts import (
-            PUBMED_QUERY_PROMPT,
-            PUBMED_QUERY_SYSTEM_PROMPT,
-            PUBMED_SORT_PROMPT,
-            PUBMED_SORT_SYSTEM_PROMPT,
-            PUBMED_TYPE_PROMPT,
-            PUBMED_TYPE_SYSTEM_PROMPT,
-        )
+        from .prompts.adsabs_prompts import (ADSABS_QUERY_PROMPT,
+                                             ADSABS_QUERY_SYSTEM_PROMPT)
+        from .prompts.crossref_prompts import (CROSSREF_QUERY_PROMPT,
+                                               CROSSREF_QUERY_SYSTEM_PROMPT)
+        from .prompts.paper_prompts import (PAPER_IDENTIFY_PROMPT,
+                                            PAPER_IDENTIFY_SYSTEM_PROMPT)
+        from .prompts.pubmed_prompts import (PUBMED_QUERY_PROMPT,
+                                             PUBMED_QUERY_SYSTEM_PROMPT,
+                                             PUBMED_SORT_PROMPT,
+                                             PUBMED_SORT_SYSTEM_PROMPT,
+                                             PUBMED_TYPE_PROMPT,
+                                             PUBMED_TYPE_SYSTEM_PROMPT)
 
         # 1. 基本查询分析
         type_prompt = dedent(
