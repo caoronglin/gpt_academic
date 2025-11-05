@@ -1,7 +1,8 @@
 from pathlib import Path
 
-from crazy_functions.doc_fns.read_fns.unstructured_all.paper_structure_extractor import \
-    PaperStructureExtractor
+from crazy_functions.doc_fns.read_fns.unstructured_all.paper_structure_extractor import (
+    PaperStructureExtractor,
+)
 
 
 def extract_and_save_as_markdown(paper_path, output_path=None):

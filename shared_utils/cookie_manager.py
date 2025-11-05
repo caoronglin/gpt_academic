@@ -9,8 +9,12 @@ def load_web_cookie_cache__fn_builder(
     def load_web_cookie_cache(persistent_cookie_, cookies_):
         import gradio as gr
 
-        from themes.theme import (assign_user_uuid, from_cookie_str,
-                                  load_dynamic_theme, to_cookie_str)
+        from themes.theme import (
+            assign_user_uuid,
+            from_cookie_str,
+            load_dynamic_theme,
+            to_cookie_str,
+        )
 
         ret = {}
         for k in customize_btns:
@@ -57,8 +61,12 @@ def assign_btn__fn_builder(
     ):
         import gradio as gr
 
-        from themes.theme import (assign_user_uuid, from_cookie_str,
-                                  load_dynamic_theme, to_cookie_str)
+        from themes.theme import (
+            assign_user_uuid,
+            from_cookie_str,
+            load_dynamic_theme,
+            to_cookie_str,
+        )
 
         ret = {}
         # 读取之前的自定义按钮

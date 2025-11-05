@@ -1,6 +1,5 @@
 from crazy_functions.multi_stage.multi_stage_utils import GptAcademicState
-from toolbox import (CatchException, get_conf, get_log_folder, select_api_key,
-                     update_ui)
+from toolbox import CatchException, get_conf, get_log_folder, select_api_key, update_ui
 
 
 def gen_image(

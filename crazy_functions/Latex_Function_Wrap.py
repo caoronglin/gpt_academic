@@ -1,6 +1,11 @@
-from crazy_functions.Latex_Function import PDF翻译中文并重新编译PDF, Latex翻译中文并重新编译PDF
+from crazy_functions.Latex_Function import (
+    PDF翻译中文并重新编译PDF,
+    Latex翻译中文并重新编译PDF,
+)
 from crazy_functions.plugin_template.plugin_class_template import (
-    ArgProperty, GptAcademicPluginTemplate)
+    ArgProperty,
+    GptAcademicPluginTemplate,
+)
 
 
 class Arxiv_Localize(GptAcademicPluginTemplate):

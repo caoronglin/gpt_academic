@@ -7,9 +7,18 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Union
 
-from unstructured.documents.elements import (Address, Footer, Header, Image,
-                                             ListItem, NarrativeText,
-                                             PageBreak, Table, Text, Title)
+from unstructured.documents.elements import (
+    Address,
+    Footer,
+    Header,
+    Image,
+    ListItem,
+    NarrativeText,
+    PageBreak,
+    Table,
+    Text,
+    Title,
+)
 from unstructured.partition.auto import partition
 
 

@@ -7,15 +7,25 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, Generator, List, Tuple
 
-from crazy_functions.crazy_utils import \
-    request_gpt_model_in_new_thread_with_ui_alive
+from crazy_functions.crazy_utils import request_gpt_model_in_new_thread_with_ui_alive
 from crazy_functions.pdf_fns.text_content_loader import TextContentLoader
+
 # 导入论文下载相关函数
-from crazy_functions.论文下载 import (SciHub, extract_paper_id, extract_paper_ids,
-                                  format_arxiv_id, get_arxiv_paper)
+from crazy_functions.论文下载 import (
+    SciHub,
+    extract_paper_id,
+    extract_paper_ids,
+    format_arxiv_id,
+    get_arxiv_paper,
+)
 from shared_utils.fastapi_server import validate_path_safety
-from toolbox import (CatchException, promote_file_to_downloadzone,
-                     report_exception, update_ui, write_history_to_file)
+from toolbox import (
+    CatchException,
+    promote_file_to_downloadzone,
+    report_exception,
+    update_ui,
+    write_history_to_file,
+)
 
 
 @dataclass

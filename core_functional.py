@@ -4,9 +4,11 @@
 import importlib
 from textwrap import dedent
 
-from toolbox import (apply_gpt_academic_string_mask_langbased,
-                     build_gpt_academic_masked_string_langbased,
-                     clear_line_break)
+from toolbox import (
+    apply_gpt_academic_string_mask_langbased,
+    build_gpt_academic_masked_string_langbased,
+    clear_line_break,
+)
 
 
 def get_core_functions():

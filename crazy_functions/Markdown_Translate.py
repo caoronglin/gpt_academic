@@ -4,9 +4,16 @@ import re
 import shutil
 
 from loguru import logger
-from toolbox import (CatchException, gen_time_str, get_log_folder,
-                     promote_file_to_downloadzone, report_exception,
-                     trimmed_format_exc, update_ui, write_history_to_file)
+from toolbox import (
+    CatchException,
+    gen_time_str,
+    get_log_folder,
+    promote_file_to_downloadzone,
+    report_exception,
+    trimmed_format_exc,
+    update_ui,
+    write_history_to_file,
+)
 
 fast_debug = False
 
@@ -39,8 +46,9 @@ class PaperFileGroup:
                 self.sp_file_index.append(index)
                 self.sp_file_tag.append(self.file_paths[index])
             else:
-                from crazy_functions.pdf_fns.breakdown_txt import \
-                    breakdown_text_to_satisfy_token_limit
+                from crazy_functions.pdf_fns.breakdown_txt import (
+                    breakdown_text_to_satisfy_token_limit,
+                )
 
                 segments = breakdown_text_to_satisfy_token_limit(
                     file_content, max_token_limit
@@ -76,8 +84,9 @@ def 多文件翻译(
     system_prompt,
     language="en",
 ):
-    from crazy_functions.crazy_utils import \
-        request_gpt_model_multi_threads_with_very_awesome_ui_and_high_efficiency
+    from crazy_functions.crazy_utils import (
+        request_gpt_model_multi_threads_with_very_awesome_ui_and_high_efficiency,
+    )
 
     #  <-------- 读取Markdown文件，删除其中的所有注释 ---------->
     pfg = PaperFileGroup()

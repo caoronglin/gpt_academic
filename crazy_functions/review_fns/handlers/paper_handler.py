@@ -1,9 +1,9 @@
 import asyncio
 from typing import Any, Dict, List, Optional, Tuple
 
-from crazy_functions.crazy_utils import \
-    request_gpt_model_multi_threads_with_very_awesome_ui_and_high_efficiency as \
-    request_gpt
+from crazy_functions.crazy_utils import (
+    request_gpt_model_multi_threads_with_very_awesome_ui_and_high_efficiency as request_gpt,
+)
 from crazy_functions.review_fns.query_analyzer import SearchCriteria
 
 from .base_handler import BaseHandler

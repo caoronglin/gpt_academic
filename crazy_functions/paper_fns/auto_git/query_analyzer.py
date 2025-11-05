@@ -41,9 +41,9 @@ class QueryAnalyzer:
 
     def analyze_query(self, query: str, chatbot: List, llm_kwargs: Dict):
         """分析查询意图"""
-        from crazy_functions.crazy_utils import \
-            request_gpt_model_multi_threads_with_very_awesome_ui_and_high_efficiency as \
-            request_gpt
+        from crazy_functions.crazy_utils import (
+            request_gpt_model_multi_threads_with_very_awesome_ui_and_high_efficiency as request_gpt,
+        )
 
         # 1. 基本查询分析
         type_prompt = f"""请分析这个与GitHub相关的查询，并严格按照以下XML格式回答：

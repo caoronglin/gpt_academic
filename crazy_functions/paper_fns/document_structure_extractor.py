@@ -4,13 +4,25 @@ import re
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from unstructured.documents.elements import (Address, Footer, Header, Image,
-                                             ListItem, NarrativeText,
-                                             PageBreak, Table, Text, Title)
+from unstructured.documents.elements import (
+    Address,
+    Footer,
+    Header,
+    Image,
+    ListItem,
+    NarrativeText,
+    PageBreak,
+    Table,
+    Text,
+    Title,
+)
 from unstructured.partition.auto import partition
 
 from crazy_functions.doc_fns.read_fns.unstructured_all.paper_structure_extractor import (
-    PaperSection, PaperStructureExtractor, StructuredPaper)
+    PaperSection,
+    PaperStructureExtractor,
+    StructuredPaper,
+)
 
 
 @dataclass

@@ -2,8 +2,10 @@ import random
 from datetime import datetime
 from typing import List, Optional
 
-from crazy_functions.review_fns.data_sources.base_source import (DataSource,
-                                                                 PaperMetadata)
+from crazy_functions.review_fns.data_sources.base_source import (
+    DataSource,
+    PaperMetadata,
+)
 
 
 class SemanticScholarSource(DataSource):

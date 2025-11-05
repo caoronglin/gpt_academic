@@ -9,11 +9,20 @@ from functools import partial
 import requests
 
 from loguru import logger
-from toolbox import (CatchException, check_repeat_upload, gen_time_str,
-                     get_conf, get_log_folder, map_file_to_sha256,
-                     promote_file_to_downloadzone, report_exception,
-                     trimmed_format_exc, update_ui, update_ui_latest_msg,
-                     zip_result)
+from toolbox import (
+    CatchException,
+    check_repeat_upload,
+    gen_time_str,
+    get_conf,
+    get_log_folder,
+    map_file_to_sha256,
+    promote_file_to_downloadzone,
+    report_exception,
+    trimmed_format_exc,
+    update_ui,
+    update_ui_latest_msg,
+    zip_result,
+)
 
 pj = os.path.join
 ARXIV_CACHE_DIR = get_conf("ARXIV_CACHE_DIR")
@@ -289,8 +298,7 @@ def pdf2tex_project(pdf_file_path, plugin_kwargs):
             )
             return None
     else:
-        from crazy_functions.pdf_fns.parse_pdf_via_doc2x import \
-            解析PDF_DOC2X_转Latex
+        from crazy_functions.pdf_fns.parse_pdf_via_doc2x import 解析PDF_DOC2X_转Latex
 
         unzip_dir = 解析PDF_DOC2X_转Latex(pdf_file_path)
         return unzip_dir
@@ -561,8 +569,9 @@ def Latex翻译中文并重新编译PDF(
     if success:
         if allow_gptac_cloud_io and arxiv_id:
             # 如果用户允许，我们将翻译好的arxiv论文PDF上传到GPTAC学术云
-            from crazy_functions.latex_fns.latex_actions import \
-                upload_to_gptac_cloud_if_user_allow
+            from crazy_functions.latex_fns.latex_actions import (
+                upload_to_gptac_cloud_if_user_allow,
+            )
 
             threading.Thread(
                 target=upload_to_gptac_cloud_if_user_allow,
