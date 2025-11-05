@@ -31,9 +31,8 @@ class MoonShotInit:
                 for file in files:
                     if file.split(".")[-1] in ["pdf"]:
                         with open(file, "r", encoding="utf8") as fp:
-                            from crazy_functions.crazy_utils import (
-                                read_and_clean_pdf_text,
-                            )
+                            from crazy_functions.crazy_utils import \
+                                read_and_clean_pdf_text
 
                             file_content, _ = read_and_clean_pdf_text(fp)
                         what_ask.append({"role": "system", "content": file_content})

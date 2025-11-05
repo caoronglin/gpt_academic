@@ -16,7 +16,6 @@ def write_chat_to_file(chatbot, history=None, file_name=None):
     将对话记录history以Markdown格式写入文件中。如果没有指定文件名，则使用当前时间生成文件名。
     """
     import os
-
     # debug
     import pickle
     import time

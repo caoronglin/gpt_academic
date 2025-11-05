@@ -15,23 +15,13 @@ import os
 import time
 
 import requests
-from loguru import logger
 
-from toolbox import (
-    clip_history,
-    encode_image,
-    get_conf,
-    get_max_token,
-    have_any_recent_upload_image_files,
-    is_any_api_key,
-    is_the_upload_folder,
-    log_chat,
-    select_api_key,
-    trimmed_format_exc,
-    update_ui,
-    update_ui_latest_msg,
-    what_keys,
-)
+from loguru import logger
+from toolbox import (clip_history, encode_image, get_conf, get_max_token,
+                     have_any_recent_upload_image_files, is_any_api_key,
+                     is_the_upload_folder, log_chat, select_api_key,
+                     trimmed_format_exc, update_ui, update_ui_latest_msg,
+                     what_keys)
 
 proxies, TIMEOUT_SECONDS, MAX_RETRY, API_ORG, AZURE_CFG_ARRAY = get_conf(
     "proxies", "TIMEOUT_SECONDS", "MAX_RETRY", "API_ORG", "AZURE_CFG_ARRAY"

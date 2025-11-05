@@ -9,10 +9,8 @@ from urllib.parse import quote
 import aiohttp
 from tqdm import tqdm
 
-from crazy_functions.review_fns.data_sources.base_source import (
-    DataSource,
-    PaperMetadata,
-)
+from crazy_functions.review_fns.data_sources.base_source import (DataSource,
+                                                                 PaperMetadata)
 
 
 class PubMedSource(DataSource):

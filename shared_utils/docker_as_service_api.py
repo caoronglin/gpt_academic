@@ -4,8 +4,9 @@ import pickle
 from typing import Any, Dict, Optional
 
 import requests
-from loguru import logger
 from pydantic import BaseModel, Field
+
+from loguru import logger
 
 
 class DockerServiceApiComModel(BaseModel):

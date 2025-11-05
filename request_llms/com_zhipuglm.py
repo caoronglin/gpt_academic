@@ -4,9 +4,9 @@
 # @Descr   : 兼容最新的智谱Ai
 import os
 
-from loguru import logger
 from zhipuai import ZhipuAI
 
+from loguru import logger
 from toolbox import encode_image, get_conf, get_pictures_list
 
 

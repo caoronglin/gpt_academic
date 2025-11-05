@@ -8,8 +8,8 @@ import shutil
 import time
 
 import gradio
-from loguru import logger
 
+from loguru import logger
 from shared_utils.config_loader import get_conf
 
 

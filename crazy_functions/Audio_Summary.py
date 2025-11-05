@@ -1,14 +1,8 @@
-from crazy_functions.crazy_utils import request_gpt_model_in_new_thread_with_ui_alive
-from toolbox import (
-    CatchException,
-    get_conf,
-    get_log_folder,
-    promote_file_to_downloadzone,
-    report_exception,
-    select_api_key,
-    update_ui,
-    write_history_to_file,
-)
+from crazy_functions.crazy_utils import \
+    request_gpt_model_in_new_thread_with_ui_alive
+from toolbox import (CatchException, get_conf, get_log_folder,
+                     promote_file_to_downloadzone, report_exception,
+                     select_api_key, update_ui, write_history_to_file)
 
 
 def split_audio_file(filename, split_duration=1000):

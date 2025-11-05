@@ -4,8 +4,9 @@ import sys
 import time
 
 import numpy as np
-from loguru import logger as logging
 from scipy.io.wavfile import WAVE_FORMAT
+
+from loguru import logger as logging
 
 
 def write_numpy_to_wave(filename, rate, data, add_header=False):

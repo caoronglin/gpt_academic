@@ -1,12 +1,7 @@
-from crazy_functions.Image_Generate import (
-    图片修改_DALLE2,
-    图片生成_DALLE2,
-    图片生成_DALLE3,
-)
+from crazy_functions.Image_Generate import (图片修改_DALLE2, 图片生成_DALLE2,
+                                            图片生成_DALLE3)
 from crazy_functions.plugin_template.plugin_class_template import (
-    ArgProperty,
-    GptAcademicPluginTemplate,
-)
+    ArgProperty, GptAcademicPluginTemplate)
 from toolbox import get_conf, update_ui
 
 

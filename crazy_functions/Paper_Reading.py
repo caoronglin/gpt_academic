@@ -6,21 +6,15 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, Generator, List, Tuple
 
-from crazy_functions.crazy_utils import request_gpt_model_in_new_thread_with_ui_alive
-from crazy_functions.paper_fns.paper_download import (
-    extract_paper_id,
-    extract_paper_ids,
-    format_arxiv_id,
-    get_arxiv_paper,
-)
+from crazy_functions.crazy_utils import \
+    request_gpt_model_in_new_thread_with_ui_alive
+from crazy_functions.paper_fns.paper_download import (extract_paper_id,
+                                                      extract_paper_ids,
+                                                      format_arxiv_id,
+                                                      get_arxiv_paper)
 from shared_utils.fastapi_server import validate_path_safety
-from toolbox import (
-    CatchException,
-    promote_file_to_downloadzone,
-    report_exception,
-    update_ui,
-    write_history_to_file,
-)
+from toolbox import (CatchException, promote_file_to_downloadzone,
+                     report_exception, update_ui, write_history_to_file)
 
 
 @dataclass
@@ -85,7 +79,8 @@ class PaperAnalyzer:
         self.questions.sort(key=lambda q: q.importance, reverse=True)
 
     def _load_paper(self, paper_path: str) -> Generator:
-        from crazy_functions.doc_fns.text_content_loader import TextContentLoader
+        from crazy_functions.doc_fns.text_content_loader import \
+            TextContentLoader
 
         """加载论文内容"""
         yield from update_ui(chatbot=self.chatbot, history=self.history)

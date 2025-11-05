@@ -5,10 +5,8 @@ from llama_index.core.callbacks.base import CallbackManager
 from llama_index.core.schema import TransformComponent
 from llama_index.core.service_context import ServiceContext
 from llama_index.core.settings import (
-    Settings,
-    callback_manager_from_settings_or_context,
-    transformations_from_settings_or_context,
-)
+    Settings, callback_manager_from_settings_or_context,
+    transformations_from_settings_or_context)
 from llama_index.core.storage.storage_context import StorageContext
 
 

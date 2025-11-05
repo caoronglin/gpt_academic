@@ -5,8 +5,8 @@ import os
 from threading import Thread
 
 from loguru import logger
-
-from request_llms.local_llm_class import LocalLLMHandle, get_local_llm_predict_fns
+from request_llms.local_llm_class import (LocalLLMHandle,
+                                          get_local_llm_predict_fns)
 from toolbox import ProxyNetworkActivate, get_conf
 
 
@@ -39,11 +39,8 @@ class GetCoderLMHandle(LocalLLMHandle):
 
         # 🏃‍♂️🏃‍♂️🏃‍♂️ 子进程执行
         with ProxyNetworkActivate("Download_LLM"):
-            from transformers import (
-                AutoModelForCausalLM,
-                AutoTokenizer,
-                TextIteratorStreamer,
-            )
+            from transformers import (AutoModelForCausalLM, AutoTokenizer,
+                                      TextIteratorStreamer)
 
             model_name = "deepseek-ai/deepseek-coder-6.7b-instruct"
             # local_dir = f"~/.cache/{model_name}"

@@ -4,7 +4,6 @@ from contextlib import redirect_stdout
 from multiprocessing import Pipe, Process
 
 from loguru import logger
-
 from request_llms.queued_pipe import create_queue_pipe
 from toolbox import ChatBotWithCookies, Singleton, update_ui
 

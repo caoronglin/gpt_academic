@@ -1,8 +1,8 @@
 import os
 
 import gradio as gr
-from loguru import logger
 
+from loguru import logger
 from toolbox import get_conf
 
 CODE_HIGHLIGHT, ADD_WAIFU, LAYOUT = get_conf("CODE_HIGHLIGHT", "ADD_WAIFU", "LAYOUT")

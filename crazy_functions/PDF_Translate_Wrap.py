@@ -1,7 +1,5 @@
 from crazy_functions.plugin_template.plugin_class_template import (
-    ArgProperty,
-    GptAcademicPluginTemplate,
-)
+    ArgProperty, GptAcademicPluginTemplate)
 
 from .PDF_Translate import 批量翻译PDF文档
 

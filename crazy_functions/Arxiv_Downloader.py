@@ -3,18 +3,13 @@ import re
 import unicodedata
 
 import requests
-from loguru import logger
 
-from crazy_functions.crazy_utils import request_gpt_model_in_new_thread_with_ui_alive
-from toolbox import (
-    CatchException,
-    get_conf,
-    get_log_folder,
-    promote_file_to_downloadzone,
-    report_exception,
-    update_ui,
-    write_history_to_file,
-)
+from crazy_functions.crazy_utils import \
+    request_gpt_model_in_new_thread_with_ui_alive
+from loguru import logger
+from toolbox import (CatchException, get_conf, get_log_folder,
+                     promote_file_to_downloadzone, report_exception, update_ui,
+                     write_history_to_file)
 
 
 def download_arxiv_(url_pdf):

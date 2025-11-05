@@ -6,15 +6,9 @@ from pydantic import BaseModel, Field
 
 from crazy_functions.json_fns.pydantic_io import GptJsonIO, JsonStringError
 from request_llms.bridge_all import predict_no_ui_long_connection
-from toolbox import (
-    CatchException,
-    disable_auto_promotion,
-    get_conf,
-    get_log_folder,
-    select_api_key,
-    update_ui,
-    update_ui_latest_msg,
-)
+from toolbox import (CatchException, disable_auto_promotion, get_conf,
+                     get_log_folder, select_api_key, update_ui,
+                     update_ui_latest_msg)
 
 
 def have_any_recent_upload_files(chatbot):

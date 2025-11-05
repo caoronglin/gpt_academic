@@ -3,21 +3,16 @@ import os
 from typing import List
 
 import llama_index
-from llama_index.core import (
-    Document,
-    PromptTemplate,
-    SimpleDirectoryReader,
-    StorageContext,
-    VectorStoreIndex,
-)
+from llama_index.core import (Document, PromptTemplate, SimpleDirectoryReader,
+                              StorageContext, VectorStoreIndex)
 from llama_index.core.ingestion import run_transformations
 from llama_index.core.response_synthesizers import TreeSummarize
 from llama_index.core.schema import TextNode
 from llama_index.vector_stores.milvus import MilvusVectorStore
-from loguru import logger
 
 from crazy_functions.rag_fns.llama_index_worker import LlamaIndexRagWorker
 from crazy_functions.rag_fns.vector_store_index import GptacVectorStoreIndex
+from loguru import logger
 from request_llms.embed_models.openai_embed import OpenAiEmbeddingModel
 from shared_utils.connect_void_terminal import get_chat_default_kwargs
 
@@ -64,7 +59,8 @@ class MilvusSaveLoad:
             checkpoint_dir = self.checkpoint_dir
         if self.does_checkpoint_exist(checkpoint_dir=checkpoint_dir):
             logger.info("loading checkpoint from disk")
-            from llama_index.core import StorageContext, load_index_from_storage
+            from llama_index.core import (StorageContext,
+                                          load_index_from_storage)
 
             storage_context = StorageContext.from_defaults(persist_dir=checkpoint_dir)
             try:

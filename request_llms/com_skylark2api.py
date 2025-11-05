@@ -2,7 +2,6 @@ import os
 import threading
 
 from loguru import logger as logging
-
 from toolbox import get_conf
 
 timeout_bot_msg = "[Local Message] Request timeout. Network error."

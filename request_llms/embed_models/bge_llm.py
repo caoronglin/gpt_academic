@@ -3,10 +3,10 @@ from textwrap import dedent
 from typing import Dict, List
 
 import requests
-from loguru import logger
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
 
+from loguru import logger
 from request_llms.bridge_all import predict_no_ui_long_connection
 
 

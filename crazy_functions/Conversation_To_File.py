@@ -1,19 +1,11 @@
 import re
 
-from loguru import logger
-
 from crazy_functions.plugin_template.plugin_class_template import (
-    ArgProperty,
-    GptAcademicPluginTemplate,
-)
-from toolbox import (
-    CatchException,
-    get_log_folder,
-    get_user,
-    promote_file_to_downloadzone,
-    update_ui,
-    update_ui_latest_msg,
-)
+    ArgProperty, GptAcademicPluginTemplate)
+from loguru import logger
+from toolbox import (CatchException, get_log_folder, get_user,
+                     promote_file_to_downloadzone, update_ui,
+                     update_ui_latest_msg)
 
 f_prefix = "GPT-Academic对话存档"
 
@@ -132,11 +124,14 @@ def write_chat_to_file(chatbot, history=None, file_name=None):
 
     import aiofiles
 
-    from crazy_functions.doc_fns.conversation_doc.excel_doc import save_chat_tables
+    from crazy_functions.doc_fns.conversation_doc.excel_doc import \
+        save_chat_tables
     from crazy_functions.doc_fns.conversation_doc.html_doc import HtmlFormatter
-    from crazy_functions.doc_fns.conversation_doc.markdown_doc import MarkdownFormatter
+    from crazy_functions.doc_fns.conversation_doc.markdown_doc import \
+        MarkdownFormatter
     from crazy_functions.doc_fns.conversation_doc.txt_doc import TxtFormatter
-    from crazy_functions.doc_fns.conversation_doc.word2pdf import WordToPdfConverter
+    from crazy_functions.doc_fns.conversation_doc.word2pdf import \
+        WordToPdfConverter
     from crazy_functions.doc_fns.conversation_doc.word_doc import WordFormatter
     from toolbox import promote_file_to_downloadzone
 

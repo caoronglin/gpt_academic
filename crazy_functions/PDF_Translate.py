@@ -4,15 +4,9 @@ from crazy_functions.pdf_fns.parse_pdf_grobid import 解析PDF_基于GROBID
 from crazy_functions.pdf_fns.parse_pdf_legacy import 解析PDF_简单拆解
 from crazy_functions.pdf_fns.parse_pdf_via_doc2x import 解析PDF_基于DOC2X
 from shared_utils.colorful import *
-from toolbox import (
-    CatchException,
-    check_packages,
-    disable_auto_promotion,
-    get_conf,
-    trimmed_format_exc_markdown,
-    update_ui,
-    update_ui_latest_msg,
-)
+from toolbox import (CatchException, check_packages, disable_auto_promotion,
+                     get_conf, trimmed_format_exc_markdown, update_ui,
+                     update_ui_latest_msg)
 
 
 @CatchException

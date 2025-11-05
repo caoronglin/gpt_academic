@@ -9,7 +9,8 @@ from docx.oxml import shared
 from docx.oxml.ns import qn
 from docx.shared import Cm, Pt
 
-from crazy_functions.doc_fns.conversation_doc.word_doc import convert_markdown_to_word
+from crazy_functions.doc_fns.conversation_doc.word_doc import \
+    convert_markdown_to_word
 
 
 class WordFormatter:

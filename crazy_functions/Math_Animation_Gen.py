@@ -1,17 +1,10 @@
 import os
 
-from loguru import logger
-
 from crazy_functions.crazy_utils import (
-    input_clipping,
-    request_gpt_model_in_new_thread_with_ui_alive,
-)
-from toolbox import (
-    CatchException,
-    gen_time_str,
-    promote_file_to_downloadzone,
-    update_ui,
-)
+    input_clipping, request_gpt_model_in_new_thread_with_ui_alive)
+from loguru import logger
+from toolbox import (CatchException, gen_time_str,
+                     promote_file_to_downloadzone, update_ui)
 
 
 def inspect_dependency(chatbot, history):

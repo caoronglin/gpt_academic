@@ -7,11 +7,11 @@ import re
 from functools import lru_cache
 from textwrap import dedent
 
+from pymdownx.superfences import fence_code_format
+
 import markdown
 from latex2mathml.converter import convert as tex2mathml
 from loguru import logger
-from pymdownx.superfences import fence_code_format
-
 from shared_utils.config_loader import get_conf as get_conf
 from shared_utils.text_mask import apply_gpt_academic_string_mask
 

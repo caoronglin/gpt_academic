@@ -5,6 +5,7 @@ PyInstaller hook for pydub and its audio dependencies
 
 import os
 import sys
+
 from PyInstaller.utils.hooks import collect_data_files, copy_metadata
 
 # 收集pydub的数据文件

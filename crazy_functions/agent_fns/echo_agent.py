@@ -1,6 +1,5 @@
-from loguru import logger
-
 from crazy_functions.agent_fns.pipe import PipeCom, PluginMultiprocessManager
+from loguru import logger
 
 
 class EchoDemo(PluginMultiprocessManager):

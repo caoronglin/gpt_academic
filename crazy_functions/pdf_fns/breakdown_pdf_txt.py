@@ -1,9 +1,8 @@
 import re
 import time
 
-from loguru import logger
-
 from crazy_functions.ipc_fns.mp import run_in_subprocess_with_timeout
+from loguru import logger
 
 
 def force_breakdown(txt, limit, get_token_fn):

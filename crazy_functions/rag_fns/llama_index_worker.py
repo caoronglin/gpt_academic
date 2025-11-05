@@ -4,9 +4,9 @@ from typing import List
 from llama_index.core import Document
 from llama_index.core.ingestion import run_transformations
 from llama_index.core.schema import TextNode
-from loguru import logger
 
 from crazy_functions.rag_fns.vector_store_index import GptacVectorStoreIndex
+from loguru import logger
 from request_llms.embed_models.openai_embed import OpenAiEmbeddingModel
 
 DEFAULT_QUERY_GENERATION_PROMPT = """\
@@ -53,7 +53,8 @@ class SaveLoad:
             checkpoint_dir = self.checkpoint_dir
         if self.does_checkpoint_exist(checkpoint_dir=checkpoint_dir):
             logger.info("loading checkpoint from disk")
-            from llama_index.core import StorageContext, load_index_from_storage
+            from llama_index.core import (StorageContext,
+                                          load_index_from_storage)
 
             storage_context = StorageContext.from_defaults(persist_dir=checkpoint_dir)
             self.vs_index = load_index_from_storage(

@@ -10,9 +10,9 @@ import numpy as np
 import tqdm
 from langchain.docstore.document import Document
 from langchain.vectorstores import FAISS
-from loguru import logger
 
 from crazy_functions.vector_fns.general_file_loader import load_file
+from loguru import logger
 from toolbox import Singleton
 
 embedding_model_dict = {

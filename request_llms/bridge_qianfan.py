@@ -6,15 +6,8 @@ from multiprocessing import Pipe, Process
 
 import requests
 
-from toolbox import (
-    clip_history,
-    get_conf,
-    is_any_api_key,
-    select_api_key,
-    trimmed_format_exc,
-    update_ui,
-    what_keys,
-)
+from toolbox import (clip_history, get_conf, is_any_api_key, select_api_key,
+                     trimmed_format_exc, update_ui, what_keys)
 
 model_name = "千帆大模型平台"
 timeout_bot_msg = "[Local Message] Request timeout. Network error."

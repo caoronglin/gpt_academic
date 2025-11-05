@@ -5,9 +5,9 @@ import threading
 import time
 from multiprocessing import Pipe, Process
 
-from loguru import logger
 from transformers import AutoModel, AutoTokenizer
 
+from loguru import logger
 from toolbox import get_conf, update_ui
 
 load_message = "ChatGLMFT尚未加载，加载需要一段时间。注意，取决于`config.py`的配置，ChatGLMFT消耗大量的内存（CPU）或显存（GPU），也许会导致低配计算机卡死 ……"

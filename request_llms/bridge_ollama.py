@@ -18,17 +18,12 @@ import traceback
 
 import gradio as gr
 import requests
-from loguru import logger
 
+from loguru import logger
 # config_private.py放自己的秘密如API和代理网址
 # 读取时首先看是否存在私密的config_private配置文件（不受git管控），如果有，则覆盖原config文件
-from toolbox import (
-    get_conf,
-    is_the_upload_folder,
-    read_one_api_model_name,
-    trimmed_format_exc,
-    update_ui,
-)
+from toolbox import (get_conf, is_the_upload_folder, read_one_api_model_name,
+                     trimmed_format_exc, update_ui)
 
 proxies, TIMEOUT_SECONDS, MAX_RETRY = get_conf(
     "proxies", "TIMEOUT_SECONDS", "MAX_RETRY"

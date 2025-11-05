@@ -5,6 +5,7 @@ from pathlib import Path
 import PyPDF2
 import requests
 from bs4 import BeautifulSoup
+
 from loguru import logger
 
 

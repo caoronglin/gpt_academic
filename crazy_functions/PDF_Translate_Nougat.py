@@ -4,29 +4,21 @@ import math
 import os
 
 from crazy_functions.crazy_utils import (
-    read_and_clean_pdf_text,
-    request_gpt_model_in_new_thread_with_ui_alive,
-    request_gpt_model_multi_threads_with_very_awesome_ui_and_high_efficiency,
-)
+    read_and_clean_pdf_text, request_gpt_model_in_new_thread_with_ui_alive,
+    request_gpt_model_multi_threads_with_very_awesome_ui_and_high_efficiency)
 from shared_utils.colorful import *
-from toolbox import (
-    CatchException,
-    disable_auto_promotion,
-    gen_time_str,
-    get_log_folder,
-    promote_file_to_downloadzone,
-    report_exception,
-    update_ui,
-    update_ui_latest_msg,
-    write_history_to_file,
-)
+from toolbox import (CatchException, disable_auto_promotion, gen_time_str,
+                     get_log_folder, promote_file_to_downloadzone,
+                     report_exception, update_ui, update_ui_latest_msg,
+                     write_history_to_file)
 
 from .pdf_fns.parse_pdf import get_avail_grobid_url, parse_pdf, translate_pdf
 
 
 def markdown_to_dict(article_content):
-    import markdown
     from bs4 import BeautifulSoup
+
+    import markdown
 
     cur_t = ""
     cur_c = ""

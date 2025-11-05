@@ -174,7 +174,8 @@ from xml.etree import ElementTree
 
 try:
     TKINTER = True
-    from tkinter import Button, Canvas, Entry, Frame, IntVar, Label, Menu, TclError, Tk
+    from tkinter import (Button, Canvas, Entry, Frame, IntVar, Label, Menu,
+                         TclError, Tk)
     from tkinter.messagebox import showerror
 
     from nltk.draw.table import Table
@@ -187,6 +188,7 @@ from urllib.error import HTTPError, URLError
 from urllib.request import urlopen
 
 import nltk
+
 from loguru import logger
 
 # urllib2 = nltk.internals.import_from_stdlib('urllib2')

@@ -1,19 +1,12 @@
 import os
 
-from loguru import logger
-
 from crazy_functions.crazy_utils import (
-    read_and_clean_pdf_text,
-    request_gpt_model_in_new_thread_with_ui_alive,
-    request_gpt_model_multi_threads_with_very_awesome_ui_and_high_efficiency,
-)
+    read_and_clean_pdf_text, request_gpt_model_in_new_thread_with_ui_alive,
+    request_gpt_model_multi_threads_with_very_awesome_ui_and_high_efficiency)
+from loguru import logger
 from shared_utils.colorful import *
-from toolbox import (
-    get_log_folder,
-    promote_file_to_downloadzone,
-    update_ui,
-    write_history_to_file,
-)
+from toolbox import (get_log_folder, promote_file_to_downloadzone, update_ui,
+                     write_history_to_file)
 
 
 def 解析PDF_简单拆解(
@@ -46,9 +39,8 @@ def 解析PDF_简单拆解(
         )  # avoid reading non-utf8 chars
 
         # 递归地切割PDF文件
-        from crazy_functions.pdf_fns.breakdown_txt import (
-            breakdown_text_to_satisfy_token_limit,
-        )
+        from crazy_functions.pdf_fns.breakdown_txt import \
+            breakdown_text_to_satisfy_token_limit
 
         paper_fragments = breakdown_text_to_satisfy_token_limit(
             txt=file_content,

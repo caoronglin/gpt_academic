@@ -11,8 +11,8 @@ from urllib.parse import urlencode, urlparse
 from wsgiref.handlers import format_date_time
 
 import websocket
-from loguru import logger
 
+from loguru import logger
 from toolbox import encode_image, get_conf, get_pictures_list
 
 timeout_bot_msg = "[Local Message] Request timeout. Network error."

@@ -7,13 +7,8 @@ from functools import lru_cache
 import requests
 
 from shared_utils.colorful import *
-from toolbox import (
-    ProxyNetworkActivate,
-    gen_time_str,
-    get_conf,
-    promote_file_to_downloadzone,
-    write_history_to_file,
-)
+from toolbox import (ProxyNetworkActivate, gen_time_str, get_conf,
+                     promote_file_to_downloadzone, write_history_to_file)
 
 
 class GROBID_OFFLINE_EXCEPTION(Exception):
@@ -120,11 +115,9 @@ def translate_pdf(
 ):
     from crazy_functions.crazy_utils import (
         request_gpt_model_in_new_thread_with_ui_alive,
-        request_gpt_model_multi_threads_with_very_awesome_ui_and_high_efficiency,
-    )
-    from crazy_functions.pdf_fns.breakdown_txt import (
-        breakdown_text_to_satisfy_token_limit,
-    )
+        request_gpt_model_multi_threads_with_very_awesome_ui_and_high_efficiency)
+    from crazy_functions.pdf_fns.breakdown_txt import \
+        breakdown_text_to_satisfy_token_limit
     from crazy_functions.pdf_fns.report_gen_html import construct_html
 
     prompt = "以下是一篇学术论文的基本信息:\n"
