@@ -1,5 +1,7 @@
 from crazy_functions.plugin_template.plugin_class_template import (
-    ArgProperty, GptAcademicPluginTemplate)
+    ArgProperty,
+    GptAcademicPluginTemplate,
+)
 from crazy_functions.SourceCode_Comment import 注释Python项目
 from toolbox import get_conf, update_ui
 

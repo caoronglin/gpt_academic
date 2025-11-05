@@ -5,8 +5,12 @@ from functools import lru_cache
 
 import tiktoken
 
-from toolbox import (apply_gpt_academic_string_mask, get_conf,
-                     read_one_api_model_name, trimmed_format_exc)
+from toolbox import (
+    apply_gpt_academic_string_mask,
+    get_conf,
+    read_one_api_model_name,
+    trimmed_format_exc,
+)
 
 # Endpoint 重定向
 API_URL_REDIRECT, AZURE_ENDPOINT, AZURE_ENGINE = get_conf(

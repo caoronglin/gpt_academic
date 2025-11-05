@@ -2,7 +2,9 @@ import requests
 from bs4 import BeautifulSoup
 
 from crazy_functions.crazy_utils import (
-    input_clipping, request_gpt_model_in_new_thread_with_ui_alive)
+    input_clipping,
+    request_gpt_model_in_new_thread_with_ui_alive,
+)
 from request_llms.bridge_all import model_info
 from toolbox import CatchException, update_ui
 

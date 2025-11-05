@@ -1,10 +1,17 @@
 from crazy_functions.crazy_utils import (
-    input_clipping, read_and_clean_pdf_text,
-    request_gpt_model_in_new_thread_with_ui_alive)
+    input_clipping,
+    read_and_clean_pdf_text,
+    request_gpt_model_in_new_thread_with_ui_alive,
+)
 from loguru import logger
-from toolbox import (CatchException, gen_time_str,
-                     promote_file_to_downloadzone, report_exception, update_ui,
-                     write_history_to_file)
+from toolbox import (
+    CatchException,
+    gen_time_str,
+    promote_file_to_downloadzone,
+    report_exception,
+    update_ui,
+    write_history_to_file,
+)
 
 
 def 解析PDF(
@@ -34,8 +41,9 @@ def 解析PDF(
 
         TOKEN_LIMIT_PER_FRAGMENT = 2500
 
-        from crazy_functions.pdf_fns.breakdown_txt import \
-            breakdown_text_to_satisfy_token_limit
+        from crazy_functions.pdf_fns.breakdown_txt import (
+            breakdown_text_to_satisfy_token_limit,
+        )
 
         paper_fragments = breakdown_text_to_satisfy_token_limit(
             txt=file_content,

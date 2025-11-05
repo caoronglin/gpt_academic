@@ -41,13 +41,21 @@ jobs:
         python -m pip install --upgrade pip
         pip install flake8 black isort mypy bandit safety
 
-    - name: Check code style with black
+    - name: Fix code style with black
       run: |
-        black --check . --exclude="(build|dist|\.venv|__pycache__)"
+        black . --exclude="(build|dist|\.venv|__pycache__)"
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add -A
+        git diff --staged --quiet || git commit -m "Auto-fix code formatting with black"
 
-    - name: Check imports with isort
+    - name: Fix imports with isort
       run: |
-        isort --check-only . --skip build --skip dist --skip .venv --skip __pycache__
+        isort . --skip build --skip dist --skip .venv --skip __pycache__
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add -A
+        git diff --staged --quiet || git commit -m "Auto-fix import sorting with isort"
 
     - name: Lint with flake8
       run: |

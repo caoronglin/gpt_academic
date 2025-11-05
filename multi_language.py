@@ -213,8 +213,9 @@ cached_translation = read_map_from_json(language=LANG)
 def trans(word_to_translate, language, special=False):
     if len(word_to_translate) == 0:
         return {}
-    from crazy_functions.crazy_utils import \
-        request_gpt_model_multi_threads_with_very_awesome_ui_and_high_efficiency
+    from crazy_functions.crazy_utils import (
+        request_gpt_model_multi_threads_with_very_awesome_ui_and_high_efficiency,
+    )
     from toolbox import ChatBotWithCookies, get_conf, load_chat_cookies
 
     cookies = load_chat_cookies()
@@ -289,8 +290,9 @@ def trans(word_to_translate, language, special=False):
 def trans_json(word_to_translate, language, special=False):
     if len(word_to_translate) == 0:
         return {}
-    from crazy_functions.crazy_utils import \
-        request_gpt_model_multi_threads_with_very_awesome_ui_and_high_efficiency
+    from crazy_functions.crazy_utils import (
+        request_gpt_model_multi_threads_with_very_awesome_ui_and_high_efficiency,
+    )
     from toolbox import ChatBotWithCookies, get_conf, load_chat_cookies
 
     cookies = load_chat_cookies()

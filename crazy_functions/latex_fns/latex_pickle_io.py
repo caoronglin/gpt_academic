@@ -8,7 +8,9 @@ class SafeUnpickler(pickle.Unpickler):
         from numpy.core.multiarray import scalar
 
         from crazy_functions.latex_fns.latex_actions import (
-            LatexPaperFileGroup, LatexPaperSplit)
+            LatexPaperFileGroup,
+            LatexPaperSplit,
+        )
         from crazy_functions.latex_fns.latex_toolbox import LinkedListNode
 
         # 定义允许的安全类

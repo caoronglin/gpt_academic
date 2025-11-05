@@ -10,9 +10,13 @@ from bs4 import BeautifulSoup
 
 from check_proxy import check_proxy
 from crazy_functions.crazy_utils import (
-    input_clipping, request_gpt_model_in_new_thread_with_ui_alive)
-from crazy_functions.prompts.internet import (SearchAcademicOptimizerPrompt,
-                                              SearchOptimizerPrompt)
+    input_clipping,
+    request_gpt_model_in_new_thread_with_ui_alive,
+)
+from crazy_functions.prompts.internet import (
+    SearchAcademicOptimizerPrompt,
+    SearchOptimizerPrompt,
+)
 from request_llms.bridge_all import model_info, predict_no_ui_long_connection
 from toolbox import CatchException, get_conf, update_ui, update_ui_latest_msg
 
