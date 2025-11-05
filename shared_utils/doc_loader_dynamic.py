@@ -23,9 +23,7 @@ def start_with_url(inputs: str):
 
 def load_web_content(inputs: str, chatbot_with_cookie, history: list):
     from crazy_functions.doc_fns.read_fns.web_reader import (
-        WebExtractorConfig,
-        WebTextExtractor,
-    )
+        WebExtractorConfig, WebTextExtractor)
     from toolbox import update_ui
 
     extractor = WebTextExtractor(WebExtractorConfig())

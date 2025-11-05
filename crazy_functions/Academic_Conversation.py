@@ -7,27 +7,20 @@ from textwrap import dedent
 from typing import Dict, List, Tuple
 
 from crazy_functions.Conversation_To_File import write_chat_to_file
-from crazy_functions.crazy_utils import request_gpt_model_in_new_thread_with_ui_alive
+from crazy_functions.crazy_utils import \
+    request_gpt_model_in_new_thread_with_ui_alive
 from crazy_functions.review_fns.data_sources.arxiv_source import ArxivSource
-from crazy_functions.review_fns.data_sources.semantic_source import (
-    SemanticScholarSource,
-)
+from crazy_functions.review_fns.data_sources.semantic_source import \
+    SemanticScholarSource
 from crazy_functions.review_fns.handlers.latest_handler import Arxiv最新论文推荐功能
 from crazy_functions.review_fns.handlers.paper_handler import 单篇论文分析功能
 from crazy_functions.review_fns.handlers.qa_handler import 学术问答功能
 from crazy_functions.review_fns.handlers.recommend_handler import 论文推荐功能
 from crazy_functions.review_fns.handlers.review_handler import 文献综述功能
 from crazy_functions.review_fns.query_analyzer import QueryAnalyzer
-from toolbox import (
-    CatchException,
-    get_conf,
-    get_log_folder,
-    get_user,
-    promote_file_to_downloadzone,
-    report_exception,
-    update_ui,
-    write_history_to_file,
-)
+from toolbox import (CatchException, get_conf, get_log_folder, get_user,
+                     promote_file_to_downloadzone, report_exception, update_ui,
+                     write_history_to_file)
 
 
 @CatchException
@@ -255,9 +248,8 @@ def 学术对话(
 
         # 保存为BibTeX格式
         try:
-            from .review_fns.conversation_doc.reference_formatter import (
-                ReferenceFormatter,
-            )
+            from .review_fns.conversation_doc.reference_formatter import \
+                ReferenceFormatter
 
             ref_formatter = ReferenceFormatter()
             bibtex_content = ref_formatter.create_document(papers_list)
@@ -279,7 +271,8 @@ def 学术对话(
 
         # 保存为EndNote格式
         try:
-            from .review_fns.conversation_doc.endnote_doc import EndNoteFormatter
+            from .review_fns.conversation_doc.endnote_doc import \
+                EndNoteFormatter
 
             endnote_formatter = EndNoteFormatter()
             endnote_content = endnote_formatter.create_document(papers_list)

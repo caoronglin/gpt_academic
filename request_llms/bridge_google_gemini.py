@@ -8,16 +8,9 @@ import re
 import time
 
 from request_llms.com_google import GoogleChatInit
-from toolbox import (
-    ChatBotWithCookies,
-    encode_image,
-    get_conf,
-    have_any_recent_upload_image_files,
-    log_chat,
-    trimmed_format_exc,
-    update_ui,
-    update_ui_latest_msg,
-)
+from toolbox import (ChatBotWithCookies, encode_image, get_conf,
+                     have_any_recent_upload_image_files, log_chat,
+                     trimmed_format_exc, update_ui, update_ui_latest_msg)
 
 proxies, TIMEOUT_SECONDS, MAX_RETRY = get_conf(
     "proxies", "TIMEOUT_SECONDS", "MAX_RETRY"

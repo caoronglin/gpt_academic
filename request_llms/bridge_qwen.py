@@ -1,14 +1,8 @@
 import os
 import time
 
-from toolbox import (
-    check_packages,
-    get_conf,
-    log_chat,
-    report_exception,
-    update_ui,
-    update_ui_latest_msg,
-)
+from toolbox import (check_packages, get_conf, log_chat, report_exception,
+                     update_ui, update_ui_latest_msg)
 
 model_name = "Qwen"
 

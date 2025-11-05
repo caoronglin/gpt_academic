@@ -11,7 +11,8 @@ from docx.oxml.ns import qn
 from docx.shared import Cm, Inches, Pt, RGBColor
 
 import markdown
-from crazy_functions.doc_fns.conversation_doc.word_doc import convert_markdown_to_word
+from crazy_functions.doc_fns.conversation_doc.word_doc import \
+    convert_markdown_to_word
 
 
 class DocumentFormatter(ABC):
@@ -307,7 +308,8 @@ class WordFormatter(DocumentFormatter):
         返回:
             生成的PDF文件路径，如果转换失败则返回None
         """
-        from crazy_functions.doc_fns.conversation_doc.word2pdf import WordToPdfConverter
+        from crazy_functions.doc_fns.conversation_doc.word2pdf import \
+            WordToPdfConverter
 
         try:
             pdf_path = WordToPdfConverter.convert_to_pdf(word_path, pdf_path)

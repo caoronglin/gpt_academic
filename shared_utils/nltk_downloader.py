@@ -174,7 +174,8 @@ from xml.etree import ElementTree
 
 try:
     TKINTER = True
-    from tkinter import Button, Canvas, Entry, Frame, IntVar, Label, Menu, TclError, Tk
+    from tkinter import (Button, Canvas, Entry, Frame, IntVar, Label, Menu,
+                         TclError, Tk)
     from tkinter.messagebox import showerror
 
     from nltk.draw.table import Table

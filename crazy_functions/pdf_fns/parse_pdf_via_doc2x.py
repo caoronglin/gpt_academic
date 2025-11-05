@@ -6,16 +6,9 @@ import requests
 from crazy_functions.crazy_utils import get_files_from_everything
 from loguru import logger
 from shared_utils.colorful import *
-from toolbox import (
-    extract_archive,
-    gen_time_str,
-    generate_file_link,
-    get_conf,
-    get_log_folder,
-    promote_file_to_downloadzone,
-    update_ui,
-    zip_folder,
-)
+from toolbox import (extract_archive, gen_time_str, generate_file_link,
+                     get_conf, get_log_folder, promote_file_to_downloadzone,
+                     update_ui, zip_folder)
 
 
 def retry_request(max_retries=3, delay=3):
@@ -268,9 +261,8 @@ def 解析PDF_DOC2X_单文件(
             # 生成在线预览html
             file_name = "在线预览翻译（原文）" + gen_time_str() + ".html"
             preview_fp = os.path.join(ex_folder, file_name)
-            from shared_utils.advanced_markdown_format import (
-                markdown_convertion_for_file,
-            )
+            from shared_utils.advanced_markdown_format import \
+                markdown_convertion_for_file
 
             with open(generated_fp, "r", encoding="utf-8") as f:
                 md = f.read()
@@ -311,9 +303,8 @@ def 解析PDF_DOC2X_单文件(
             # 生成在线预览html
             file_name = "在线预览翻译" + gen_time_str() + ".html"
             preview_fp = os.path.join(ex_folder, file_name)
-            from shared_utils.advanced_markdown_format import (
-                markdown_convertion_for_file,
-            )
+            from shared_utils.advanced_markdown_format import \
+                markdown_convertion_for_file
 
             with open(generated_fp, "r", encoding="utf-8") as f:
                 md = f.read()

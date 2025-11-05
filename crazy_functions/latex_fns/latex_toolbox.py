@@ -661,13 +661,8 @@ def _merge_pdfs(pdf1_path, pdf2_path, output_path):
 
 def _merge_pdfs_ng(pdf1_path, pdf2_path, output_path):
     import PyPDF2  # PyPDF2这个库有严重的内存泄露问题，把它放到子进程中运行，从而方便内存的释放
-    from PyPDF2.generic import (
-        ArrayObject,
-        FloatObject,
-        NameObject,
-        NumberObject,
-        TextStringObject,
-    )
+    from PyPDF2.generic import (ArrayObject, FloatObject, NameObject,
+                                NumberObject, TextStringObject)
 
     Percent = 1
     # raise RuntimeError('PyPDF2 has a serious memory leak problem, please use other tools to merge PDF files.')

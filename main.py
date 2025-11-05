@@ -55,15 +55,9 @@ def main():
         # )
 
     # 一些基础工具
-    from toolbox import (
-        ArgsGeneralWrapper,
-        DummyWith,
-        find_free_port,
-        format_io,
-        get_conf,
-        on_file_uploaded,
-        on_report_generated,
-    )
+    from toolbox import (ArgsGeneralWrapper, DummyWith, find_free_port,
+                         format_io, get_conf, on_file_uploaded,
+                         on_report_generated)
 
     # 对话、日志记录
     enable_log(get_conf("PATH_LOGGING"))
@@ -100,18 +94,11 @@ def main():
     # 如果WEB_PORT是-1, 则随机选取WEB端口
     PORT = find_free_port() if WEB_PORT <= 0 else WEB_PORT
     from check_proxy import get_current_version
-    from themes.theme import (
-        adjust_theme,
-        advanced_css,
-        assign_user_uuid,
-        from_cookie_str,
-        js_code_clear,
-        js_code_for_toggle_darkmode,
-        js_code_show_or_hide,
-        load_dynamic_theme,
-        theme_declaration,
-        to_cookie_str,
-    )
+    from themes.theme import (adjust_theme, advanced_css, assign_user_uuid,
+                              from_cookie_str, js_code_clear,
+                              js_code_for_toggle_darkmode,
+                              js_code_show_or_hide, load_dynamic_theme,
+                              theme_declaration, to_cookie_str)
 
     title_html = f'<h1 align="center">GPT 学术优化 {get_current_version()}</h1>{theme_declaration}'
 
@@ -121,7 +108,8 @@ def main():
     functional = get_core_functions()
 
     # 高级函数插件
-    from crazy_functional import get_crazy_functions, get_multiplex_button_functions
+    from crazy_functional import (get_crazy_functions,
+                                  get_multiplex_button_functions)
 
     DEFAULT_FN_GROUPS = get_conf("DEFAULT_FN_GROUPS")
     plugins = get_crazy_functions()
@@ -154,7 +142,8 @@ def main():
     cancel_handles = []
     customize_btns = {}
     predefined_btns = {}
-    from shared_utils.cookie_manager import make_cookie_cache, make_history_cache
+    from shared_utils.cookie_manager import (make_cookie_cache,
+                                             make_history_cache)
 
     with gr.Blocks(
         title="GPT 学术优化", theme=set_theme, analytics_enabled=False, css=advanced_css
@@ -394,7 +383,8 @@ def main():
         gr.Spark()
 
         # 插件二级菜单的实现
-        from themes.gui_advanced_plugin_class import define_gui_advanced_plugin_class
+        from themes.gui_advanced_plugin_class import \
+            define_gui_advanced_plugin_class
 
         new_plugin_callback, route_switchy_bt_with_arg, usr_confirmed_arg = (
             define_gui_advanced_plugin_class(plugins)
@@ -692,7 +682,8 @@ def main():
 
         # 是否启动语音输入功能
         if ENABLE_AUDIO:
-            from crazy_functions.live_audio.audio_io import RealtimeAudioDistribution
+            from crazy_functions.live_audio.audio_io import \
+                RealtimeAudioDistribution
 
             rad = RealtimeAudioDistribution()
 
@@ -705,7 +696,8 @@ def main():
         app_block.load(assign_user_uuid, inputs=[cookies], outputs=[cookies])
 
         # 初始化（前端）
-        from shared_utils.cookie_manager import load_web_cookie_cache__fn_builder
+        from shared_utils.cookie_manager import \
+            load_web_cookie_cache__fn_builder
 
         load_web_cookie_cache = load_web_cookie_cache__fn_builder(
             customize_btns, cookies, predefined_btns

@@ -10,7 +10,8 @@ def validate_path():
 
 validate_path()  # validate path so you can run from base directory
 
-from crazy_functions.latex_fns.latex_actions import LatexPaperFileGroup, LatexPaperSplit
+from crazy_functions.latex_fns.latex_actions import (LatexPaperFileGroup,
+                                                     LatexPaperSplit)
 from crazy_functions.latex_fns.latex_pickle_io import objdump, objload
 
 pfg = LatexPaperFileGroup()

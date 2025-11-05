@@ -5,7 +5,8 @@ import traceback
 import requests
 
 from loguru import logger
-from toolbox import get_conf, is_the_upload_folder, update_ui, update_ui_latest_msg
+from toolbox import (get_conf, is_the_upload_folder, update_ui,
+                     update_ui_latest_msg)
 
 proxies, TIMEOUT_SECONDS, MAX_RETRY = get_conf(
     "proxies", "TIMEOUT_SECONDS", "MAX_RETRY"
